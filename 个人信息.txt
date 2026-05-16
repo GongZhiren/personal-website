@@ -1,7 +1,0 @@
-google scholar: https://scholar.google.com/citations?user=eFd7yW4AAAAJ&hl=en&authuser=1
-github: https://github.com/GongZhiren
-linkin: https://www.linkedin.com/in/zhiren-gong-3228a73b7/
-
-research interest: Model EfficiencyLarge Language ModelsInterpretable and Reliable AIMachine Learning
-
-说欢迎各种合作（在积极探索efficiency各层面的研究，并期待具体的落地应用），然后说欢迎有任何PhD/RA意向的国际生/本地生都可以与我联系

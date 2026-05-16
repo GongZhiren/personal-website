@@ -1,3 +1,27 @@
 .DS_Store
 *.swp
 *~
+
+# Private/raw source materials not needed for website deployment
+CV of Zhiren Gong.docx
+Recent News.txt
+个人信息.txt
+个人照片.jpg
+注意事项.txt
+照片素材/coauthor名单.txt
+4657fcd0c3e6faf0f35c641d07d84eb7.jpg
+
+# Paper source folders (site only uses selected exported assets)
+paper1/
+paper3/
+paper4/
+paper5/*.pdf
+paper5/b3e510da-8176-40c4-a326-83be0733fa96.png
+
+# Unused image assets
+assets/paper1_alt.png
+assets/paper1_main.png
+assets/paper2_main.png
+assets/paper3_main.png
+assets/paper4_main.png
+logo/网页logo.png
