@@ -1,0 +1,417 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2024
+
+
+% ready for submission
+\usepackage{neurips_2024}
+
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2024}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2024}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2024}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{subcaption}
+% \usepackage{subfigure}
+
+
+\title{Hardware-Shielded PEFT for LLM Security On Device}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  David S.~Hippocampus\thanks{Use footnote for providing further information
+    about author (webpage, alternative address)---\emph{not} for acknowledging
+    funding agencies.} \\
+  Department of Computer Science\\
+  Cranberry-Lemon University\\
+  Pittsburgh, PA 15213 \\
+  \texttt{hippo@cs.cranberry-lemon.edu} \\
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+}
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
+  both the left- and right-hand margins. Use 10~point type, with a vertical
+  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
+  bold, and in point size 12. Two line spaces precede the abstract. The abstract
+  must be limited to one paragraph.
+\end{abstract}
+
+
+\section{Introduction}
+
+%% 近年来，机器学习即服务（MLaaS） 逐渐成为热门趋势，许多垂直领域的机构由于缺乏足够的计算资源和专业知识，难以独立训练和部署大模型。因此，这些机构通常希望借助云端计算，将私有数据用于模型的训练或推理，以实现大模型的高效应用。
+
+% 然而，在 医疗、政府等高隐私领域，数据的敏感性使得直接采用白盒方式提供大模型推理服务存在极大风险。攻击者可能通过模型推理接口窃取模型的关键信息，甚至还原出用户的敏感数据，造成严重的隐私泄露问题。
+
+% 为了解决这一问题，多方安全计算（MPC）、零知识证明（ZKP）和同态加密（HE） 等密码学技术被广泛研究，并在特定场景下提供了严格的安全保障。然而，这些方法通常涉及频繁的加密解密操作，并依赖大量底层算子的计算，导致计算开销极高，在实际应用中难以满足大规模深度学习任务的需求。
+
+% 相比之下，可信执行环境（TEE） 作为一种基于硬件的安全计算技术，能够在隔离的安全区域内执行计算，确保数据和模型参数的机密性，同时避免密码学方案带来的巨大计算开销。因此，在隐私保护场景下，对 LoRA 进行大模型微调或推理，基于 TEE 的计算方式更具实际应用价值，能够在保障数据安全的同时，提升计算效率。
+
+
+%% 目前考虑的Challenges有两个，1 通信成本过高。 2，传统的比较方法无法判断模型层隐私性, 放置热力图，说明一下分布的不一致。
+%% 如何说明当前隐私层选择的有效性，就是通过安全攻击来证明。
+
+%% 总体的任务可能是考虑加入噪声来, 换个角度说，对于放在GPU的权重 加入高斯噪声，对于不放入GPU的 不需要加高斯噪声，因为本身对噪声很敏感。
+
+In recent years, Machine Learning as a Service (MLaaS) has gained significant traction across various industries. Many organizations, particularly those in vertical domains like healthcare and government, often face limitations in computational resources and specialized expertise, making it challenging to independently train and deploy large models. Consequently, these organizations tend to leverage cloud-based computing to train or infer models with their private data, thereby achieving the efficient deployment of large models.
+
+However, in privacy-sensitive sectors such as healthcare and government, the sensitive nature of data poses a significant risk when using white-box approaches for large model inference. Attackers can exploit model inference interfaces to extract crucial model information, potentially leading to the reconstruction of sensitive user data, thus resulting in severe privacy breaches.
+
+To address these concerns, cryptographic techniques such as Multi-Party Computation (MPC), Zero-Knowledge Proofs (ZKP), and Homomorphic Encryption (HE) have been widely researched and offer strict security guarantees in specific scenarios. Despite their potential, these methods are often computationally expensive, requiring frequent encryption and decryption operations and relying on numerous low-level operators, making them impractical for large-scale deep learning tasks in real-world applications.
+
+In contrast, Trusted Execution Environments (TEE), a hardware-based secure computation technology, provides a more practical solution. By executing computations in isolated secure regions, TEEs ensure the confidentiality of data and model parameters, while avoiding the high computational overhead of cryptographic schemes. Therefore, in privacy-preserving settings, fine-tuning or inferring large models like LoRA based on TEE-based computations offers significant practical value, as it enhances both data security and computational efficiency.
+
+Currently, two main challenges remain in this domain. First, the high communication cost, which can introduce significant delays in the secure computation process. Second, the lack of effective methods to evaluate the privacy leakage at different layers of a model. Traditional comparison techniques are insufficient to assess the privacy risks associated with specific model layers, making it challenging to identify vulnerable areas. Heatmaps can be used to visualize the distribution of privacy risks, but discrepancies in the distribution across layers need further exploration.
+
+To evaluate the effectiveness of current privacy protection mechanisms, one must conduct security attack simulations to assess how well different layers of the model resist various forms of privacy threats. These security analyses will help validate the robustness of the model's privacy preservation capabilities and inform the refinement of layer-specific privacy protection strategies.
+
+
+Many research efforts have made to optimize neural network model architectures using reinforcement learning method(RL), including RL-based Neural architecture search (NAS)\cite{yu2022topology,miao2022}, RL-based Model Compression and Distillation\cite{yao2024layer,yao2024scaleot}. Inspired by these methods, we consider to adopt reinforcement learning method to learn the privacy sensitivity of each layers dynamically when fine tuning the LLM. 
+
+As showed in previous works\cite{}
+
+
+\section{Related Works}
+\label{related_works}
+\subsection{Trust Execution Environments}
+Trusted Execution Environments (TEEs) are hardware-enforced isolated enclaves designed to protect sensitive data and computations from adversarial access. This security model relies on hardware primitives such as memory isolation controllers (e.g., ARM TrustZone\cite{alves2004trustzone}) 
+, cryptographic enclaves (Intel SGX\cite{costan2016intel}), and virtualization extensions (AMD SEV\cite{kaplan2016amd}). Prior studies \cite{zhang2024no,hou2021model}broadly define TEEs as secure zones within potentially compromised host devices, including GPUs, where data confidentiality, code integrity, and execution isolation are guaranteed 
+. However, In the context of Trusted Execution Environments (TEEs), memory constraints are a significant consideration. For instance, Intel's Software Guard Extensions (SGX) reserves a portion of physical memory known as the Processor Reserved Memory (PRM), with a maximum size of 128 MB on device CPU, which hinders the deployment of Large language models. Although, there is upgrade version TEEs, like Intel Ex
+
+\subsection{TEE-Shielded Model Partition and Protection}
+TEE-Shielded Model Partition and Protection framework aims to safeguard partial components of deep neural network models using Trust Execution Environments, addressing model attacks (e.g., model stealing attacks, membership inference attacks) while balancing deployment efficiency, effectiveness, and security. Such methods downgrading while-box to black-box attacks by selectively shielding critical model components, thereby raising the barrier for adversaries into label-only black-box attacks. Recently, several works proposed to partition model into TEE.
+
+\subsection{Parameter Efficient Fine Tuning}
+% \subsection{Reinforcement Learning in Model Architecture Optimization}
+% Neural architecture search (NAS) methodology is 
+While large language models (LLMs) like those developed by OpenAI and DeepSeek-R1 have demonstrated remarkable capabilities in general-purpose tasks through foundation model paradigms, their application in privacy-sensitive domains remains constrained. In such scenarios, domain-specific models are still essential to safeguard user data privacy and address specialized requirements. To bridge this gap, Parameter-Efficient Fine-Tuning (PEFT) methods offer a practical solution. These techniques enable the adaptation of large foundation models to domain-specific tasks with minimal computational overhead, while preserving data confidentiality by avoiding full model retraining on sensitive datasets.
+
+\section{Main Methodology}
+\label{method}
+
+\subsection{Threats to Model}
+\label{Threats}
+% The goal of this paper is to degrade while-box attacks to black-box label-only attacks. We consider the security guarantee of a black-box baseline, where TEE protects the while LLM trained parameters and only returning prediction labels, as the upper bound security protection offered by previous approaches\cite{zhang2024no,shen2022soter,hou2021model}. Besides, we assume that the communication between GPU and TEE can be good protected by current cryptographic encryption methods, which can prevent information leakage from intermediate feature maps.
+
+% In addition, we assume that both the model owner and the attacker can access to the open-sourced LLM on the Internet to improve the accuracy of the model or atacks, a realistic setting for practical on-device learning tasks\cite{chen2022teacher,jiang2023empirical}. The attacker can infer the architecture of the whole protected model, or an equivalent one, based on public information, such as the inference results or the unprotected model part, by existing attack methods\cite{chen2022copy}. Besides, we assume that the attacker can query the victim model for limited times (less than 1\% of the training data), a practical assumption shared by related works\cite{rakin2022deepsteal,oliynyk2023know}. 
+This paper aims to degrade white-box attacks to black-box label-only attacks in the context of protecting PEFT based large language models (LLMs) using Trusted Execution Environments (TEEs). We consider a security baseline where TEE protects the trained parameters of the LLM and only returns the predicted labels to external queries, providing a theoretical upper bound on security protection, informed by previous works\cite{zhang2024no}, \cite{shen2022soter}, \cite{hou2021model}. Meanwhile, we assume that the communication between the GPU and TEE is adequately secured by state-of-the-art cryptographic encryption methods, which ensures that intermediate feature maps and other sensitive data are protected from potential leakage during model inference.
+
+The attacker is able to access to the open-sourced version of the LLM, which is publicly available online. This reflects a realistic scenario in practical on-device learning tasks, where attackers can leverage publicly available models to enhance their attacks or improve the accuracy of their own versions of the model\cite{chen2022teacher}, \cite{jiang2023empirical}. But, we assume that the attacker can only query the victim model a limited number of times (less than 1\% of the training data), which aligns with realistic scenarios where model queries are often constrained in practice \cite{rakin2022deepsteal}, \cite{oliynyk2023know}. In this setting, the attacker seeks to exploit any available information to infer details about the protected model, such as training data characteristics or architectural details, using existing techniques\cite{chen2022copy}, and can reconstruct an similar protected model. 
+
+% \begin{figure*}[htbp]
+%     \centering
+%     \includegraphics[width=\linewidth]{Styles/images/Framework.pdf} % 图片文件名
+%     \caption{The Workflow of Main Methods}
+%     \label{fig:mainmethods}
+% \end{figure*}
+% \subsection{Approach Overview}
+\subsection{Preliminary}
+% In this paper, inspired by the inference bottleneck of LLMs deployed in TEEs—mainly caused by communication and computation overhead—we aim to mitigate inference latency by balancing \textbf{Security}, \textbf{Efficiency}, and \textbf{Performance} in fine-tuned LLMs.
+Motivated by the inference bottleneck in TEEs - particularly the dual constraints of secure enclave communication costs and limited TEE compute capacity - we propose a tri-objective optimization framework balancing:
+\textbf{(S) Security}, \textbf{(E) Latency}, and \textbf{(P) Performance} for privacy-preserving LLM deployment.
+
+To achieve this, we leverage Adapter-based fine-tuning (e.g., LoRA) to select privacy-sensitive layers and prune them for deployment in Trusted Execution Environments (TEEs), thereby reducing inference time while enhancing protection against model attacks.
+
+Given an base LLM $\mathcal{B}$ parameterized by weights $\mathcal{W}$ and a local downstream dataset $\mathcal{D_T}$, we optimize:
+\begin{equation}
+\mathcal{B} = \mathcal{W} + \Delta\mathcal{W}, \quad \text{where} \quad \Delta\mathcal{W} = \arg\min_{\Delta} \mathcal{L}(\mathcal{B}; \Delta\mathcal{W})
+\end{equation}
+\begin{equation}
+\text{s.t.} \quad \mathcal{J}(\mathcal{A}|\mathcal{S}), \quad \text{D}_{im}(\Delta\mathcal{W}) \leq \theta.
+\end{equation}
+This ensures that privacy-sensitive layers are identified through reinforcement learning objective $\mathcal{J}(\mathcal{A}|\mathcal{S})$ while maintaining a compact adapter structure.
+Finally, these selected adapters are deployed in TEEs to preserve privacy while minimizing communication and computational overhead.
+
+Specifically, in this paper, we focus on the design of split inference for the Transformer architecture \cite{vaswani2017attention}, which is widely adopted in LLMs \cite{han2022survey,chang2024survey}. We regard each decoder as a basic block to evaluate its privacy, and an LLM $\mathcal{B}$ can be characterized as $\mathcal{B} = \{b_1, b_2, ..., b_{n-1}, b_n\}$, where $n$ is the total number of layers. 
+
+Our approach involves selecting $k$ high-privacy-sensitivity basic blocks $\mathcal{A_S}$ in each basic block, deploying them into TEEs, and then combining them with the remaining $n-k$ lower-sensitivity basic blocks $\mathcal{A_{NS}}$ , which is computing in GPU, to construct a split inference model, represented as $\mathcal{B} = [\mathcal{A_S}, \mathcal{A_{NS}}]$. 
+
+Besides safeguarding higher-privacy layers, we also need to reduce the computational overhead of Adapter $\mathcal{A_S}$ in TEEs. Therefore, structural model prune is applied to produce shielded compressed adapters $\hat{\mathcal{A_S}}$. 
+Hence, the final split inference model is given by $\mathcal{B} = [\hat{\mathcal{A_S}}, \mathcal{A_{NS}}]$.
+
+\subsection{Layer-Wise Privacy Dynamic Awareness}
+In this section, we propose a novel method for dynamic layer-wise privacy awareness using reinforcement learning. The objective of this approach is to estimate the privacy score of the adapters in each basic block and then deploy higher-privacy-sensitive adapters into Trusted Execution Environments (TEEs) to safeguard their information security.
+
+The first challenge in this approach is estimating the privacy at the adapter level. Since Gaussian noise is commonly employed in differential privacy to mitigate the leakage of private information, we adopt a similar strategy. Specifically, we apply Gaussian noise to estimate the privacy of adapter weights and rank the privacy sensitivity of each layer.
+
+Since we treat TEEs as a black box that serves as an upper bound for model attacks, it is essential to place as much privacy-sensitive information as possible in the adapters protected within the TEE. Therefore, we approach this process as a multi-armed bandit problem and use reinforcement learning to explore and train the LLM, with the privacy score of each adapter serving as the guiding metric.
+
+Furthermore, we employ a dual-process framework to achieve our goal. This approach is akin to a multi-objective task, consisting of a reinforcement learning (RL) task that dynamically evaluates the privacy score of each LLM adapter, and a deep learning (DL) task for training the primary model via gradient descent. These two processes alternate iteratively during the training phase to ensure the balance between performance and security.
+
+\paragraph{\textit{Method Formulation:}}
+Reinforcement learning (RL) is a type of machine learning where an agent learns to make decisions by interacting with the environment. The learning process is driven by the reward feedback from the environment based on the actions. The core elements of RL are states, actions, and rewards. 
+
+%% 强化学习 的目标是  Privacy+Performance的 Object
+Inspired by the concept of Stochastic Policy Optimization (SPO) \cite{schulman2017proximal}, we employ a policy-based RL approach to optimize the privacy score distribution of basic blocks, aiming to achieve an optimal trade-off between security and performance. The objective function for this RL process is defined as
+
+\begin{equation}
+\mathcal{J}(\pi) = \mathbb{E}_{\tau}[R(\tau)], \tau = (s_0,a_0,s_1,a_1,...)
+\end{equation}
+
+where $\tau$ denotes a sequence of states and actions encountered by the RL agent while interacting with the DL model. The policy $\pi$ determines the action selection, and $R(\tau)$ represents the cumulative reward accumulated over the trajectory $\tau$. The ultimate goal of this process is to learn an optimal policy $\pi$ that maximizes the expected return from the initial state distribution of $S$.
+
+In our problem, we define the privacy score $S = [s_1,s_2,...,s_n]$ as the \textbf{environmental state} during the training phase, initializing it to zero. 
+The dataset designated for fine-tuning is partitioned into two subsets: the training set $\mathcal{D}_T$ and the validation set $\mathcal{D}_V$, which are defined as local private datasets. During the training phase, we employ deep learning to train the model $\mathcal{B} = [\mathcal{A}_{hp}, \mathcal{A}_{lp}]$ while concurrently updating privacy score $S$ using RL. This update is based on the interaction with deep learning loss fluctuations of DL when executing different actions.
+
+\begin{figure}[htp]
+    \centering
+    \begin{subfigure}[t]{0.46\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Styles/images/weight_boxplot_comparison.pdf}
+        \caption{left: Weight Distribution Comparison (Original Scale). right: Absolute Weight Distribution Comparison (Log Scale)}
+    \end{subfigure}
+    \hspace{0.05\linewidth}
+    \begin{subfigure}[t]{0.46\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Styles/images/weight_histogram_comparison.pdf}
+        \caption{left: Base Model - Weight Distribution. right: Adapter - Weight Distribution}
+    \end{subfigure}
+    \caption{Layer-level Model Weight Distribution}
+    \label{fig:weight}
+\end{figure}
+
+\paragraph{Action Policy Definition:}
+
+The \textbf{policy action} in this work is defined as which basic block are chosen for the DL training. As we proposed, differential privacy can used to protect adapters. Therefore, Gaussian noise is adopted in our work to estimate the layer-wise privacy sensitivity. 
+%% 加入一些论文，用于说明高斯噪声常常用于保护模型的隐私性
+
+%% LoRA fine tune 首先已经有相关的文献指出，weight 的权重远大于LoRA层的权重，所以基于LoRA的权重标准差的不会影响其原始foundation model的大小。 
+%% 列出一个公式  W = W+AB  std(AB) << W .  因此对LoRA权重加噪声，只会弱化该LoRA的大小，而不会影响本身W的作用。 
+As showed in Figure\ref{fig:weight}, the weight of based model has relatively larger absolute values than fine-tuned LoRA values. Therefore, we proposed to use Gaussian noise to destroy the impact of LoRA weights, while still keep the impact of base model weights. The detail is formulated in the following:
+
+The forward of basic block is $W = W + A \cdot B, \text{where}, |A| \ll |W|$, and $MLP_{in} = X + MHA(X)$. Thus, even if noise has large impact on multi-head attention in this basic block, it still has residual connection to mitigate its influence. \\
+The Gaussian Noise is defined as 
+\begin{equation}
+   A' = A + \epsilon,\ \ \epsilon \sim \mathcal{N}(0,\sigma_i^2)
+\end{equation}
+Then
+\begin{equation}
+W_{\text{new}}' = W + (A + \mathcal{N}(0, \sigma^2)) \cdot B
+\end{equation}
+
+% 基于当前层标准差分布的噪声添加模式 需要加一个关于噪声大小选择的实验 看看有没有相关的论文说明这个点的
+In addition, as the value of weights are various depend on the depth of layers. We consider to use flexible $\epsilon$ to mitigate the bias of impacts of Gaussian noise on specific weights. Drawn from the adaptive noise in gradients\cite{adamczewski2023differential_privacy,lee2018concentrated_privacy_budget}, we consider to use 10\% of std of weights to cause degradation of lora's performance. As in our setting, we only want to reduce the impact of current layers' weight. Therefore, we design a flexible noise depends on the std of weights when injecting noise into it.
+
+%% 是否可以给放在TEE里的层定一个名字，不放在TEE里的层定一个名字
+%% Sampling 的方法
+Furthermore, towards RL training, the specific action policy is intending to select basic blocks that may have higher privacy sensitivity. However, in order to find out the optimal distribution, we leverage privacy score based uniform distribution to sampling the basic blocks, which fullfill the setting of exploration and balance. 
+
+The chosen of placing a specific layer into TEEs (higher sensitivity blocks) acts as the action, influenced by an action policy $\pi_i$ based on the privacy score of each basic block, it like state transition function, which is defined as:
+
+\begin{equation}
+\pi_i \sim U\bigl(0, \operatorname{Sigmoid}(s_i)\bigr)
+\label{eq:pi_distribution}
+\end{equation}
+
+where $\pi$ denotes the Weighted Random Sampling based on 0 and $Sigmoid(s_i)$. For each step, we randomly sample a probability $p_i \sim \pi_i$, generating the probability set $\mathcal{P} = {p_1,p_2,...,p_n}$ for all basic blocks.
+%% group 形式的的训练，防止将隐私性聚集在某一个地方 根据model merging的理论，模型不同的部分承担的不同的功能，因此不能单一的只考虑某一个部分的模型。我们还是需要全局去考虑
+Empirically, we set $N_t$ basic blocks in LLMs are selected following $\mathcal{P}$ that considered may have higher privacy and then injected noise into its weights. However, since LLMs are typically deep, and the action policy in the early training steps is inaccurate, directly a significant number of adjacent layers, potential cause the collapses of training. Meanwhile, consolidating all the relatively high-privacy model layers into a contiguous layers can also degrade the model’s security and performance. 
+To handle these issues, we group total layers into $N_g$ groups and sampling $\frac{N_t}{N_g}$ of layers in each group. The set of groups is defined as $\{g_j\}_{j=1}^{N_g}$. The selection of higher privacy layers' index is denoted as:
+
+\begin{equation}
+\mathcal{A}_{hp} = \{i \hspace{0.5em} \text{where} \hspace{0.5em} p_i = \mathrm{Sampling}(\pi_i),\quad i \in g_j\}
+\label{eq:ahp_definition}
+\end{equation}
+where $N_g$ is empirically set to 3 by default. Then, according to $\mathcal{A}_{hp}$, the candidate network split into two subsets $[\mathcal{A}_{hp},\mathcal{A}_{lp}]$ is formed as :
+\begin{equation}
+    F = [f_1, f_2, ... ,f_{n-1},f_n] \quad f_i =  \begin{cases}
+                                                    h_i & h_i \in \mathcal{A}_{hp}, \\
+                                                    l_i & otherwise.
+                                                  \end{cases}
+\end{equation}  
+
+\paragraph{Update of Privacy Score:}
+The update of privacy score is based on rewards feedback of policy actions. In this 
+
+\begin{equation}
+    \Delta\mathcal{L}_i = \frac{1}{M}\sum_{m=1}^M \left[\mathcal{L}(x_m;\mathcal{A}_{hp}') -\mathcal{L}(x_m;\mathcal{A}_{hp})\right]
+\end{equation}
+where $M$ is the batch size of validation datasets. $\mathcal{A}_{hp}'$ denotes gaussian noise is injected into corresponding layer's adapter weights. We aims to diff the loss fluctuation before and after the noise injecting of selected higher privacy layers. 
+
+\begin{equation}
+      R_i^t = e^{\Delta\mathcal{L}_i^t} - \frac{1}{N}\sum^{N}_{i=1}e^{\Delta\mathcal{L}_i^t}
+\end{equation}
+where $R_i^t$ is the reward of $i$ layer in step $t$. We split total layers into two subsets when deployment, that one subset is $\mathcal{A}_{hp}$ with higher privacy and another subset is $\mathcal{A}_{lp}$ with relatively low privacy. Therefore, we design reward that if $\Delta\mathcal{L}_i^t$ is bigger than zero, we consider it has higher sensitivity to gaussian noise, vice verse. And the privacy score of layers with higher privacy would be increased, and privacy score of low privacy layers would be penalty. 
+
+Moreover, since we use interval training to prevent the collapse of both RL and DL, interval steps is set as $T$. In order to avoid that some layers are not selected in this interval, that would cause always degrade its privacy score, we design the layer sampling tracker $K =[\mathcal{A}_{hp}^1,\mathcal{A}_{hp}^2,...,\mathcal{A}_{hp}^{T}]$, that we only update privacy score of layers that has been sampled and trained.
+
+Following formulated the update of privacy score:
+\begin{equation}
+    s_i = \begin{cases}
+           s_i + r_i^t * \mu * \sigma(s_i)*(1-\sigma(s_i)), & i \in \mathcal{A}_{hp}^t \And \mathcal{A}_{hp}^t\in K \\
+           s_i & otherwise
+    \end{cases}
+\end{equation}
+where $\sigma$ is sigmoid function, $\mu$ is learning rate of RL to control the convergence of privacy scores.
+
+\subsection{Dynamic Layer Compression}
+The deployment of LLMs within TEEs faces two critical issues: First, the absence of GPU acceleration support in TEEs significantly compromises computational efficiency; second, the communication bandwidth limitations may impose additional constraints on data transfer between secure and non-secure zones.
+
+Recent studies \cite{hoefler2021sparsity_prune,zhang2023loraprune,ma2023llm_prune} have revealed the inherent over-parametrization characteristics of modern LLMs, suggesting that structural pruning can achieve model compression without substantial performance degradation. This observation motivates our dual-process approach: Implementing RL to find out the privacy layers that should be shielded within TEEs, while simultaneously compressing shielded layers' weights and feature dimensions transmitted to GPU-accelerated components.
+In the following, we will briefly introduce the gradient guided weight pruning, and describe how we use it to dynamically prune the higher privacy layers when training. 
+
+\paragraph{Gradient based Model Pruning}
+Following by previous works \cite{zhang2023loraprune,ma2023llm_prune,molchanov2019pruning}, the importance of a weight $W_{i,j} \in W_{0}$ can be quantified by measuring the impact of its removal on the loss. For an input $x$ and the ground-truth prediction $y$, the induced error of $W_{i,j}$ can be given as:
+\begin{equation}
+    I_{i,j} = \left[ L(x,y,W+(BA)) - L(x,y,W+(BA) | W_{i,j} = 0) \right]^2
+\end{equation}
+
+Computing $I_{i,j}$ for each weight is computationally expensive. Thus, we can use first-order Taylor expansion to approximate the importance $\hat{I}_{i,j}$ by setting the element $(BA)_{i,j} = -W_{i,j}$ if the element $W_{i,j} \in W_0$ is removed. Then the importance of weights in LoRA can be formulated in:
+\begin{equation}
+       \hat{I}_{i,j} = [(\frac{\partial\mathcal{L}}{\partial B_{i,:}}A_{:,j}+B_{i,:}\frac{\partial\mathcal{L}}{A_{:,j}}-\frac{\partial\mathcal{L}}{\partial B_{i,:}}\frac{\partial\mathcal{L}}{\partial A_{:,j}})(W_{i,j}+(BA)_{i,j})]^2
+\end{equation}
+
+\paragraph{Joint Training}
+During training, we faces two issues:first, in the earlier phase of training, the model has less sensitivity towards private local data, hence there is no clear distribution of privacy layers, which is unable to allow us to prune higher privacy layer that should be deployed in TEEs. Second, estimating importance and pruning weights in earlier phase with less batch of data is inaccurate, can empirically lead to significant bias and performance loss.
+
+To address the co-adaptation issues between RL and model pruning during simultaneous training, we propose a \textbf{dynamic pruning strategy} specifically optimized for RL-compatible pruning. This design ensures structural pruning compatibility and steadily while maintaining GPU-based base model integrity.
+
+Formally, we defined the dynamic ratio of pruning:
+\begin{equation}
+    \text{ratio}_i(t) = \frac{R_{\text{total}} - R_{\text{current}}(t)}{(T - t + \epsilon) \cdot \sigma(s_i)} \cdot \left(1 -\alpha + \alpha \cdot \frac{t}{T}\right)
+\end{equation}
+where $T$ is total steps, $t$ is current steps, $R_{total}$ is total prune ratio, and $R_{current}$ is cumulative prune ratio. In addition, $\alpha$ is hyper-parameter to control prune rate. Therefore, the pruning ratio at each step will progressively increase in a linear manner.
+
+Specifically, we adopt weight mask and head-based prune to implement the adapter weight structural pruning. The importance of head is computed by average importance of weights' elements in this head, and we also applied moving average that $H_i^t = \beta H_{i}^{t} + (1-\beta)H_i^{t-1}$ to mitigate single batch data bias.
+In addition, weight mask is computed by ranking the head importance:
+\begin{equation}
+       \text{Mask}_i = \begin{cases} 
+   0 & \text{if } H_i \in \text{TopK}(H, \lfloor \text{ratio}(t) \cdot N_{head} \rfloor) \\
+   1 & \text{otherwise}
+   \end{cases}
+\end{equation}
+
+After all, the forward process of adapter with mask can be formulated as :
+\begin{equation}
+    f = xW + xBA \odot \text{Mask}
+\end{equation}
+Where \( BA \) denotes the LoRA adapter weights within TEE, preserving base model \( W \) in GPU. $\odot$ denotes Hardamard product.
+
+\subsection{Fast Recovery of Performance Degradation}
+Empirically, although we only prune LoRA weights 
+
+
+\subsection{Deployment of LLMs}
+
+\paragraph{Encryption of Intermediate Feature Map Communication}
+%% 需要说明一下，中间层加解密不增加时间cost
+%% appendics 加一个实验
+\paragraph{Noise inject to layers in GPU}
+
+\section{Experiments}
+
+%% 有一个总体的Efficiency 和 Security的 trade-off图
+%% 逐渐增加放入TEE中层的数量，会使得攻击的效果逐渐下降，但是通信消耗会增加。因此，我们需要根据实际的情况去找一个平衡点
+
+\subsection{Efficiency}
+\subsection{Security}
+
+%% 
+\subsection{Performance}
+
+\begin{ack}
+Use unnumbered first level headings for the acknowledgments. All acknowledgments
+go at the end of the paper before the list of references. Moreover, you are required to declare
+funding (financial activities supporting the submitted work) and competing interests (related financial activities outside the submitted work).
+More information about this disclosure can be found at: \url{https://neurips.cc/Conferences/2024/PaperInformation/FundingDisclosure}.
+
+
+Do {\bf not} include this section in the anonymized submission, only in the final paper. You can use the \texttt{ack} environment provided in the style file to automatically hide this section in the anonymized submission.
+\end{ack}
+
+
+\bibliographystyle{plain}
+\bibliography{references}  % Ensure the .bib file is named correctly here
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\appendix
+
+\section{Appendix / supplemental material}
+
+Optionally include supplemental material (complete proofs, additional experiments and plots) in appendix.
+All such materials \textbf{SHOULD be included in the main submission.}
+
+
+\end{document}

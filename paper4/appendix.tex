@@ -1,0 +1,467 @@
+\section{Pseudocode algorithm of \method}
+\label{apd:algorithm}
+\begin{algorithm}[h]
+\caption{\method: RL-based Sensitivity Measurement \& Shielded Adapter Compression}
+\label{alg:method}
+\begin{algorithmic}[1]
+\State Initialize $W$ with LoRA adapters $\Delta W = B \cdot A$
+\State Set $\mathcal{S}_0 = \textbf{0}$ for $n$ layers
+\State Set $T$ as total steps, $t_{rsm}$ as episode steps, $t_{prn}$ as prune interval steps
+\State Initialize $\pi$, $\mathcal{A} = [a_0]$
+\For{$t = 1 \to T$}
+    \State Update $\Delta B_t \cdot A_{t} \leftarrow \Delta B_{t-1} \cdot A_{t-1}$
+    \If{$t$ mod $t_{rsm}$== 0}
+        \For{$i$-th layer in all layers}
+            \State Noise injection: $f_i = xW_i+x(A_i+\epsilon) \cdot B_i$
+            \State Layer Evaluation: $\Delta L_i^t$    \quad \quad \quad   // loss change after noise perturbation
+            \State Compute Rewards:  $R_i^t$            \quad \quad \quad  
+            \State Update Sensitivity Scores: $s_i = s_i + R_i \cdot \mu \cdot \text{sigmoid}(s_i) \cdot (1 - \text{sigmoid}(s_i))$
+        \EndFor
+        \State Sampling $a_t$: Select a subset of sensitive layers $l_i$ via $\pi$
+        \State Update: $\mathcal{A} \leftarrow a_t$ 
+        \State Partial selected sensitive layers $l_i$ fine tuning.
+    \EndIf
+    \If{$t$ mod $t_{prn}$ == 0}
+        \For{layer $l_i$}
+            \State Calculate prune ratio: $\text{ratio}_i(t)$
+            \State Apply in matrix $B$, $A$: $\text{mask} == \vec{0} \gets \text{Rank}(\vec{H}, \lfloor \text{ratio}_i(t) \cdot N_{head} \rfloor)$
+        \EndFor
+    \EndIf
+\EndFor
+\State Return $W$ with compressed $\Delta W$ and $\mathcal{S}(T)$
+\end{algorithmic}
+\end{algorithm}
+Here we present the pseudocode of \method, for better understanding of entire framework of Section~\ref{method} and Fig.~\ref{fig:mainmethods}.
+
+\section{Convergence Analysis}
+\label{convergence_analysis}
+In order to theoretical prove the effectiveness of \method~(especially the RSM module), we provide the convergence analysis of a randomized layer gradient descent algorithm, with reference to \cite{nesterov2012efficiency}, extending it to a setting where at iteration \(k\), the total sampling mass \(C_k = \sum_{i=1}^L p_i^k\) may vary, but is lower-bounded by \(C_k \ge C > 0\). Under block-wise Lipschitz smoothness and a fixed step size \(\eta \le \frac{1}{\max_i L_i}\), we prove almost-sure convergence to stationary points with an \(O(1/k)\) rate, and linear convergence when the objective function \(f\) satisfies the Polyak–Łojasiewicz (PL) condition.
+
+Let \(\theta \in \mathbb{R}^n\) be partitioned into \(L\) disjoint blocks (i.e., layers), such that \(\theta = (\theta^{(1)}, \dots, \theta^{(L)})\). At iteration \(k\), each block \(i\) is selected with probability \(p_i^k \ge 0\), such that \(\sum_{i=1}^L p_i^k = C_k\). Let \(S_k\) denote the random set of selected indices. For each \(i \in S_k\), the update rule is given by:
+
+\[
+\theta_{k+1}^{(i)} = \theta_k^{(i)} - \eta \nabla_i f(\theta_k),
+\]
+while the other blocks remain unchanged.
+
+\textbf{Assumption 1:} \textit{Block-wise smoothness.} There exist constants \(L_i > 0\) such that
+\[
+\|\nabla_i f(\theta + U_i h) - \nabla_i f(\theta)\| \le L_i \|h\| \quad \text{for all} \quad \theta, h.
+\]
+
+\textbf{Assumption 2:} \textit{Step size.} A fixed step size \(\eta\) satisfies \(0 < \eta \le \frac{1}{\max_i L_i}\).
+
+\textbf{Assumption 3:} \textit{Uniform mass bound.} There exists a constant \(C > 0\) such that \(C_k \ge C\) for all \(k\).
+
+\textbf{Assumption 4:} \textit{Polyak–Łojasiewicz condition.} The objective function \(f\) satisfies the Polyak–Łojasiewicz condition:
+\[
+\frac{1}{2} \|\nabla f(\theta)\|^2 \ge \mu (f(\theta) - f^*),
+\]
+where \(f^*\) is the minimum of \(f\).
+
+\paragraph{Gradient Update and Function Value Bound}
+
+The update of block \(i\) by \(\Delta^{(i)} = -\eta \nabla_i f(\theta)\) results in the following bound for the objective function value:
+\[
+f(\theta + U_i \Delta^{(i)}) \le f(\theta) - \eta \|\nabla_i f(\theta)\|^2 + \frac{1}{2} L_i \eta^2 \|\nabla_i f(\theta)\|^2 \le f(\theta) - \frac{\eta}{2} \|\nabla_i f(\theta)\|^2.
+\]
+
+\paragraph{Expected Function Value Change}
+
+Conditioned on \(\theta_k\), the expectation of the function value at the next step is:
+
+\[
+\begin{aligned}
+\E[f(\theta_{k+1}) \mid \theta_k] 
+&= (1 - C_k) f(\theta_k) + \sum_{i=1}^L p_i^k f(\theta_k + U_i \Delta^{(i)}) \\
+&\le f(\theta_k) - \frac{\eta}{2} \sum_{i=1}^L p_i^k \|\nabla_i f(\theta_k)\|^2 \\
+&\le f(\theta_k) - \frac{\eta C}{2} \|\nabla f(\theta_k)\|^2.
+\end{aligned}
+\]
+
+Rearranging and taking the full expectation:
+
+\[
+\frac{\eta C}{2} \mathbb{E}[\|\nabla f(\theta_k)\|^2] \le \mathbb{E}[f(\theta_k)] - \mathbb{E}[f(\theta_{k+1})].
+\]
+
+\paragraph{Summation Over Iterations}
+
+Summing from \(k = 0\) to \(N - 1\) gives:
+
+\[
+\frac{\eta C}{2} \sum_{k=0}^{N-1} \mathbb{E}[\|\nabla f(\theta_k)\|^2] \le f(\theta_0) - f(\theta_N) \le f(\theta_0) - f^*,
+\]
+so:
+
+\[
+\sum_{k=0}^\infty \mathbb{E}[\|\nabla f(\theta_k)\|^2] < \infty,
+\]
+
+which implies that \(\mathbb{E}[\|\nabla f(\theta_k)\|^2] \to 0\) as \(k \to \infty\). A standard supermartingale argument then implies that \(\|\nabla f(\theta_k)\| \to 0\) almost surely.
+
+\paragraph{Convergence Rate}
+
+Define:
+\[
+\delta_N = \min_{0 \le k < N} \mathbb{E}[\|\nabla f(\theta_k)\|^2].
+\]
+
+From the finite sum above, we have:
+
+\[
+N \delta_N \le \sum_{k=0}^{N-1} \mathbb{E}[\|\nabla f(\theta_k)\|^2] \le \frac{2(f(\theta_0) - f^*)}{\eta C},
+\]
+
+which implies that \(\delta_N = O(1/N)\).
+
+\paragraph{Linear Convergence Under the Polyak–Łojasiewicz Condition}
+Under the Polyak–Łojasiewicz condition, we have:
+\[
+\begin{aligned}
+\mathbb{E}[f(\theta_{k+1}) - f^*] 
+&\le \mathbb{E}[f(\theta_k) - f^*] - \frac{\eta C}{2} \mathbb{E}[\|\nabla f(\theta_k)\|^2] \\
+&\le (1 - \mu \eta C) \mathbb{E}[f(\theta_k) - f^*],
+\end{aligned}
+\]
+
+which implies global linear convergence to the minimum \(f^*\).
+
+In conclusion, the randomized layer selection method for gradient descent converges almost surely to stationary points with an \(O(1/k)\) rate, and linearly under the Polyak–Łojasiewicz condition.
+
+\section{Experiment Configuration}
+In this part, we provide the hyperparameter used in our experiments, including Reinforcement Learing in RSM, and fine tuning. We provide the model stealing attack pipeline and setup. All artifacts will be released through a public GitHub repository upon paper acceptance, ensuring full transparency and replicability of our research.
+
+\label{implementation_parameters}
+\subsection{Parameter Efficient Fine Tuning}
+During adapter fine-tuning for general tasks, we primarily apply LoRA adapters to the multi-head attention and feedforward layers, specifically to the query, key, value, and dense components. The exact placement of LoRA modules depends on the model's performance on task-specific datasets. Our goal is to minimize the number of trainable parameters while maintaining competitive accuracy. For instance, in relatively simple tasks such as CIFAR-10, LoRA is only applied to the query and value projections. In contrast, for more challenging NLP tasks, we insert LoRA adapters into the query, key, value, and dense components of each layer. The rank hyperparameter of LoRA is chosen from~{16, 32, 64}, depending on the size of the model and the dataset.
+
+For dynamic pruning, we set the total pruning ratio with 20\% and 50\% to balance performance and efficiency. The pruning frequency is set to 20 steps, and the warm-up ratio is set to 0.1. 
+
+We use a micro-batch size is 8,32 and gradient-accumulation-steps as 8,1 for LLaMA and ViT, respectively. The training epochs of nlp tasks are setting in range of [2,5]. For vision tasks, the epoch is setting from 6 to 20 depends on the task complexity. We employ the AdamW as optimizer, experimenting with a range of learning rates:~[2e-5,4e-5,2e-4,3e-4].
+
+\subsection{Reinforcement Learning in RSM}
+Several hyperparameters are involved in this phase. The first is gaussian noise, which is set within the range of 0.01 to 0.1 for vision models. For LLaMA and OPT models, however, a smaller noise value is required, as a larger gaussian noise may lead to loss vanishing or explosion due to the depth of layers. The sampling group size is fixed at 3. The reinforcement learning (RL) steps are scheduled every 20 fine-tuning steps, meaning that the RL procedure is executed once after every 20 steps of standard fine-tuning. The parameter $N_t$ is set to 40\% of the total number of layers. The learning rate for the reinforcement learning process is selected in the range of 3 to 8, depending on the convergence behavior of the Sensitivity score distributions.
+
+\subsection{Model Stealing Attack}
+Model Stealing Attack aims to create a "knockoff" or surrogate model that replicates the functionality of a victim model by adversaries, using only black-box access to query the victim model. The attack process typically involves initializing a surrogate model using a publicly available pre-trained model, sampling images/text from an out-of-distribution dataset to query the victim model and collect predictions, and then retraining the surrogate model on these collected prediction pairs to mimic the victim models' behavior. The effectiveness of model stealing is evaluated by measuring the surrogate models' accuracy on the victim model's private test dataset, indicating how well the surrogate model performs after being trained on the adversary's constructed dataset.
+
+To perform fair comparison, we employ standard query-based stealing techniques where the attacker trains a model from a set of collected data labeled by the partially-shielded victim model. Query-based MS attack has been widely adopted in literature\cite{zhang2024no,AnonymousCoder2025Phantom,orekondy2019knockoff}. For surrogate model initialization, we assume that adversaries have knowledge of the LM architectures, since many public LMs are open-sourced. Therefore, adversaries can compare differences between their local models and publicly available models to identify the trained parameters.
+
+\paragraph{Model Stealing Attack Setup.}
+Model stealing attacks aim to extract a surrogate model that replicates the functionality of the victim model. To simulate this, we adopt the same architecture as the victim model and fine-tune it using a limited query-based training dataset, which consists of approximately 1\% of the full dataset. This setting has been shown to be realistic and practical in real-world scenarios~\cite{zhang2024no}. Moreover, \method follows the same fine-tuning configurations as baselines for a fair comparison. During this process, we shield approximately 40\% of the total adapters based on sensitivity scores, and reinitialize these adapters with random weights before retraining. The learning rate and number of training epochs are set to be consistent with those used in the initial fine-tuning phase.
+
+\section{Supplementary Experimental Results}
+\subsection{Ablation Study}
+\label{ablation_study}
+%% 随机mask一些层，来比较效果
+%% ablation study 主要是 噪声的影响/prune的影响/prune的影响
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{\textbf{NLP Model Performance Across Tasks (Accuracy \%)}} 
+\label{tab:overall_nlp_performance}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{@{}ll*{6}{S[table-format=2.2]}S[table-format=2.2]@{}}
+\toprule
+\textbf{Model} & \textbf{Variant} & {ARC-C} & {ARC-E} & {HellaSwag} & {OBQA} & {PIQA} & {WinoGrande} & {Average} \\ 
+\midrule
+\multirow{7}{*}{OPT-2.7B}
+    & Shield-LoRA/Phantom     & 37.99 & 51.94 & 51.95 & 32.80 & 72.03 & 61.16 & 51.65 \\
+    & TEESlice         & 36.12 & 49.57 & 50.31 & 30.85 & 71.49 & 60.06 & 49.90 \\
+    \cmidrule(l){2-9}
+    & Shield-LoRA+$\text{RL}_{sens}$   & 37.95 & 52.41 & 51.75 & 33.92 & 71.65 & 59.70 & 51.56 \\
+    & Shield-LoRA+SAC(30\%)    & 34.15 & 48.19 & 48.50 & 31.72 & 67.90 & 57.95 & 48.07 \\
+    \cmidrule(l){2-9}
+    & \textbf{$\method$}   & \cellcolor{blue!10}38.07 & \cellcolor{blue!10}52.27 & \cellcolor{blue!10}51.62 & \cellcolor{blue!10}33.80 & \cellcolor{blue!10}71.82 & \cellcolor{blue!10}59.82 & \cellcolor{blue!10}52.40 \\
+\midrule
+\midrule
+\multirow{7}{*}{Llama-7B}
+    & Shield-LoRA/Phantom    & 41.43 & 65.06 & 72.39 & 45.67 & 77.92 & 68.61 & 61.85 \\
+    & TEESlice         & 39.96 & 63.98 & 71.82 & 43.18 & 75.27 & 66.28 & 60.08 \\
+    \cmidrule(l){2-9}
+    & Shield-LoRA+$\text{RL}_{sens}$ & 41.32 & 65.18 & 72.25 & 45.79 & 78.05 & 68.48 & 61.85 \\
+    & Shield-LoRA+SAC(30\%)  & 39.55 & 62.95 & 69.46 & 42.56 & 72.80 & 65.72 & 58.84 \\
+    \cmidrule(l){2-9}
+    & \textbf{$\method$}   & \cellcolor{blue!10}41.89 & \cellcolor{blue!10}65.40 & \cellcolor{blue!10}73.04 & \cellcolor{blue!10}45.40 & \cellcolor{blue!10}77.85 & \cellcolor{blue!10}68.75 & \cellcolor{blue!10}62.06 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{\textbf{Vision Model Performance Across Tasks (Accuracy \%)}} 
+\label{tab:overall_vision_performance}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{@{}ll*{6}{S[table-format=2.2]}S[table-format=2.2]@{}}
+\toprule
+\textbf{Model} & \textbf{Variant} & {CIFAR-10} & {CIFAR-100} & {UTKFace} & {MNIST} & {GTSRB} & {Sun397} & {Average} \\ 
+\midrule
+\multirow{7}{*}{ViT-Base} 
+    & Shield-LoRA/Phantom    & 97.47 & 85.96 & 75.03 & 98.90 & 93.35 & 53.37 & 84.01 \\
+    & TEESlice         & 95.73 & 82.21 & 73.87 & 96.28 & 90.36 & 54.28 & 82.12 \\
+    \cmidrule(l){2-9}
+    & Shield-LoRA+$\text{RL}_{sens}$   & 97.35 & 85.80 & 74.92 & 98.72 & 93.21 & 53.20 & 83.87 \\
+    & Shield-LoRA+SAC(30\%)    & 96.12 & 84.77 & 74.61 & 97.41 & 92.89 & 52.48 & 83.05 \\
+    % & Shield-LoRA+RL/SAC(50\%)    & 94.62 & 83.21 & 72.63 & 96.24 & 90.44 & 51.86 & 82.83 \\
+    \cmidrule(l){2-9}
+    & \textbf{$\method$}   & \cellcolor{blue!10}97.97 & \cellcolor{blue!10}86.07 & \cellcolor{blue!10}75.01 & \cellcolor{blue!10}98.25 & \cellcolor{blue!10}93.20 & \cellcolor{blue!10}53.76 & \cellcolor{blue!10}84.04 \\
+\midrule
+\midrule
+\multirow{7}{*}{ViT-Large}     
+    & Shield-LoRA/Phantom     & 98.58 & 91.97 & 88.38 & 98.46 & 94.79 & 63.81 & 89.33 \\
+    & TEESlice         & 95.76 & 89.37 & 85.46 & 95.58 & 91.84 & 62.05 & 86.68 \\
+    \cmidrule(l){2-9}
+    & Shield-LoRA+$\text{RL}_{sens}$   & 98.41 & 91.78 & 88.25 & 98.19 & 94.62 & 63.55 & 89.13 \\
+    & Shield-LoRA+SAC(30\%)    & 97.11 & 90.62 & 86.53 & 97.12 & 92.95 & 62.54 & 87.81 \\
+    % & Shield-LoRA+RL/SAC(50\%)    & 95.94 & 89.09 & 85.76 & 96.51 & 91.88 & 61.89 & 85.18 \\
+    \cmidrule(l){2-9}
+    & \textbf{$\method$}   & \cellcolor{blue!10}99.01 & \cellcolor{blue!10}91.05 & \cellcolor{blue!10}88.25 & \cellcolor{blue!10}98.78 & \cellcolor{blue!10}95.35 & \cellcolor{blue!10}63.97 & \cellcolor{blue!10}89.40 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+
+
+In this section, we compare the performance of \method, Phantom, TEESlice, and Shield-LoRA methods. The results are presented in Table~\ref{tab:overall_nlp_performance} and Table~\ref{tab:overall_vision_performance}. Phantom employs a post-selection strategy; thus, its model performance are identical to the Shield-LoRA method, which uses standard fine-tuned LoRA-LMs without additional modifications. TEESlice exhibits slightly inferior performance compared to other methods due to the removal of several adapters aimed at minimizing the number of adapters shielded within TEEs. Although TEESlice can be theoretically applied to LM scenarios, its practicality is limited, as the adapter removal is passive and only a small number of layers can be removed while satisfying accuracy loss constraints. 
+Ablation studies have demonstrate that each module has no obvious negative impact on overall model performance, except for the pruning ratio. 
+Besides, due to the size of Table, we shows the standard error of NLP models in Table.\ref{tab:std_error}.
+
+\begin{table}[htbp]
+\centering
+\caption{Model Performance Across Tasks (Accuracy \%) with Standard Error of the Mean}
+\label{tab:std_error}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{
+    @{} ll
+    *{8}{S[table-format=2.2(2)]}  % 前 6 列：两位整数，两位小数，加上 4 位不确定度
+    S[table-format=2.2(2)]        % 最后一列：两位整数，两位小数，加上 2 位不确定度
+  @{}}
+\toprule
+Model & & {ARC-C} & {ARC-E} & {HellaSwag} & {OBQA} & {PIQA} & {WinoGrande} & {Average} \\
+\midrule
+OPT-2.7B & \textbf{$\method$}
+  & 38.07(1.35) & 52.27(1.02) & 51.62(0.48)
+  & 33.80(2.13) & 71.82(1.01) & 59.82(1.37)
+  & 52.40(1.22) \\
+\midrule
+Llama-7B & \textbf{$\method$}
+  & 41.89(1.41) & 65.40(1.01) & 73.04(0.45)
+  & 45.40(2.00) & 77.85(0.94) & 68.75(1.29)
+  & 62.07(1.18) \\
+\midrule
+\midrule
+Model &  & {CIFAR-10} & {CIFAR-100} & {UTKFace} & {MNIST} & {GTSRB} & {Sun397} & {Average} \\
+\midrule
+ViT-Base  &\method   & 97.97(0.20) & 86.07(0.55) & 75.01(1.03) & 98.25(0.52) & 93.20(0.45) & 53.76(1.21) & 84.04(1.01) \\
+\midrule
+ViT-Large &\method   & 99.01(0.20) & 91.05(0.56) & 88.25(1.02) & 98.78(0.41) & 95.35(0.34) & 63.97(1.36) & 89.40(1.02) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\subsection{Utility Analysis}
+\label{utility_analysis}
+\begin{table}[ht]
+\centering
+\caption{Memory Consumption Comparison Across Models and Methods. \textbf{Bold} denotes the minimal memory consumption}
+\label{tab:memory_comparison}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|l|cccc}
+\toprule
+\textbf{Models} & \textbf{Methods} & \makecell{\#Public Params} & \makecell{\#Trainable Params} &  \makecell{\#Params in TEE} & \makecell{TEE Memory} \\
+\midrule
+\multirow{4}{*}{\makecell{LLaMA 7B\\~(r=32) \\ (ratio=30\%)}} 
+& Shield-LoRA           & 6.79B          & 56.10M         & 56.10M          & 224.4 MB \\
+& Phantom           & 6.79B          & 72.93M         & 16.83M          & 67.32 MB \\
+& TEESlice          & 6.79B          & 44.88M         & 44.88M          & 179.52 MB \\
+\cmidrule(l){3-6}
+& \textbf{\method} & 6.79B & 56.10M & \textbf{13.74M} & \textbf{54.96 MB~(4.08$\times$)} \\
+\midrule
+\midrule
+\multirow{4}{*}{\makecell{OPT 2.7B \\ (r=32) \\ (ratio=30\%)}} 
+& Shield-LoRA           & 2.70B          & 47.19M          & 47.19M           & 188.76 MB \\
+& Phantom           & 2.70B          & 58.99M          & 11.80M           & 47.20 MB \\
+& TEESlice          & 2.70B          & 37.75M          & 37.75M           & 151.00 MB \\
+\cmidrule(l){3-6}
+& \textbf{\method}  & 2.70B &  47.19M  & \textbf{11.56M}  & \textbf{46.24 MB~(4.08$\times$)} \\
+\midrule
+\midrule
+\multirow{4}{*}{\makecell{ViT-Base \\ (r=16) \\ (ratio=30\%)}} 
+& Shield-LoRA           & 86.71M          & 0.88M           & 0.88M           & 3.52 MB \\
+& Phantom           & 86.71M          & 1.32M           & 0.44M           & 1.76 MB \\
+& TEESlice           & 86.71M         & 0.62M           & 0.62M           & 2.48 MB \\
+\cmidrule(l){3-6}
+& \textbf{\method}  & 86.71M & 0.88M  & \textbf{0.22M}  & \textbf{0.88 MB~(4.00$\times$)} \\
+\midrule
+\midrule
+\multirow{4}{*}{\makecell{ViT-Large \\ (r=16) \\ (ratio=30\%)}} 
+& Shield-LoRA           & 305.74M          & 2.36M           & 2.36M           & 9.44 MB \\
+& Phantom           & 305.74M          & 3.54M           & 1.18M           & 4.72 MB \\
+& TEESlice          & 305.74M          & 1.65M           & 1.65M           & 6.60 MB \\
+\cmidrule(l){3-6}
+& \textbf{\method}  & 305.74M & 2.36M  & \textbf{0.58M}  & \textbf{2.32 MB~(4.06$\times$)} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+In this section, we present the memory consumption of \method compared with baseline methods. Obviously, \method achieves minimal memory occupation in TEEs due to adapter compression and only partial layers shielded in TEEs. \method achieves averagely 4.00$\times$ less memory consumption than baselines. 
+
+
+\begin{table}[htbp]
+\centering
+\small % 缩小整体字号
+\caption{Inference and Computation Overhead Evaluation of ViT-Large and OPT-2.7B.\colorbox{blue!10}{\makebox[2ex][c]{\rule{0pt}{1ex}}} indicate lowest inference overhead}
+\label{tab:Large_opt_efficiency}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccccc|cccccc@{}}
+\toprule
+& \multicolumn{5}{c|}{Inference Costs~(ViT-Large)} & & \multicolumn{5}{c}{Inference Costs~(OPT-2.7B)} \\
+\cmidrule(lr){2-6} \cmidrule(lr){8-12}
+\textbf{Time~(ms)} & Shield-LoRA & Phantom & TEESlice & \method & No-Shield & \textbf{Time~(s)} & Shield-LoRA & Phantom & TEESlice & \method & No-Shield \\
+\midrule
+GPU   & 24.33  & 23.56 & 28.90 & 23.24    & 32.21  & GPU   & 0.15  & 0.16   & 0.18   & 0.16   & 0.17  \\
+TEE   & 58.51  & 25.67 & 50.55 & \cellcolor{blue!10}23.27    & {--}   & TEE  & 1.86   & 0.08   & 1.35  & \cellcolor{blue!10}0.08  & {--} \\
+Trans & 685.51 & 629.24 & 537.40 & \cellcolor{blue!10}333.60  & {--}  & Trans & 4.03  & 3.98  & 3.15 & \cellcolor{blue!10}1.25 & {--}\\
+\midrule 
+Total & 768.35~(1.00$\times$) & 678.47 & 616.85 & \cellcolor{blue!10}377.11~(2.04$\times$) & 32.21 & Total & 6.04~(1.00$\times$) & 4.22 & 4.68 & \cellcolor{blue!10}1.49~(4.05$\times$) & 0.17 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+We also evaluate the inference and computation overhead for ViT-Large and OPT-2.7B, in order to demonstrate \method can be applied in different type of models. As shown in Table.\ref{tab:Large_opt_efficiency}, \method achieves the best efficiency both in ViT-Large and OPT-2.7B, accelerating 2.04$\times$ and 4.05$\times$, respectively.  Additionally, we provide the transfer intermediate features maps of NLP models~(OPT-2.7B, LLaMA-7B), their feature dimension are  4096. The results are presented in Table.\ref{tab:transmitted_data}.
+\begin{table}
+\centering
+\small
+\caption{Comparison of transfer flops/size between original and compressed hidden dimensions~(30\%) across different batch sizes. The original hidden size for LLMs are all 4096.}
+\label{tab:transmitted_data}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{ccccc}
+\toprule
+Batch Size & Original Size (MB) & Compressed Size (MB) & Original Flops & Compressed Flops\\
+\midrule
+16 & 0.25 & 0.17 & 65,536 & 45,875 \\
+32 & 0.5 & 0.35 & 131,072 & 91,750 \\
+64 & 1 & 0.7 & 262,144 & 183,500  \\
+128 & 2 & 1.4 & 524,288 & 367,001  \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:compression_comparison}
+\end{table}
+
+\subsection{Gaussian Noise Analysis}
+\label{nosie_analysis}
+%% 训练参数的选择 比如 noise的细粒度化，是怎么设计的. 做一点分析，不同层的权重的大小不一致 ，画一些对比图
+%% loss change 的图表 所有, 不同的数据集，不同的模型
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Styles/images/weight_histogram_comparison.pdf}
+    \caption{Weight Value Distribution Comparison between Base Model and LoRA Adapter}
+    \label{fig:weight_distribution}
+\end{figure}
+
+Fig.~\ref{fig:weight_distribution} shows the weight magnitude distribution of base model ViT-Base and LoRA Adapter, which is \textbf{$W$} and \textbf{$B \cdot A$}. Obviously, the weight of \textbf{$W$} has larger value than fine-tuned adapters. Therefore, the noise setting based on adapters' weights has a negligible impact on base model weights. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Styles/images/Vit_base_12_privacy_distribution_vertical.pdf}
+    \caption{Sensitivity scores distribution of all layers for ViT-Base with six vision task benchmarks}
+    \label{fig:vit_base_12_privacy_scores}
+\end{figure}
+
+In Fig.\ref{fig:vit_base_12_privacy_scores}, we present all sensitivity scores of ViT-Base for all layers under various vision datasets. The results present that different layer has domain-specific sensitivity scores, which demonstrates shielding fixed number of layers are impractical for real on device LM protection.
+
+\subsection{Evaluation of Surrogate Model}
+\label{attack_analysis}
+%% 加入perplity
+%% 攻击的细节，不同的攻击样本量产生的效果, Perplexity
+%% 不同数量的层放到tee里会产生不同的安全效果
+As shown in Table.\ref{tab:appendix_security_large}, we present the MS attack performance of ViT-Large and OPT-2.7B, in order to demonstrate \method can also apply to different LM architectures. The results demonstrate \method has comparable defensive effectiveness against black-box level protections. But for ViT-Large, the surrogate model has better attack performance than ViT-Base, cause the base model~(open-sourced weights) already has good generalization ability in classify CIFAR and UTKFace datasets. 
+
+\begin{table}[htbp]
+\centering
+\small % 缩小整体字号
+\caption{Performance of MS attack accuracy. A lower attack accuracy~(surrogate model) represents a higher defense effectiveness. \colorbox{blue!10}{\makebox[2ex][c]{\rule{0pt}{1ex}}} indicate the best defensive capability. 
+% The lower the defensive accuracy for MS attack, the better the performance in defending against MS attack.
+}
+\label{tab:appendix_security_large}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccccc|cccccc@{}}
+\toprule
+& \multicolumn{5}{c|}{Model Stealing Attack (ViT-Large)} & & \multicolumn{5}{c}{Model Stealing Attack (OPT-2.7B)} \\
+\cmidrule(lr){2-6} \cmidrule(lr){8-12}
+\textbf{Dataset} & No-Shield & Phantom & TEESlice & \method & Shield-LoRA & \textbf{Dataset} & No-Shield & Phantom & TEESlice & \method & Shield-LoRA \\
+\midrule
+C10 & 99.01 & 96.48 & 94.12 & \cellcolor{blue!10}93.58 & 93.47 & ARC-E & 52.27 & 45.38 & 38.01 & \cellcolor{blue!10}37.12 & 36.39 \\
+C100 & 91.05 & 48.63 & 27.25 & \cellcolor{blue!10}26.86 & 27.01 & PIQA & 71.82 & 61.83 & \cellcolor{blue!10}50.27 & 50.39 & 51.47 \\
+UTKFace & 88.25 & 67.37 & \cellcolor{blue!10}54.79 & 55.58 & 49.67 & WinoGrande & 59.82 & 50.34 & \cellcolor{blue!10}45.23 & 45.74 & 45.81 \\
+\midrule
+Average & 92.77 & 70.83 & 58.72 & \cellcolor{blue!10}58.67 & 56.72 & Average & 61.30 & 52.52 & 44.50 & \cellcolor{blue!10}44.42 & 44.56 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Additionally, we conduct experiments of selecting random number of layers on standard fine tuned ViT-Large model. The results are shown in Fig.\ref{fig:random_layer_selection}. Obviously, standard fine tuned ViT-Large requires more shielded layers to protect its privacy. Averagely, the least number of shielded layers should greater than 15 while \method could achieve black-box level protection with approximately 1/3 shielded layers.
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{Styles/images/accuracy_vs_layer.pdf} % 图片文件名
+    \caption{Accuracy comparison of Random Shielded Layers Selection and \method}
+    \label{fig:random_layer_selection}
+\end{figure*}
+
+% In order to better demonstrate the defensive effectiveness of \method, we utilize confidence gap to evaluate surrogate model, that even though the adversary can extract correct label, it is hard to infer if the sample belong to training data/private data. Confidence Gap~\cite{yuan2022membership_confidence_gap} calculates the difference in average confidence between victim LM's training dataset and test dataset, which relates to the extent that surrogate remembers training data. The results are shown in Table.\ref{tab:condifdence_gap}. We set random selection strategy shields same number of layers as \method for fair comparison.
+
+% \begin{table}[htbp]
+% \centering
+% \small
+% \caption{Confidence Gap regarding representative baselines}
+% \label{tab:condifdence_gap}
+% \begin{tabular}{@{}ccccccccc@{}}
+% \toprule
+% Model & Dataset & No-Shield & Random & Phantom & TEESlice & \method & Shield-LoRA \\
+% \midrule
+% \multirow{3}{*}{ViT-Large}& C10  & 100\%  & 98\%   & 48\%  & 0\%  & 0\%   & 0\%    \\
+% & C100  & 100\% & 76\%   & 32\%  & 0\%   & 0\% & 0\%   \\
+% & UTK   & 100\%  & 74\%  & 35\%  & 0\%   & 0\%    & 0\%   \\
+% \midrule
+% \multirow{3}{*}{ViT-Base}& C10  & 100\%  & 96\%   & 46\%  & 0\%   & 0\%   & 0\%    \\
+% & C100  & 100\% & 75\%   & 35\%  & 0\%   & 0\% & 0\%   \\
+% & UTK   & 100\%  & 74\%  & 34\%  & 0\%   & 0\%    & 0\%   \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+\section{Implementation of Baselines}
+\label{implementation_of_baselines}
+Given the lack of previous works' implementation and experiments on TEE shielded fine tuned LMs, especially with low-rank adaptation, there is no ready-to-use tools for baseline evaluation. To provide a comprehensive demonstration of the effectiveness of \method, we adapt most recent TEE-shielded Deep Neural Networks methods for evaluation. 
+
+\subsection{Phantom Description}
+Phantom is a recent method proposed at USENIX Security 2025, which leverages reinforcement learning-based architecture search combined with top-K layer-wise sensitivity analysis to identify the most sensitive layers for inserting redundant modules. These redundant layers are designed to degrade model performance for unauthorized users, while maintaining full functionality for authorized users who possess valid decryption keys. During inference, authorized users must verify their keys within a Trusted Execution Environment (TEE) to obtain correct predictions; otherwise, the model's forward pass becomes corrupted, leading to erroneous outputs.
+
+However, Phantom is tailored specifically for models trained from scratch and cannot be directly applied to large models (LMs) fine-tuned with Low-Rank Adaptation (LoRA). To enable a fair comparison, we assume that adversaries lack knowledge of the actual forward computation path of a LoRA-based LLM. Accordingly, we propose to insert a subset of redundant LoRA adapters into the model. Our objective is to maximize the loss of LoRA-fine-tuned models in the presence of these redundant adapters. Following the experimental setup in Phantom, we insert redundant adapters into the three most sensitive layers, as determined by layer-wise sensitivity analysis. The corresponding results are presented in Appendix~\ref{ablation_study}.
+
+\subsection{TEESlice Description}
+Although TEESlice are specifically designed for models, such as ResNet-18\cite{he2016deep_resnet}, VGG\cite{simonyan2014vgg}, it has similar model partition mechanism as adapter-based fine tuning. TEESlice consists of two stages: model slice extraction and hybrid model deployment. The slice extraction stage automatically finds the "sweet spot" by minimizing the utility cost while maintaining accuracy and security. TEESlice trains $M_{dense}$ from the public backbone and then prunes $M_{dense}$ to get $M_{sparse}$. In the hybrid model deployment stage, $M_{sparse}$ is deployed across the TEE and GPU. Model slices are deployed inside TEEs, whereas the other part of the backbone are offloaded on GPUs.
+
+In our experiments, we regard lora adapter as model slices proposed in TEESlice. The objective of this method is dropping as more as adapters with minimal accuracy loss following the iterative slice prune mechanism in TEESlice. However, the pre-defined threshold $\delta$ defined as 1\% governs the tolerable accuracy loss during pruning is too small for LMs to drop adapters. Then we set threshold $\delta$ as 5\% as tolerable accuracy loss. The main difference between TEESlice and \method~is that our method actively selects model layers with higher sensitivity, intentionally gathering more private information into the layers should be deployed within the TEEs. In contrast, TEESlice adopts a passive selection strategy, merely determining whether removing a certain layer would negatively impact the final performance. The experimental results and analysis are presented Appendix~\ref{ablation_study}.
+
+\section{Limitations}
+\label{limitation}
+Although the architecture presented in this paper achieves competitive performance in terms of inference efficiency, defensive effectiveness, and accuracy, it has the following limitations. 
+First, even though we compare \method with most state-of-the-art baselines~(TEESlice\cite{zhang2024no}, Phantom\cite{AnonymousCoder2025Phantom}), published in top-tier security conferences. We do not include methods from leading AI conferences. There is an ICML 2024 paper, namely GroupCover\cite{zhang2024groupcover}, but it targets convolutional layers and cannot be applied to the Transformer models used in our setting.
+Second, the baselines focus on smaller models such as ResNet18 \cite{he2016deep_resnet} and VGG16 \cite{simonyan2014vgg}, whereas we evaluate on large-scale models. Although their techniques could in principle be adapted to larger architectures, they may not achieve the same level of effectiveness in that context.
+
+
+
+
+

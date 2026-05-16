@@ -1,0 +1,89 @@
+% \begin{table*}[!t]
+%     \centering
+%     \caption{Comparison between prior settings and our MHLC setting (all citations use placeholder form [...]). ``Sem.'': semantic anchors; ``U/S/R'': understanding / synthesising / reasoning coverage; ``Output'': target granularity; ``HLC-Style'': direct evaluation of high-level cognition from fragmented non-semantic evidence.}
+%     \label{tab:related_comparison}
+%     \renewcommand{\arraystretch}{1.1}
+%     \setlength{\tabcolsep}{4pt}
+%     \begin{tabular}{l l l c c c c c c}
+%         \toprule
+%         \textbf{Major Class} & \textbf{Sub-Class} & \textbf{Target} & \textbf{Sem.} & \textbf{U} & \textbf{S} & \textbf{R} & \textbf{Output} & \textbf{HLC-Style} \\
+%         \midrule
+%         \multirow{6}{*}{Multimodal tasks} 
+%         & Numerical-Tabular [...] & Classification/Prediction & Y & Y & N & N & Low & N \\
+%         & Numerical-Arithmetic [...] & Exact computation & N & N & N & Y & Low & N \\
+%         & Numerical-TimeSeries [...] & Forecasting & N & N & Y & N & Low & N \\
+%         & Visual-Detection [...] & Entity localization & Y & Y & N & N & Low & N \\
+%         & Visual-VQA [...] & Question answering & Y & N & N & Y & Mid & N \\
+%         & Visual-Relation [...] & Relation/caption generation & Y & N & Y & N & Mid & N \\
+%         \midrule
+%         Textual HLC & Text-based HLC [...] & Tactical style inference & Y & Y & Y & Y & High & P \\
+%         \midrule
+%         \textbf{This work} & \textbf{MHLC (Num+Vis) [...]} & \textbf{Tactical style inference} & \textbf{N} & \textbf{Y} & \textbf{Y} & \textbf{Y} & \textbf{High} & \textbf{Y} \\
+%         \bottomrule
+%     \end{tabular}
+% \end{table*}
+
+% \section{Related Work}
+% \label{sec:related}
+
+% \subsection{High-Level Cognition of LLMs}
+% As a more advanced cognitive ability, HLC was formalized in prior work [...] as a chained integration of three stages, which we adopt consistently throughout this paper: \textbf{Understanding (U)}---interpreting fragmented low-level evidence into latent local states; \textbf{Synthesising (S)}---integrating local states across context into an implicit global situation model; and \textbf{Reasoning (R)}---mapping that global model to high-level conclusions. HLC is not a single skill: it requires models to realize the full U$\rightarrow$S$\rightarrow$R chain rather than isolated pattern matching or shallow shortcuts. This framing matters because many LM benchmarks stress one stage (e.g., local perception or short-hop inference) while leaving cross-stage integration untested.
+
+% Prior textual-modality studies [...] instantiate HLC over \emph{language-native} evidence, where lexical and discourse cues can scaffold any weak stage: schema-like names, explicit roles, and narrative structure partially substitute for raw physical grounding. Those works report a notable dual finding: state-of-the-art LLMs do not reliably solve HLC in zero-shot settings, yet fine-tuning can improve performance. The unresolved question, phrased in U/S/R terms, is whether gains reflect genuine U$\rightarrow$S$\rightarrow$R competence that transfers when such scaffolding is removed, or whether optimization mainly fits semantic shortcuts that bypass strict non-semantic understanding and synthesising.
+
+% \subsection{LMs on Multimodal Tasks: Progress and Limits}
+% Recent multimodal LM research reports strong results across numerical and visual tasks, but these formulations rarely demand the same U$\rightarrow$S$\rightarrow$R chain as MHLC. To avoid a literature ``listing'' perspective, we read prior work through \emph{which stages of U/S/R are actually exercised} when semantic scaffolding and output granularity are taken into account (cf.\ Table~\ref{tab:related_comparison}).
+
+% \textbf{Numerical modality.} Three representative lines are tabular learning [...], arithmetic reasoning [...], and time-series forecasting [...]. Tabular settings usually retain feature-level semantic anchors (column names, schema semantics, serialized descriptors), so models can lean on language priors after a shallow U-like encoding; they seldom require building a non-semantic global match model (S) or mapping it to tactical abstractions (R). Arithmetic emphasizes closed-world symbolic execution: success is largely procedural R-style manipulation with little need for latent physical understanding from raw, fragmented statistics. Time-series forecasting targets low-level value extrapolation; it may involve temporal integration, but typically not S over heterogeneous match evidence nor R to high-level style hypotheses. Collectively, these lines showcase correlation modeling, symbolic computation, or low-level prediction---not the joint U+S+R demanded when inputs are raw non-semantic trajectories and outputs are high-level.
+
+% \textbf{Visual modality.} Representative lines include object detection [...], visual question answering [...], and relation-centric visual understanding [...]. Detection and relation tasks chiefly map localized visual evidence to semantic categories---a U-heavy, entity-centric regime with limited obligation to synthesize a global latent dynamics model (S) or reason to abstract tactical judgments (R). VQA injects textual questions and often retrieved semantics, which shortcuts early U and channels the task toward answer selection (R under strong priors) rather than autonomous construction of a global framework from weak spatial signals alone. Even challenging visual reasoning benchmarks rarely evaluate reconstruction of latent physical-world logic from distributed, non-semantic heatmaps followed by high-level label inference. Thus dominant metrics align visual inputs with semantics or local relations, not full U$\rightarrow$S$\rightarrow$R over non-semantic spatial observations.
+
+% From this U/S/R-centric view, existing multimodal progress is important yet orthogonal to our core question: can LMs realize \emph{complete} U$\rightarrow$S$\rightarrow$R when semantic shortcuts are minimized and the target remains high-level? \textbf{MHLC} is defined as exactly that stress test: inputs are explicitly non-semantic numerical sequences and spatial heatmaps; outputs are high-level tactical styles; and success presupposes interpreting fragmented evidence (U), integrating it into an implicit global match representation (S), and mapping that representation to abstract labels (R)---without schema semantics or natural-language questions to carry the chain. MatchIntel2 operationalizes this definition. As Table~\ref{tab:related_comparison} summarizes, MHLC is complementary to prior multimodal benchmarks and sharpens the modality-agnostic HLC question left open by textual studies.
+
+% This positioning also guides interpretation of our results. Models strong on language-anchored U or entity-localized visual U may still lack non-semantic S and tactical R; conversely, gains tied to semantic shortcuts should not imply robust MHLC. The MHLC setting therefore offers a direct lens on whether current LMs exhibit intrinsic U$\rightarrow$S$\rightarrow$R over physical evidence beyond textual support.
+
+
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Methodological Progress and Limits Towards AGI}
+In the pursuit of Artificial General Intelligence (AGI), the academic community has explored diverse methodologies, which can be broadly categorized into three classes, as summarized in Table $\ref{tab:related_comparison}$. Based on the core characteristics of AGI, we provide a critical re-examination of these prior works. The first category encompasses Contrastive Learning, Generative Alignment, Joint Embedding Models, and Cross-modal Translation. These approaches integrate multimodal information into a shared semantic space. While they mitigate the isolation of disparate data modalities via cross-modal alignment, they rely heavily on explicit semantic anchors (e.g., object schemas or textual prompts). Consequently, they struggle to transcend heterogeneous representational barriers to achieve true Modality-Agnostic capabilities. The second category comprises plug-and-play reasoning paradigms, including Chain-of-Thought, Tree-of-Thoughts, TTC, and TTS. These methods construct complex logical chains via internal deductions dictated by external rules. Although this alleviates the opacity inherent in constructing complex cognitive chains, it confines the model to a vacuum of reasoning devoid of physical constraints, thereby failing to achieve endogenously driven High-level Cognition grounded in the physical world. The third category consists of data-driven fitting methods, such as Reinforcement Learning from Human Feedback (RLHF), Direct Preference Optimization (DPO), and Instruction Tuning. These methods employ probabilistic modeling and global optimization over massive historical datasets to approximate the complex distribution of state evolutions in the physical world. Nevertheless, they are fundamentally global optimizations performed on static snapshots of the world; lacking continuous learning driven by interactive feedback, they are incapable of supporting Open-ended Evolution. The GWC framework proposed in this paper is explicitly designed to evaluate models against these three fundamental deficiencies.
+% 学术界在追求通用人工智能的过程中，探索了很多的方法，主要为三个不同的方向：多模态模型[][][]，它将各种感官输入整合到一个共享的语义空间中；推理范式[][][]，它通过离散的符号推演和显式的启发式搜索来构建复杂的逻辑链条；数据驱动拟合方法[][][]，它对海量历史数据的概率建模与全局优化来逼近真实世界状态演变的复杂分布。尽管他们取得了一些进展，但在与复杂、异构的物理世界交互时仍存在根本性的局限性。为了避免文献“罗列”，我们基于MHLC的三大核心特征，对前人工作进行了重新审视。如表\ref{tab:related_comparison}所示，多模态模型通常依赖于显式的语义锚点（如对象图式或文本提示），这将其局限于浅层表征对齐，无法跨越表征壁垒实现真正的 \textbf{Modality-Agnostic}。推理范式虽然擅长封闭世界的符号操作，但却将模型困于脱离物理世界的推理之中。由于依赖预设的启发式规则与外挂算法来强行模拟推理链，它们无法实现基于物理世界内生集成的 Compositional Generalization。此外，纯粹的数据驱动拟合通常针对静态世界快照进行优化，缺乏神经可塑性与动态交互闭环，因而无法支撑模型涌现出真正的 \textbf{Open-ended Evolution}。我们提出的MHLC框架明确地针对这三个根本缺陷对模型进行评估。
+
+\begin{table*}[!t]
+    \centering
+    \caption{Comparison of methodologies towards AGI based on the three core characteristics of Gestalt World-Level Capability (GWC). ``Mod.-Agnostic'': Modality-Agnostic processing without reliance on semantic shortcuts; ``Comp. Gen.'': Compositional Generalization through organically integrated cognitive chains rather than scripted logic; ``Open Evo.'': Open-ended Evolution avoiding static snapshot interpolation. `Y', `N', and `P' denote Yes, No, and Partial, respectively.}
+    \label{tab:related_comparison}
+    \renewcommand{\arraystretch}{1.1}
+    \setlength{\tabcolsep}{6pt}
+    \begin{tabular}{l l c c c}
+        \toprule
+        \textbf{Major Class} & \textbf{Representative Works} & \textbf{Mod.-Agnostic} & \textbf{Comp. Gen.} & \textbf{Open Evo.} \\
+        \midrule
+        \multirow{2}{*}{\textbf{Multimodal Alignment}} 
+        & Vision-Language (VQA/Caption) [...] & N & N & N \\
+        & Numerical-Tabular \& Relation [...] & N & N & N \\
+        \midrule
+        \multirow{2}{*}{\textbf{Test-Time Reasoning}} 
+        & Chain-of-Thought / ToT [...] & P & P & N \\
+        & Test-Time Scaling (TTC/TTS) [...] & P & P & P \\
+        \midrule
+        \multirow{2}{*}{\textbf{Data-Driven Fitting}} 
+        & Large-Scale Pretraining [...] & P & N & N \\
+        & Evolutionary Algorithms [...] & N & P & P \\
+        \midrule
+        \textbf{This work} & \textbf{GWC Framework} & \textbf{Y} & \textbf{Y} & \textbf{Y} \\
+        \bottomrule
+    \end{tabular}
+    \vspace{-2mm}
+\end{table*}
+
+\subsection{Theoretical Progress and Limits Towards AGI}
+% To precisely measure the cognitive gaps identified above, we must define what constitutes true intelligence. As a more advanced cognitive ability, HLC was formalized in prior cognitive science and NLP research \cite{...} as a chained integration of three stages, which we adopt consistently: \textbf{Understanding (U)}---interpreting fragmented low-level evidence into latent local states; \textbf{Synthesising (S)}---integrating local states across context into an implicit global situation model; and \textbf{Reasoning (R)}---mapping that global model to high-level conclusions. HLC is not a single skill: it requires models to realize the full U$\rightarrow$S$\rightarrow$R chain rather than relying on isolated pattern matching or shallow shortcuts.
+
+% Prior studies instantiating HLC predominantly focused on textual or language-native evidence \cite{...}. In these settings, lexical and discourse cues naturally scaffold the weak stages of the cognitive chain: schema-like names, explicit roles, and narrative structures partially substitute for raw physical grounding. Consequently, it remains unresolved whether state-of-the-art models possess genuine U$\rightarrow$S$\rightarrow$R competence that transfers when textual scaffolding is removed, or whether their performance on textual HLC merely reflects an overfitting to semantic shortcuts. 
+
+% By introducing the MHLC framework, we extend the U$\rightarrow$S$\rightarrow$R continuum into the multimodal physical world. We explicitly define MHLC as the ability to autonomously execute this strict cognitive chain over fragmented, non-semantic sensory inputs, providing the missing analytical mechanism to evaluate true AGI progression.
+
+Within the theoretical research of Artificial General Intelligence (AGI), the academic community has formalized the essence of "intelligence" from multiple distinct perspectives. The first category is Optimality-based Intelligence, exemplified by AIXI and Universal Intelligence, which defines generality through the maximization of expected returns across environments. While providing a unified metric for AGI, these theories are founded upon incomputable, idealized assumptions. They remain confined to abstract characterizations of asymptotic optimality, lack an executable Framework, treat the environment as an exogenous entity, and fail to provide Protocol modeling for authentic interactive processes. The second category comprises Cognitive \& World Models, such as World Models, Predictive Processing, and Active Inference. These emphasize prediction and decision-making via endogenous world models, advancing intelligence from passive fitting to active modeling. Nevertheless, their representations typically rely on specific modalities or environmental assumptions, complicating the construction of a cross-modal unified Framework. Predominantly validated in closed or simulated environments, they also lack a Benchmark capable of capturing open-world complexity. The third category involves Capability-oriented Theories, including ARC and meta-learning, which translate AGI into definitions of abstract reasoning and generalization. Yet, they primarily reside at the level of testing, lacking a construction Framework. Their reliance on static, scale-limited tasks makes them difficult to extend into a Benchmark and Protocol supporting continuous interaction. Consequently, while existing AGI theories have made significant strides in formalizing intelligence, they have yet to establish a unified pathway from abstract characterization to real-world systems. To address these limitations, our proposed GWC framework provides comprehensive modeling across three critical dimensions: Framework, Benchmark, and Protocol.

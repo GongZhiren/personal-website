@@ -1,0 +1,90 @@
+\begin{table*}[t]
+    \centering
+    \caption{Comparison of methodologies towards AGI based on the three core attributes of \textbf{Holistic World Intelligence (HWI)}.}
+    \vspace{-4mm}
+    \label{tab:related_comparison}
+    \renewcommand{\arraystretch}{1.0}
+    \setlength{\tabcolsep}{4pt} 
+    \small 
+    \begin{tabularx}{\textwidth}{p{2.8cm} l l X c c c} 
+        \toprule
+        \textbf{Target Attribute} & \textbf{Major Class} & \textbf{Technical Paradigms} & \textbf{Key Deficiency (vs. HWI)} & \textbf{Mod-A.} & \textbf{HLC} & \textbf{Open-E.} \\
+        \midrule
+        % 第一组：Modality-Agnostic
+        \multirow{2}{*}{\textbf{Modality-Agnostic}} & \multirow{2}{*}{Alignment} 
+        & CLIP / Flamingo & Semantically bound to explicit anchors/shortcuts. & \xmark & \xmark & \xmark \\
+        & & Knowledge Graphs & Domain-isolated; lacks unified physical grounding. & \xmark & $\triangle$ & \xmark \\
+        \midrule
+        % 第二组：HLC
+        \multirow{2}{*}{\textbf{High-Level Cognition}} & \multirow{2}{*}{Reasoning} 
+        & CoT / ToT & Exogenous logic detached from physical constraints. & $\triangle$ & $\triangle$ & \xmark \\
+        & & o1 / TTS & Search-based inference without endogenous growth. & $\triangle$ & $\triangle$ & \xmark \\
+        \midrule
+        % 第三组：Open-E
+        \multirow{2}{*}{\textbf{Open-ended Evolution}} & \multirow{2}{*}{Fitting} 
+        & Instruction Tuning & Passive interpolation of static, non-interactive data. & $\triangle$ & \xmark & \xmark \\
+        & & RLHF / DPO & Reactive optimization lacking proactive world-modeling. & $\triangle$ & $\triangle$ & $\triangle$ \\
+        \midrule
+        \textbf{All Dimensions} & \textbf{Ours} & \textbf{HWI Framework} & \textbf{Endogenous, grounded, and active intelligence.} & \textbf{\cmark} & \textbf{\cmark} & \textbf{\cmark} \\
+        \bottomrule
+    \end{tabularx}
+    \begin{flushleft}
+    \scriptsize
+    \textbf{Note}:
+    \textbf{Mod-A.}: Modality-Agnostic (transcending sensory boundaries); 
+    \textbf{HLC}: High-Level Cognition (endogenously grounded reasoning chains); 
+    \textbf{Open-E.}: Open-ended Evolution (active interaction vs. static fitting). 
+    \cmark\ indicates strong support; 
+    $\triangle$ indicates partial/limited support; 
+    \xmark\ indicates little or no support.
+    \end{flushleft}
+    \vspace{-2mm}
+\end{table*}
+
+\begin{table}[t] 
+    \centering
+    \caption{Summary of existing AGI theoretical perspectives and their gaps relative to the HWI requirements.}
+    \vspace{-4mm}
+    \label{tab:theory_summary}
+    \renewcommand{\arraystretch}{1.0} 
+    \setlength{\tabcolsep}{3pt} 
+    \footnotesize 
+    \begin{tabularx}{\columnwidth}{@{} p{1.3cm} p{2.7cm} X @{}}
+        \toprule
+        \textbf{Perspective} & \textbf{Core Examples} & \textbf{Primary Gap} \\ 
+        \midrule
+        \textbf{Optimality} & AIXI, Universal Intelligence & Idealized assumptions; incomputable. \\
+        \midrule
+        \textbf{Cognitive} & World Models, Active Inference Predictive Processing & Closed environments; modality-specific; limiting unified cross-modal evaluation. \\
+        \midrule
+        \textbf{Capability} & ARC, Meta-Learning & Static tasks; lacks a unified how-to path. \\
+        \midrule
+        \textbf{HWI (Ours)} & \textbf{HWI Framework} & \textbf{Integrated, grounded, and evaluable.} \\
+        \bottomrule
+    \end{tabularx}
+    \vspace{-2mm} 
+\end{table}
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Methodological Progress Towards AGI}
+
+Existing AGI methodologies broadly fall into three paradigms (Table~\ref{tab:related_comparison}), each exhibiting systemic deficiencies relative to HWI attributes \cite{marcus2020next}.
+First, \textbf{representation alignment} (e.g., contrastive learning, joint embeddings, and models like CLIP \cite{radford2021learning}/Flamingo \cite{alayrac2022flamingo} or Knowledge Graphs \cite{ji2021survey}) maps disparate modalities into shared spaces but remains \emph{semantically bound} to explicit anchors, failing to achieve true \emph{Modality-Agnosticism} \cite{yuksekgonul2022and}.
+Second, \textbf{exogenous reasoning} (e.g., CoT, ToT, or search-based paradigms like o1/TTS \cite{snell2024scaling}) facilitates logical transparency yet operates in a reasoning vacuum detached from physical constraints, precluding endogenously grounded \emph{High-Level Cognition} \cite{pearl2018theoretical}.
+Finally, \textbf{static optimization} via instruction tuning or preference learning (RLHF \cite{ouyang2022training}, DPO \cite{rafailov2023direct}) approximates world states through passive data-fitting \cite{bender2020climbing}. Lacking active environmental interaction, these methods cannot sustain \emph{Open-ended Evolution} \cite{lehman2011abandoning}.
+The HWI framework is therefore explicitly designed to evaluate and bridge these fundamental gaps between current paradigms and authentic world intelligence \cite{bisk2020experience}.
+
+\vspace{-2mm}
+\subsection{Theoretical Progress Towards AGI}
+
+Theoretical studies of AGI have formalized \emph{intelligence} from several distinct but incomplete perspectives (Table~\ref{tab:theory_summary}) \cite{legg2007collection}.
+First, \textbf{optimality-based theories} (e.g., AIXI \cite{hutter2005universal}, Universal Intelligence \cite{legg2007universal}) define generality through asymptotic performance across environments \cite{sutton1998reinforcement}.
+While principled, they rely on idealized and often incomputable assumptions \cite{leike2017ai}, remaining descriptive rather than executable for real-world interactive intelligence \cite{everitt2018agi}.
+Second, \textbf{cognitive and world-model theories} (e.g., World Models \cite{ha2018recurrent}, Predictive Processing \cite{friston2010free}, Active Inference \cite{zhiren2026learning}) emphasize endogenous modeling, prediction, and action \cite{matsuo2022deep}.
+Although closer to authentic intelligence, they are typically grounded in specific modalities or closed environments \cite{kaiser2019model}, limiting unified cross-modal evaluation under open-world complexity \cite{hafner2019dream}.
+Third, \textbf{capability-oriented theories} (e.g., ARC \cite{chollet2019measure}, meta-learning \cite{finn2017model}) characterize AGI through abstraction, reasoning, and rapid generalization \cite{lake2017building}.
+However, they mainly specify \emph{what} capabilities to test, rather than \emph{how} to construct a unified intelligence framework \cite{lecun2022path}, and their largely static tasks are insufficient for continuous interaction and open-ended evolution \cite{team2021open}.
+Overall, existing AGI theories clarify important aspects of intelligence, but still lack a unified path from abstract formulation to systematic real-world evaluation \cite{bommasani2021opportunities}.
+Our HWI framework addresses this gap through an integrated structure spanning \textbf{framework}, \textbf{benchmark}, and \textbf{protocol}.

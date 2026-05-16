@@ -1,0 +1,651 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{caption}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Experimental Plan for Validating Routing-Induced Exponent Collapse in Sparse MoE}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Goal and Experimental Philosophy}
+
+This document presents a complete experimental plan for validating the core theoretical claims of the paper on the unification of sparse path routing and information exponents. Since the paper is primarily theoretical, the purpose of the experiments is \emph{not} to perform large-scale benchmarking, nor to demonstrate frontier-scale engineering superiority. Instead, the experiments should serve the following purpose:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Mechanism validation:} empirically verify the central geometric mechanism claimed by the theory, namely that routing-induced spatial truncation breaks global symmetry and restores learnable local signal.
+    \item \textbf{Minimal logic closure:} provide a compact but sufficient chain of evidence connecting the main theoretical statements to observable training dynamics.
+    \item \textbf{Controlled falsifiability:} design the experiments so that each major theorem or proposition corresponds to at least one direct empirical test.
+    \item \textbf{Lightweight executability:} ensure all experiments can be run with modest compute using synthetic data and small neural architectures, without requiring large-scale dense pretraining or full-scale MoE retraining.
+\end{enumerate}
+
+Accordingly, the experimental section should not be written as a standard broad benchmark section. It should instead be organized as a sequence of \textbf{targeted validation experiments}, each answering one precise question tied to the theory.
+
+\section{Core Theoretical Claims to Validate}
+
+The experiments should be explicitly mapped to the following theoretical claims.
+
+\subsection{Claim A: Dense learning suffers from a symmetry-induced optimization barrier}
+
+For high-order parity-like targets with global information exponent $k^* \ge 2$, dense models initialized isotropically should exhibit weak or vanishing effective learning signal in early optimization. Empirically, this should appear as slow convergence, unstable training, or failure to reach low error as the input dimension $d$ and parity order $k$ increase.
+
+\subsection{Claim B: Routing-induced truncation restores local learnability}
+
+When the input space is restricted to a sign-definite region (or equivalently, when a routing path successfully isolates such a region), the cancellation present under the full symmetric measure disappears. The local target distribution becomes biased, and the local optimization problem becomes significantly easier.
+
+\subsection{Claim C: Routing depth is structurally important}
+
+A shallow partition that does not isolate sufficiently pure sign regions should fail to recover strong local signal. Increasing routing depth should improve partition purity and lead to a clear transition in trainability, especially for higher-order parity targets.
+
+\subsection{Claim D: Initialization matters for trainable routing}
+
+Even if a good partition would make the local problem easy, the router may fail to discover it from purely random initialization on highly symmetric tasks. Thus, a weakly structured or warm-started router should substantially improve optimization relative to a purely random start.
+
+\subsection{Claim E: Optional extensions}
+
+If time permits, additional experiments may validate secondary theoretical claims concerning soft routing leakage, shared experts, anisotropic covariances, or residual low-frequency/high-frequency decomposition. These are valuable but not strictly required for minimal logic closure.
+
+\section{Experimental Structure}
+
+The experiments are organized into four mandatory blocks and two optional blocks:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Block I: Dense barrier on symmetric synthetic tasks.}
+    \item \textbf{Block II: Oracle truncation and local exponent collapse.}
+    \item \textbf{Block III: Learned routing and routing depth.}
+    \item \textbf{Block IV: Initialization and weak warm-start for routers.}
+    \item \textbf{Block V (optional): Soft routing temperature and leakage.}
+    \item \textbf{Block VI (optional): Shared experts for low/high-frequency decomposition.}
+\end{enumerate}
+
+The first four blocks are the minimum set needed to support the paper convincingly.
+
+\section{Common Experimental Setup}
+
+\subsection{Data distribution}
+
+All main experiments should begin with controlled synthetic Gaussian data:
+\begin{equation}
+    \bm{x} \sim \mathcal{N}(\bm{0}, I_d), \qquad \bm{x} \in \mathbb{R}^d.
+\end{equation}
+This choice is essential because the theory is formulated under isotropic Gaussian measures and Hermite-type decompositions. Using this setting first ensures that the experiments directly test the claimed theory, rather than confounding it with additional data structure.
+
+\subsection{Target functions}
+
+The main targets should be synthetic parity-like functions. At minimum, the following two families should be used.
+
+\paragraph{Pure parity target.}
+\begin{equation}
+    y = \prod_{i=1}^{k} x_i.
+\end{equation}
+This is the canonical target corresponding most directly to the theory. Its effective difficulty increases with $k$.
+
+\paragraph{Mixed low/high-frequency target.}
+\begin{equation}
+    y = \alpha \sum_{i=1}^{m} x_i + \beta \prod_{i=1}^{k} x_i.
+\end{equation}
+This target decomposes into an easy low-frequency component and a hard high-frequency component, and is useful for optional shared-expert or warm-start analysis.
+
+If label noise is desired for robustness tests, use
+\begin{equation}
+    \tilde{y} = y + \epsilon, \qquad \epsilon \sim \mathcal{N}(0,\sigma^2),
+\end{equation}
+with a small fixed $\sigma$ such as $0.01$ or $0.05$.
+
+\subsection{Dimensions and difficulty levels}
+
+A practical grid should vary both ambient dimension $d$ and parity order $k$. A recommended starting range is:
+\begin{equation}
+    d \in \{16, 32, 64, 128\}, \qquad k \in \{2, 3, 4, 5\}.
+\end{equation}
+Not all combinations need to be fully exhausted. The key is to show at least:
+\begin{enumerate}[leftmargin=2em]
+    \item increasing difficulty with higher $k$ at fixed $d$;
+    \item increasing difficulty with higher $d$ at fixed $k$;
+    \item improved behavior under routing or truncation relative to dense baselines.
+\end{enumerate}
+
+\subsection{Train/validation/test splits}
+
+For each configuration:
+\begin{itemize}[leftmargin=2em]
+    \item Training samples: $50\,000$ to $200\,000$
+    \item Validation samples: $10\,000$
+    \item Test samples: $10\,000$
+\end{itemize}
+If compute is limited, the training size can be reduced initially, but scaling experiments should still include at least two or three training sizes.
+
+\subsection{Optimization}
+
+Use Adam or SGD with momentum. For simplicity and stability:
+\begin{itemize}[leftmargin=2em]
+    \item Optimizer: Adam
+    \item Learning rate: $10^{-3}$ as default
+    \item Batch size: $256$ or $512$
+    \item Epochs: enough to observe either convergence or a clear plateau
+\end{itemize}
+
+Each experiment should be repeated across multiple random seeds (preferably $5$) to distinguish real trends from seed artifacts.
+
+\subsection{Evaluation metrics}
+
+The following metrics should be collected consistently.
+
+\paragraph{Primary predictive metric.}
+Mean squared error (MSE) on validation and test sets.
+
+\paragraph{Optimization speed.}
+Define a threshold $\varepsilon$ and record the \emph{time-to-threshold} or \emph{step-to-threshold}:
+\begin{equation}
+    \tau_\varepsilon = \inf \{t \ge 0 : \mathcal{L}_t \le \varepsilon\}.
+\end{equation}
+This is crucial because the theory concerns optimization barriers, not merely final accuracy.
+
+\paragraph{Early learning signal.}
+Record:
+\begin{itemize}[leftmargin=2em]
+    \item gradient norm at early iterations;
+    \item parameter-feature alignment;
+    \item correlation between predictions and target in early epochs.
+\end{itemize}
+
+\paragraph{Routing statistics.}
+For routing-based models, record:
+\begin{itemize}[leftmargin=2em]
+    \item expert/path utilization;
+    \item routing entropy;
+    \item path purity with respect to sign patterns;
+    \item local label mean under each path.
+\end{itemize}
+
+\paragraph{Seed sensitivity.}
+Report mean and standard deviation across seeds. High seed variance is itself evidence of unstable optimization and should not be hidden.
+
+\section{Block I: Dense Barrier on Symmetric Tasks}
+
+\subsection{Purpose}
+
+This block validates the basic premise that dense models face a meaningful optimization barrier on symmetric parity tasks. Without this block, later routing experiments lose their interpretive foundation.
+
+\subsection{Question to answer}
+
+Does a dense model become increasingly hard to train as the parity order $k$ or ambient dimension $d$ grows, even though the target function is simple and fully known?
+
+\subsection{Models}
+
+Use a small dense MLP as the baseline:
+\begin{itemize}[leftmargin=2em]
+    \item Input dimension $d$
+    \item Two or three hidden layers
+    \item Hidden width $128$ or $256$
+    \item ReLU or GELU activation
+    \item Scalar output
+\end{itemize}
+
+It is advisable to keep the architecture fixed across $d$ and $k$ where possible, to avoid architecture tuning confounding the trend.
+
+\subsection{Protocol}
+
+For each $(d,k)$ pair:
+\begin{enumerate}[leftmargin=2em]
+    \item Sample training, validation, and test data from $\mathcal{N}(0,I_d)$.
+    \item Construct labels via $y = \prod_{i=1}^{k} x_i$.
+    \item Train the dense MLP from random isotropic initialization.
+    \item Repeat over multiple seeds.
+    \item Record train/validation/test MSE curves and time-to-threshold.
+\end{enumerate}
+
+\subsection{Expected outcome}
+
+The expected trend is:
+\begin{itemize}[leftmargin=2em]
+    \item for small $k$ and small $d$, the model may learn;
+    \item as $k$ increases, optimization should slow significantly;
+    \item as $d$ increases at fixed $k$, convergence should also deteriorate;
+    \item early training should exhibit weak correlation and slow improvement.
+\end{itemize}
+
+\subsection{What this block proves}
+
+This block does \emph{not} prove the theorem itself. Rather, it establishes the empirical phenomenon that the theory is trying to explain: dense learning becomes hard on globally symmetric high-order targets.
+
+\subsection{Recommended figures}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Test MSE versus training step for several $k$ at fixed $d$.
+    \item Time-to-threshold versus $d$ for several $k$.
+    \item Early-stage gradient norm or prediction-target correlation versus training step.
+\end{enumerate}
+
+\section{Block II: Oracle Truncation and Local Learnability}
+
+\subsection{Purpose}
+
+This is the single most important empirical block. It directly validates the central geometric claim that truncation of the input measure restores local signal by breaking cancellation.
+
+\subsection{Question to answer}
+
+If we restrict training to a sign-definite region corresponding to one orthant, does the same hard global task become much easier to learn?
+
+\subsection{Two versions}
+
+\paragraph{Version A: Dataset-level truncation.}
+Restrict the dataset to samples satisfying
+\begin{equation}
+    x_1 > 0,\; x_2 > 0,\; \dots,\; x_k > 0.
+\end{equation}
+Then train a simple model on this truncated dataset only.
+
+\paragraph{Version B: Oracle routing.}
+Define an oracle router that sends each sample to an expert according to the sign pattern of the first $k$ coordinates. Then train one expert per region or one expert on a selected sign-definite region.
+
+Version A is the cheapest and most direct test. Version B is closer in form to the MoE interpretation.
+
+\subsection{Protocol for Version A}
+
+For each $(d,k)$:
+\begin{enumerate}[leftmargin=2em]
+    \item Generate full Gaussian data.
+    \item Keep only samples satisfying $x_1,\dots,x_k > 0$.
+    \item Train the same dense MLP or even a much smaller model on the truncated subset.
+    \item Compare against the full-space dense baseline from Block I.
+\end{enumerate}
+
+\subsection{Additional measurements}
+
+For the truncated dataset, explicitly measure:
+\begin{equation}
+    \hat{\mu}_0 = \frac{1}{n}\sum_{i=1}^n y_i,
+    \qquad
+    \hat{\mu}_{1,j} = \frac{1}{n}\sum_{i=1}^n y_i x_{i,j}.
+\end{equation}
+These empirical local moments are important because they are the direct observable counterparts of the theoretical claim that truncation restores non-zero low-order signal.
+
+\subsection{Expected outcome}
+
+Relative to the full-space baseline:
+\begin{itemize}[leftmargin=2em]
+    \item the truncated task should learn much faster;
+    \item early-stage gradients should be stronger;
+    \item empirical local moments should be clearly non-zero;
+    \item a smaller model may already suffice under truncation.
+\end{itemize}
+
+\subsection{What this block proves}
+
+This block is the empirical anchor of the \emph{Exponent Collapse} intuition. It shows that when cancellation is removed by truncation, optimization becomes easy. This is the closest experimental counterpart to the paper's main theorem.
+
+\subsection{Recommended figures and tables}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Full-space versus truncated-space learning curves.
+    \item Table of empirical local moments $\hat{\mu}_0$ and $\hat{\mu}_{1,j}$.
+    \item Time-to-threshold comparison between dense and truncated training.
+\end{enumerate}
+
+\section{Block III: Learned Routing and Routing Depth}
+
+\subsection{Purpose}
+
+This block tests whether learned routing exhibits the depth-related transition predicted by the theory.
+
+\subsection{Question to answer}
+
+Does increasing routing depth improve partition quality and trainability, especially when the parity order $k$ is large?
+
+\subsection{Model family}
+
+Use a lightweight MoE with:
+\begin{itemize}[leftmargin=2em]
+    \item $N=2$ experts per routing layer;
+    \item routing depth $L \in \{1,2,3,4\}$;
+    \item small expert MLPs;
+    \item hard routing or straight-through hard routing if feasible;
+    \item soft routing may be used initially for stability, but hard assignment statistics should still be logged.
+\end{itemize}
+
+\subsection{Important design principle}
+
+This experiment should \emph{not} aim to build a strong general-purpose MoE. The model should remain intentionally simple so that the causal role of routing depth is visible.
+
+\subsection{Protocol}
+
+For selected parity tasks such as $k \in \{2,3,4\}$:
+\begin{enumerate}[leftmargin=2em]
+    \item Train learned-routing MoE models with different depths $L$.
+    \item Keep other factors as fixed as possible.
+    \item Measure predictive performance and optimization speed.
+    \item Log routing purity statistics:
+    \begin{itemize}
+        \item fraction of samples in each path having consistent sign pattern;
+        \item empirical local mean label per path;
+        \item routing entropy.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Partition purity metric}
+
+Define a sign-pattern purity score for a path $\pi$:
+\begin{equation}
+    \mathrm{Purity}(\pi) = \max_{\bm{s} \in \{-1,+1\}^k}
+    \frac{1}{|\mathcal{D}_\pi|}
+    \sum_{\bm{x}_i \in \mathcal{D}_\pi}
+    \mathbf{1}\!\left[\mathrm{sign}(x_{i,1:k}) = \bm{s}\right],
+\end{equation}
+where $\mathcal{D}_\pi$ is the set of samples assigned to path $\pi$.
+
+This is extremely useful because it connects the theoretical notion of orthant isolation to something directly measurable.
+
+\subsection{Expected outcome}
+
+The expected trend is:
+\begin{itemize}[leftmargin=2em]
+    \item shallow routing may help slightly but not robustly;
+    \item deeper routing should yield cleaner partitions;
+    \item cleaner partitions should correlate with faster learning and lower MSE;
+    \item the depth requirement should become more visible as $k$ increases.
+\end{itemize}
+
+\subsection{What this block proves}
+
+This block does not need to prove the exact theoretical bound numerically. It is sufficient to show a \emph{clear directional dependence}: deeper routing creates purer local regions and improves optimization in a way consistent with the theory.
+
+\subsection{Recommended figures}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Learning curves for different routing depths at fixed $k$.
+    \item Final test MSE versus depth.
+    \item Purity versus depth.
+    \item Scatter plot of purity versus time-to-threshold.
+\end{enumerate}
+
+\section{Block IV: Initialization and Warm-Start Effects}
+
+\subsection{Purpose}
+
+This block addresses a key theoretical vulnerability: even if a good partition would help, can the router actually discover it from scratch on a symmetric task?
+
+\subsection{Question to answer}
+
+Does a weakly structured initialization significantly improve learned routing and downstream optimization relative to purely random initialization?
+
+\subsection{Warm-start design}
+
+A full dense-to-MoE upcycling procedure is not required. Instead, use lightweight warm-start strategies such as:
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Biased router initialization:} initialize router weights with small alignment to the first $k$ coordinates.
+    \item \textbf{Weak sign splitter:} pretrain the router briefly to predict a coarse sign pattern.
+    \item \textbf{Feature-biased initialization:} initialize selected routing directions closer to the active subspace.
+\end{enumerate}
+
+These are deliberately lightweight surrogates for the theoretical argument that purely random routing may fail to bootstrap symmetry breaking.
+
+\subsection{Protocol}
+
+For one or two difficult tasks (for example, $k=4$ or $k=5$):
+\begin{enumerate}[leftmargin=2em]
+    \item Train the same MoE architecture from random initialization.
+    \item Train it again with a weak warm-start.
+    \item Compare:
+    \begin{itemize}
+        \item learning curves;
+        \item routing purity;
+        \item local label mean within paths;
+        \item seed sensitivity.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Expected outcome}
+
+Warm-started routers should:
+\begin{itemize}[leftmargin=2em]
+    \item reach better routing partitions more reliably;
+    \item show lower variance across seeds;
+    \item converge faster and more stably than randomly initialized routers.
+\end{itemize}
+
+\subsection{What this block proves}
+
+This block supports the theory's practical claim that the existence of good partitions alone is insufficient; optimization also requires a mechanism that helps the router enter a favorable regime.
+
+\subsection{Recommended figures}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Random-init versus warm-start learning curves.
+    \item Purity trajectories over training.
+    \item Error bars across seeds for final test MSE.
+\end{enumerate}
+
+\section{Block V (Optional): Soft Routing Temperature and Leakage}
+
+\subsection{Purpose}
+
+This block examines whether overly soft routing blurs partitions and reduces local signal, as suggested by the theory's discussion of leakage.
+
+\subsection{Question to answer}
+
+Does routing temperature affect partition sharpness and learning effectiveness in a non-trivial way?
+
+\subsection{Protocol}
+
+Train the same routing model under several temperatures:
+\begin{equation}
+    \tau \in \{2.0,\;1.0,\;0.5,\;0.25,\;0.1\}.
+\end{equation}
+
+Measure:
+\begin{itemize}[leftmargin=2em]
+    \item test MSE;
+    \item routing entropy;
+    \item path purity;
+    \item local label mean;
+    \item convergence speed.
+\end{itemize}
+
+\subsection{Expected outcome}
+
+Very large $\tau$ should produce diffuse routing and poor partition purity. Moderately small $\tau$ should improve localization. Extremely small $\tau$ may introduce optimization instability depending on implementation. The key result is that partition sharpness and local signal should co-vary with temperature.
+
+\section{Block VI (Optional): Shared Experts for Low/High-Frequency Decomposition}
+
+\subsection{Purpose}
+
+This block supports the paper's optional advanced claim that shared experts can absorb easy low-frequency structure while routed experts focus on hard residual structure.
+
+\subsection{Target}
+
+Use the mixed target:
+\begin{equation}
+    y = \alpha \sum_{i=1}^{m} x_i + \beta \prod_{i=1}^{k} x_i.
+\end{equation}
+
+\subsection{Model comparison}
+
+Compare:
+\begin{enumerate}[leftmargin=2em]
+    \item dense baseline;
+    \item standard MoE;
+    \item shared-linear branch + routed residual experts.
+\end{enumerate}
+
+\subsection{Expected outcome}
+
+The shared branch should absorb the easy component, reduce optimization burden on routed experts, and improve stability and convergence.
+
+\section{Ablation Strategy}
+
+A theory paper can be damaged by excessive but weak experiments just as easily as by too few experiments. Therefore, the ablation plan must stay disciplined.
+
+\subsection{Mandatory ablations}
+
+At minimum, the following controlled comparisons should appear:
+\begin{enumerate}[leftmargin=2em]
+    \item Dense full-space training versus truncated-space training.
+    \item Dense baseline versus learned-routing MoE.
+    \item Learned-routing MoE with varying depth.
+    \item Random-init router versus weak warm-start router.
+\end{enumerate}
+
+\subsection{Useful but secondary ablations}
+
+If bandwidth permits:
+\begin{enumerate}[leftmargin=2em]
+    \item hard versus soft routing;
+    \item different temperatures;
+    \item isotropic versus anisotropic covariance;
+    \item with versus without low-frequency shared branch.
+\end{enumerate}
+
+\section{What Must Be Reported}
+
+To make the empirical evidence persuasive, the paper must report not only final accuracy but also the intermediate quantities that reflect the claimed mechanism.
+
+\subsection{Minimum reporting set}
+
+For every main experiment, report:
+\begin{itemize}[leftmargin=2em]
+    \item mean and standard deviation across seeds;
+    \item final validation/test MSE;
+    \item time-to-threshold or step-to-threshold;
+    \item training curves;
+    \item for routing models: routing purity and entropy.
+\end{itemize}
+
+\subsection{Mechanism-level reporting}
+
+For the strongest connection to the theory, also report:
+\begin{itemize}[leftmargin=2em]
+    \item empirical local target mean in routed regions;
+    \item empirical local first-order moments;
+    \item correlation between partition purity and optimization speed.
+\end{itemize}
+
+These quantities are much more valuable than adding extra datasets or extra baselines unrelated to the theory.
+
+\section{Suggested Final Experimental Narrative in the Paper}
+
+The final experimental section should be written as a logical progression rather than as a benchmark dump. A strong structure is:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Global barrier:} dense models struggle on globally symmetric parity tasks.
+    \item \textbf{Local restoration:} oracle truncation breaks cancellation and makes learning easy.
+    \item \textbf{Learned routing:} learned MoE partially realizes this effect, and depth matters because it improves partition purity.
+    \item \textbf{Initialization:} routing is hard to bootstrap from pure symmetry, and weak warm-start substantially helps.
+    \item \textbf{Optional extensions:} temperature, shared experts, or anisotropy further support the broader theory.
+\end{enumerate}
+
+This narrative directly mirrors the theory and creates a clean logic closure.
+
+\section{Priority Plan Under Limited Time}
+
+If time is very limited, the experiments should be executed in the following strict order.
+
+\subsection{Tier 1: absolutely necessary}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Dense barrier experiment.
+    \item Oracle truncation experiment.
+    \item Learned routing with depth comparison.
+\end{enumerate}
+
+These three already provide the essential empirical support.
+
+\subsection{Tier 2: strongly recommended}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Weak warm-start versus random-init routing.
+\end{enumerate}
+
+This addresses the most likely reviewer concern about trainability.
+
+\subsection{Tier 3: optional polish}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Soft routing temperature scan.
+    \item Shared expert decomposition.
+    \item Anisotropic covariance robustness.
+\end{enumerate}
+
+\section{Potential Failure Modes and How to Interpret Them}
+
+\subsection{Failure mode 1: dense baseline learns too well}
+
+If the dense baseline learns parity tasks too easily, the chosen tasks are too small or too easy. Increase $k$, increase $d$, reduce model overcapacity, or shorten the training budget to reveal the optimization gap more clearly.
+
+\subsection{Failure mode 2: learned routing is unstable}
+
+This is not necessarily bad news. High instability across seeds is itself evidence supporting the claim that trainable routing is difficult to bootstrap under symmetry. In that case, emphasize the benefit of warm-start and purity diagnostics.
+
+\subsection{Failure mode 3: depth effects are weak}
+
+If the depth trend is weak, the issue may be that the model is not actually learning meaningful partitions. In that case, examine routing entropy, purity, and local label means. The experiment should not be judged only by final MSE.
+
+\subsection{Failure mode 4: truncated data is too easy in a trivial way}
+
+That is acceptable as long as the analysis explicitly states the point: the experiment is not intended to mimic realistic MoE training, but to isolate the geometric mechanism by which truncation removes cancellation and restores signal.
+
+\section{Minimal Figure and Table Checklist}
+
+A sufficient empirical section can be built around the following set.
+
+\subsection{Figures}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Dense baseline learning curves across $k$.
+    \item Full-space versus truncated-space comparison.
+    \item Learned-routing MoE learning curves across depths.
+    \item Routing purity versus depth.
+    \item Random-init versus warm-start routing.
+\end{enumerate}
+
+\subsection{Tables}
+
+\begin{enumerate}[leftmargin=2em]
+    \item Final test MSE and time-to-threshold for dense, truncated, and MoE models.
+    \item Empirical local moments under truncation or routed paths.
+    \item Mean and standard deviation across seeds.
+\end{enumerate}
+
+\section{Final Recommendation}
+
+The experimental objective is not to prove every theorem numerically. Rather, it is to provide a clean empirical correspondence to the paper's main logic:
+\begin{center}
+\emph{global symmetry $\rightarrow$ dense optimization barrier $\rightarrow$ local truncation breaks cancellation $\rightarrow$ routing approximates truncation $\rightarrow$ depth and initialization govern whether this mechanism becomes trainable in practice.}
+\end{center}
+
+If the experiments clearly establish this chain, then even with small synthetic models and moderate compute, the paper can achieve a convincing empirical logic closure appropriate for a theory-heavy NeurIPS submission.
+
+
+\input{Styles/experiment/claim_a}
+
+\input{Styles/experiment/claim_b}
+
+\input{Styles/experiment/claim_c}
+
+\input{Styles/experiment/claim_d}
+
+\end{document}

@@ -1,0 +1,15 @@
+一些under review的文章，请不要显示投稿到哪里（可以写coming soon）
+under preparation的文章不需要放进去。
+
+Research Highlights只需要放最厉害的文章，水文不需要放进去。
+同时，我想把research highlights里面拆分成2个模块（鼠标click切换）：（1）model efficiency （主要就是subspacepath pruner、sot、lotr、active inference）（2）applications （主要是XDomainBench和一些和通信结合的文章）
+左边是图，下面是tag
+
+Education里面放NTU、NUAA、UoE三段经历
+
+Experience里面放Technical Director、CUHKSZ、Penn
+
+Honors & Awards放最厉害的那些奖（education中也有很多award）
+
+专利和软著不需要放
+
