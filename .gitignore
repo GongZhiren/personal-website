@@ -17,6 +17,8 @@ paper3/
 paper4/
 paper5/*.pdf
 paper5/b3e510da-8176-40c4-a326-83be0733fa96.png
+paper6/*
+!paper6/overview.png
 
 # Unused image assets
 assets/paper1_alt.png
