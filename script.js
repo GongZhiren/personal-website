@@ -1,17 +1,19 @@
-function initScopedTabs(rootSelector, buttonSelector, panelSelector) {
-  const root = document.querySelector(rootSelector);
-  if (!root) return;
+function initPublicationTabs() {
+  const section = document.getElementById("publications");
+  if (!section) return;
 
-  const buttons = root.querySelectorAll(buttonSelector);
-  const panels = root.querySelectorAll(panelSelector);
+  const buttons = section.querySelectorAll("[data-pub-tab]");
+  const panels = section.querySelectorAll("[data-pub-panel]");
   if (!buttons.length || !panels.length) return;
 
-  const activate = (targetId) => {
+  const openTab = (tabName) => {
     buttons.forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.target === targetId);
+      const selected = btn.dataset.pubTab === tabName;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-selected", selected ? "true" : "false");
     });
     panels.forEach((panel) => {
-      panel.classList.toggle("is-active", panel.id === targetId);
+      panel.classList.toggle("tab-open", panel.dataset.pubPanel === tabName);
     });
   };
 
@@ -19,16 +21,41 @@ function initScopedTabs(rootSelector, buttonSelector, panelSelector) {
     btn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const targetId = btn.dataset.target;
-      if (!targetId) return;
-      activate(targetId);
+      openTab(btn.dataset.pubTab);
     });
   });
 
-  const defaultBtn = root.querySelector(`${buttonSelector}.active`) || buttons[0];
-  if (defaultBtn?.dataset.target) {
-    activate(defaultBtn.dataset.target);
-  }
+  openTab(buttons[0].dataset.pubTab);
+}
+
+function initAchievementTabs() {
+  const section = document.getElementById("achievement");
+  if (!section) return;
+
+  const buttons = section.querySelectorAll("[data-ach-tab]");
+  const panels = section.querySelectorAll("[data-ach-panel]");
+  if (!buttons.length || !panels.length) return;
+
+  const openTab = (tabName) => {
+    buttons.forEach((btn) => {
+      const selected = btn.dataset.achTab === tabName;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+    panels.forEach((panel) => {
+      panel.classList.toggle("tab-open", panel.dataset.achPanel === tabName);
+    });
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openTab(btn.dataset.achTab);
+    });
+  });
+
+  openTab(buttons[0].dataset.achTab);
 }
 
 function initScrollNav() {
@@ -84,8 +111,16 @@ function initTldrToggles() {
   });
 }
 
-initScopedTabs("#publications", ".pub-tab-btn", ".pub-panel");
-initScopedTabs("#achievement", ".achievement-tab-btn", ".achievement-panel");
-initScrollNav();
-initSmoothLinks();
-initTldrToggles();
+function boot() {
+  initPublicationTabs();
+  initAchievementTabs();
+  initScrollNav();
+  initSmoothLinks();
+  initTldrToggles();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}

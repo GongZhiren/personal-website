@@ -300,13 +300,13 @@ h1 {
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
 }
 
-#publications .pub-panel {
-  display: none;
+#publications .pub-panels > .pub-panel {
+  display: none !important;
   gap: 12px;
 }
 
-#publications .pub-panel.is-active {
-  display: grid;
+#publications .pub-panels > .pub-panel.tab-open {
+  display: grid !important;
 }
 
 .highlight-item {
@@ -537,12 +537,12 @@ button.pub-link {
   flex-wrap: wrap;
 }
 
-#achievement .achievement-panel {
-  display: none;
+#achievement .achievement-panels > .achievement-panel {
+  display: none !important;
 }
 
-#achievement .achievement-panel.is-active {
-  display: block;
+#achievement .achievement-panels > .achievement-panel.tab-open {
+  display: block !important;
 }
 
 #achievement .list li {

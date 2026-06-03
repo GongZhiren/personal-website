@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=20260308">
 </head>
 <body>
   <div class="page-bg"></div>
@@ -161,12 +161,13 @@
         <div class="section-head">
           <h2 class="title-with-icon"><img src="./icon/publications.png" alt="Publications icon">Selected Publications</h2>
           <div class="tab-controls">
-            <button type="button" class="tab-btn pub-tab-btn active" data-target="efficiency-panel">Model Efficiency</button>
-            <button type="button" class="tab-btn pub-tab-btn" data-target="application-panel">Applications</button>
+            <button type="button" class="tab-btn" data-pub-tab="efficiency" aria-selected="true">Model Efficiency</button>
+            <button type="button" class="tab-btn" data-pub-tab="application" aria-selected="false">Applications</button>
           </div>
         </div>
 
-        <div id="efficiency-panel" class="pub-panel is-active">
+        <div class="pub-panels">
+        <div id="efficiency-panel" class="pub-panel tab-open" data-pub-panel="efficiency">
           <article class="pub-card">
             <img src="./assets/subspacepath_main.png" alt="SubspacePath Pruner project figure" loading="lazy">
             <div class="pub-main">
@@ -331,7 +332,7 @@
           </article>
         </div>
 
-        <div id="application-panel" class="pub-panel">
+        <div id="application-panel" class="pub-panel" data-pub-panel="application">
           <article class="pub-card">
             <img src="./assets/xdomain_main.png" alt="XDomainBench project figure" loading="lazy">
             <div class="pub-main">
@@ -463,6 +464,7 @@
           </article>
 
         </div>
+        </div>
       </section>
 
       <section class="section split2">
@@ -470,12 +472,13 @@
           <div class="section-head achievement-head">
             <h2 class="title-with-icon"><img src="./icon/honors.png" alt="Achievement icon">Achievement</h2>
             <div class="tab-controls achievement-tabs">
-              <button type="button" class="tab-btn achievement-tab-btn active" data-target="achievement-honors-panel">Honors</button>
-              <button type="button" class="tab-btn achievement-tab-btn" data-target="achievement-awards-panel">Awards</button>
-              <button type="button" class="tab-btn achievement-tab-btn" data-target="achievement-patent-panel">Patents</button>
+              <button type="button" class="tab-btn" data-ach-tab="honors" aria-selected="true">Honors</button>
+              <button type="button" class="tab-btn" data-ach-tab="awards" aria-selected="false">Awards</button>
+              <button type="button" class="tab-btn" data-ach-tab="patents" aria-selected="false">Patents</button>
             </div>
           </div>
-          <div id="achievement-honors-panel" class="achievement-panel is-active">
+          <div class="achievement-panels">
+          <div id="achievement-honors-panel" class="achievement-panel tab-open" data-ach-panel="honors">
             <ul class="list">
               <li><strong>NTU Research Scholarship (RSS)</strong>, PhD Program.</li>
               <li><strong>NUAA Outstanding Graduate (Top 1%)</strong> and <strong>Outstanding Thesis 2023 (Top 4%)</strong>.</li>
@@ -486,7 +489,7 @@
               <li><strong>First Prize Outstanding Student Scholarship</strong> (Top 5%, 2019 - 2023).</li>
             </ul>
           </div>
-          <div id="achievement-awards-panel" class="achievement-panel">
+          <div id="achievement-awards-panel" class="achievement-panel" data-ach-panel="awards">
             <ul class="list">
               <li><strong>National Second Prize (Top 3%)</strong>, China Undergraduate Mathematical Contest in Modeling (CUMCM), 2021.</li>
               <li><strong>Meritorious Winner (Top 8%)</strong>, Mathematical Contest in Modeling (MCM), 2021.</li>
@@ -498,7 +501,7 @@
               <li><strong>National Second Prize (Top 20%)</strong>, National College Students Mathematics Competition, 2019.</li>
             </ul>
           </div>
-          <div id="achievement-patent-panel" class="achievement-panel">
+          <div id="achievement-patent-panel" class="achievement-panel" data-ach-panel="patents">
             <ul class="list patent-list">
               <li>
                 <strong>Three-dimensional Spectrum Situation Completion Method and Apparatus based on Generative Adversarial Network</strong><br>
@@ -526,6 +529,7 @@
               </li>
             </ul>
           </div>
+          </div>
         </article>
         <article id="service" class="card section">
           <h2 class="title-with-icon"><img src="./icon/service.png" alt="Service icon">Service</h2>
@@ -544,6 +548,6 @@
     </main>
   </div>
 
-  <script src="./script.js"></script>
+  <script src="./script.js?v=20260308"></script>
 </body>
 </html>
