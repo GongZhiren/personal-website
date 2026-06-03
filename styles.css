@@ -551,16 +551,6 @@ button.pub-link {
   line-height: 1.5;
 }
 
-.patent-list a {
-  color: #2a5bff;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.patent-list a:hover {
-  text-decoration: underline;
-}
-
 .service-rows p {
   margin: 0 0 8px;
   color: var(--muted);
