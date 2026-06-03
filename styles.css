@@ -251,6 +251,12 @@ h1 {
   line-height: 1.5;
 }
 
+.timeline-news-group {
+  display: grid;
+  gap: 6px;
+  margin-top: 3px;
+}
+
 .news-line {
   display: flex;
   align-items: flex-start;
