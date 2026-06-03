@@ -16,7 +16,7 @@
     <nav class="top-nav">
       <a href="#news">News</a>
       <a href="#publications">Publications</a>
-      <a href="#awards">Honors</a>
+      <a href="#achievement">Achievement</a>
       <a href="#service">Service</a>
       <a href="#contact">Contact</a>
     </nav>
@@ -130,6 +130,17 @@
           </p>
         </div>
         <div class="timeline-item">
+          <time>May 2026</time>
+          <p class="news-line">
+            <img src="./icon/[庆祝].png" alt="news icon">
+            <span>
+            <a href="https://openreview.net/forum?id=nsIOhilpBE" target="_blank" rel="noreferrer">SubspacePath Pruner</a> and
+            <a href="https://openreview.net/forum?id=PmOQoOlPgX" target="_blank" rel="noreferrer">Rule-Guided Active Inference</a>
+            accepted by ICML AdaptFM Workshop and ICML FoGen Workshop.
+            </span>
+          </p>
+        </div>
+        <div class="timeline-item">
           <time>Jan 2026</time>
           <p class="news-line">
             <img src="./icon/[庆祝].png" alt="news icon">
@@ -163,7 +174,10 @@
               <h3>SubspacePath Pruner: Inference-time Pruning via Probe-based Representation-Parameter Coupling</h3>
               <p class="authors"><span class="me">Zhiren Gong</span>, Yikun Hou, Fan Wu, Che Wang, Fuyao Zhang, Tiantong Wu, Yurong Hao, Jiaming Zhang, Yiyang Duan, Tiantong Wang, Fei Huang, Chau Yuen, Wei Yang Bryan Lim</p>
               <div class="pub-meta">
-                <span class="venue-badge">ICML 2026</span>
+                <div class="venue-badges">
+                  <span class="venue-badge">ICML 2026</span>
+                  <span class="venue-badge">ICML AdaptFM Workshop 2026</span>
+                </div>
                 <div class="pub-links">
                   <button class="pub-link tldr-toggle" type="button" data-target="abs-subspace">TL;DR</button>
                   <a class="pub-link" href="https://openreview.net/forum?id=fvkCjFvWKf" target="_blank" rel="noreferrer">Paper</a>
@@ -190,7 +204,10 @@
               <h3>Learning Human Habits with Rule-Guided Active Inference</h3>
               <p class="authors"><span class="me">Zhiren Gong</span>, Chao Yang, Wendi Ren, Shuang Li</p>
               <div class="pub-meta">
-                <span class="venue-badge">ICLR 2026</span>
+                <div class="venue-badges">
+                  <span class="venue-badge">ICLR 2026</span>
+                  <span class="venue-badge">ICML FoGen Workshop 2026</span>
+                </div>
                 <div class="pub-links">
                   <button class="pub-link tldr-toggle" type="button" data-target="abs-active">TL;DR</button>
                   <a class="pub-link" href="https://openreview.net/forum?id=FZXwkBH6s7" target="_blank" rel="noreferrer">Paper</a>
@@ -450,17 +467,78 @@
       </section>
 
       <section class="section split2">
-        <article id="awards" class="card section">
-          <h2 class="title-with-icon"><img src="./icon/honors.png" alt="Honors icon">Honors</h2>
-          <ul class="list">
-            <li><strong>NTU Research Scholarship (RSS)</strong>, PhD Program.</li>
-            <li><strong>NUAA Outstanding Graduate (Top 1%)</strong> and <strong>Outstanding Thesis 2023 (Top 4%)</strong>.</li>
-            <li><strong>Headmaster's Special Mention</strong> (2020, 2022), highest undergraduate honor at NUAA.</li>
-            <li><strong>Top 10 Outstanding Youth of NUAA</strong> (2022).</li>
-            <li><strong>Aviation Industry Honors Scholarship</strong> (Top 0.01%).</li>
-            <li><strong>National Scholarship of China</strong> (Top 1%).</li>
-            <li><strong>First Prize Outstanding Student Scholarship</strong> (Top 5%, 2019 - 2023).</li>
-          </ul>
+        <article id="achievement" class="card section">
+          <div class="section-head achievement-head">
+            <h2 class="title-with-icon"><img src="./icon/honors.png" alt="Achievement icon">Achievement</h2>
+            <div class="tab-controls achievement-tabs">
+              <button class="tab-btn achievement-tab active" data-target="achievement-honors-panel">Honors</button>
+              <button class="tab-btn achievement-tab" data-target="achievement-awards-panel">Awards</button>
+              <button class="tab-btn achievement-tab" data-target="achievement-patent-panel">Patent</button>
+            </div>
+          </div>
+          <div id="achievement-honors-panel" class="achievement-panel active">
+            <ul class="list">
+              <li><strong>NTU Research Scholarship (RSS)</strong>, PhD Program.</li>
+              <li><strong>NUAA Outstanding Graduate (Top 1%)</strong> and <strong>Outstanding Thesis 2023 (Top 4%)</strong>.</li>
+              <li><strong>Headmaster's Special Mention</strong> (2020, 2022), highest undergraduate honor at NUAA.</li>
+              <li><strong>Top 10 Outstanding Youth of NUAA</strong> (2022).</li>
+              <li><strong>Aviation Industry Honors Scholarship</strong> (Top 0.01%).</li>
+              <li><strong>National Scholarship of China</strong> (Top 1%).</li>
+              <li><strong>First Prize Outstanding Student Scholarship</strong> (Top 5%, 2019 - 2023).</li>
+            </ul>
+          </div>
+          <div id="achievement-awards-panel" class="achievement-panel">
+            <ul class="list">
+              <li><strong>Best Oral Presentation Award</strong>, ICEME Academic Conference (2021).</li>
+              <li><strong>National Second Prize (Top 3%)</strong>, China Undergraduate Mathematical Contest in Modeling (CUMCM) (2021).</li>
+              <li><strong>Meritorious Winner (Top 8%)</strong>, Mathematical Contest in Modeling (MCM) (2021).</li>
+              <li><strong>Asia Second Prize (Top 15%)</strong>, Asia Pacific Mathematical Contest in Modelling (APMCM) (2020, 2021).</li>
+              <li><strong>National Second Prize</strong>, National Student Artificial Intelligence Knowledge Competition (2021).</li>
+              <li><strong>Provincial Second Prize</strong>, Jiangsu Province Engineering Ability Competition (2021).</li>
+              <li><strong>National Third Prize</strong>, National Student Optoelectronic Design Competition (2021).</li>
+              <li><strong>National First Prize (Top 10%)</strong>, National Student Academic Physics Competition (2020).</li>
+              <li><strong>National Second Prize</strong>, East China Mathematical Modelling Competition (2020).</li>
+              <li><strong>National Second Prize</strong>, Huajiao Cup National University Mathematics Competition (2020).</li>
+              <li><strong>Provincial Second Prize</strong>, Jiangsu Internet+ and Challenge Cup Competition (2020).</li>
+              <li><strong>National Third Prize</strong>, National Student Physics Experiment Competition (2020).</li>
+              <li><strong>National Second Prize (Top 20%)</strong>, National University Mathematics Competition (2019).</li>
+              <li><strong>Provincial Third Prize</strong>, Jiangsu Smart Manufacturing Competition (2019).</li>
+              <li><strong>National and provincial honors</strong>, Smart Instrument Design Competitions (2020 - 2021).</li>
+            </ul>
+          </div>
+          <div id="achievement-patent-panel" class="achievement-panel">
+            <ul class="list patent-list">
+              <li>
+                <strong>Three-dimensional Spectrum Situation Completion Method and Apparatus based on Generative Adversarial Network</strong><br>
+                PCT/CN2022/073723, WO 2022/206149 A1 (co-inventor).
+              </li>
+              <li>
+                <strong>An Unmanned Aerial Vehicle Decision Evaluation Method in a Complex Environment</strong><br>
+                Chinese National Invention Patent CN113673149 (A).
+                <a href="https://bit.ly/3KQxzRy" target="_blank" rel="noreferrer">Link</a>
+              </li>
+              <li>
+                <strong>Adaptive Parking Lot Intelligent Management and Control Method based on Neural Network</strong><br>
+                Chinese National Invention Patent CN113283302 (A).
+                <a href="https://bit.ly/3UOm8yp" target="_blank" rel="noreferrer">Link</a>
+              </li>
+              <li>
+                <strong>Intelligent Garbage Sorting Device and Method based on Deep Learning Technology</strong><br>
+                Chinese National Invention Patent CN113562355 (A).
+                <a href="https://bit.ly/41pyyiP" target="_blank" rel="noreferrer">Link</a>
+              </li>
+              <li>
+                <strong>Liquid Surface Tension Meter based on Intelligent Control of an STM32 Single-chip Microcomputer, and Use Method thereof</strong><br>
+                Chinese National Invention Patent CN113376059 (A).
+                <a href="https://bit.ly/3GYjGQb" target="_blank" rel="noreferrer">Link</a>
+              </li>
+              <li>
+                <strong>Device and Method for Achieving Energy-saving Cooling of Automobile by Utilizing Air Outlet Frame</strong><br>
+                Chinese National Invention Patent CN112428788 (A).
+                <a href="https://bit.ly/41mRf6H" target="_blank" rel="noreferrer">Link</a>
+              </li>
+            </ul>
+          </div>
         </article>
         <article id="service" class="card section">
           <h2 class="title-with-icon"><img src="./icon/service.png" alt="Service icon">Service</h2>

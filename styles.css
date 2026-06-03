@@ -420,6 +420,13 @@ h1 {
   flex-wrap: wrap;
 }
 
+.venue-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .venue-badge {
   border: 1px solid #cad8ff;
   background: #f4f7ff;
@@ -504,9 +511,36 @@ button.pub-link {
   font-size: 12.6px;
 }
 
-#awards .list li {
+.achievement-head {
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.achievement-tabs {
+  flex-wrap: wrap;
+}
+
+.achievement-panel {
+  display: none;
+}
+
+.achievement-panel.active {
+  display: block;
+}
+
+#achievement .list li {
   margin-bottom: 7px;
   line-height: 1.5;
+}
+
+.patent-list a {
+  color: #2a5bff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.patent-list a:hover {
+  text-decoration: underline;
 }
 
 .service-rows p {

@@ -1,6 +1,24 @@
 function initHighlightTabs() {
-  const buttons = document.querySelectorAll(".tab-btn");
-  const panels = document.querySelectorAll(".pub-panel");
+  const buttons = document.querySelectorAll("#publications .tab-btn");
+  const panels = document.querySelectorAll("#publications .pub-panel");
+
+  if (!buttons.length || !panels.length) return;
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.target;
+      buttons.forEach((b) => b.classList.remove("active"));
+      panels.forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      const panel = document.getElementById(target);
+      if (panel) panel.classList.add("active");
+    });
+  });
+}
+
+function initAchievementTabs() {
+  const buttons = document.querySelectorAll("#achievement .achievement-tab");
+  const panels = document.querySelectorAll("#achievement .achievement-panel");
 
   if (!buttons.length || !panels.length) return;
 
@@ -70,6 +88,7 @@ function initTldrToggles() {
 }
 
 initHighlightTabs();
+initAchievementTabs();
 initScrollNav();
 initSmoothLinks();
 initTldrToggles();
