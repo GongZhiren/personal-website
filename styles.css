@@ -279,7 +279,8 @@ h1 {
 
 .tab-controls { display: flex; gap: 8px; }
 
-.tab-btn {
+.pub-tab-btn,
+.achievement-tab-btn {
   border: 1px solid #d5e2ff;
   background: #f5f8ff;
   color: #3757a3;
@@ -289,14 +290,21 @@ h1 {
   cursor: pointer;
 }
 
-.tab-btn.active {
+.pub-tab-btn.active,
+.achievement-tab-btn.active {
   color: #fff;
   border-color: transparent;
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
 }
 
-.pub-panel { display: none; gap: 12px; }
-.pub-panel.active { display: grid; }
+#publications .pub-panel {
+  display: none;
+  gap: 12px;
+}
+
+#publications .pub-panel.is-active {
+  display: grid;
+}
 
 .highlight-item {
   border: 1px solid #d8e3ff;
@@ -526,12 +534,16 @@ button.pub-link {
   flex-wrap: wrap;
 }
 
-.achievement-panel {
+#achievement .achievement-panel {
   display: none;
 }
 
-.achievement-panel.active {
+#achievement .achievement-panel.is-active {
   display: block;
+}
+
+#achievement .achievement-panel[hidden] {
+  display: none !important;
 }
 
 #achievement .list li {

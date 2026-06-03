@@ -1,35 +1,29 @@
-function initHighlightTabs() {
-  const buttons = document.querySelectorAll("#publications .tab-btn");
-  const panels = document.querySelectorAll("#publications .pub-panel");
+function initScopedTabs(rootSelector, buttonSelector, panelSelector) {
+  const root = document.querySelector(rootSelector);
+  if (!root) return;
 
+  const buttons = root.querySelectorAll(buttonSelector);
+  const panels = root.querySelectorAll(panelSelector);
   if (!buttons.length || !panels.length) return;
 
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.target;
-      buttons.forEach((b) => b.classList.remove("active"));
-      panels.forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const panel = document.getElementById(target);
-      if (panel) panel.classList.add("active");
+  const activate = (targetId) => {
+    buttons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.target === targetId);
     });
-  });
-}
-
-function initAchievementTabs() {
-  const buttons = document.querySelectorAll("#achievement .achievement-tab");
-  const panels = document.querySelectorAll("#achievement .achievement-panel");
-
-  if (!buttons.length || !panels.length) return;
+    panels.forEach((panel) => {
+      const isActive = panel.id === targetId;
+      panel.classList.toggle("is-active", isActive);
+      panel.hidden = !isActive;
+    });
+  };
 
   buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.target;
-      buttons.forEach((b) => b.classList.remove("active"));
-      panels.forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      const panel = document.getElementById(target);
-      if (panel) panel.classList.add("active");
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const targetId = btn.dataset.target;
+      if (!targetId) return;
+      activate(targetId);
     });
   });
 }
@@ -87,8 +81,8 @@ function initTldrToggles() {
   });
 }
 
-initHighlightTabs();
-initAchievementTabs();
+initScopedTabs("#publications", ".pub-tab-btn", ".pub-panel");
+initScopedTabs("#achievement", ".achievement-tab-btn", ".achievement-panel");
 initScrollNav();
 initSmoothLinks();
 initTldrToggles();
