@@ -279,19 +279,22 @@ h1 {
 
 .tab-controls { display: flex; gap: 8px; }
 
-.pub-tab-btn,
-.achievement-tab-btn {
+.tab-controls .tab-btn {
   border: 1px solid #d5e2ff;
   background: #f5f8ff;
   color: #3757a3;
   border-radius: 999px;
   padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.pub-tab-btn.active,
-.achievement-tab-btn.active {
+.tab-controls .tab-btn.active {
   color: #fff;
   border-color: transparent;
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
@@ -540,10 +543,6 @@ button.pub-link {
 
 #achievement .achievement-panel.is-active {
   display: block;
-}
-
-#achievement .achievement-panel[hidden] {
-  display: none !important;
 }
 
 #achievement .list li {

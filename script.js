@@ -11,9 +11,7 @@ function initScopedTabs(rootSelector, buttonSelector, panelSelector) {
       btn.classList.toggle("active", btn.dataset.target === targetId);
     });
     panels.forEach((panel) => {
-      const isActive = panel.id === targetId;
-      panel.classList.toggle("is-active", isActive);
-      panel.hidden = !isActive;
+      panel.classList.toggle("is-active", panel.id === targetId);
     });
   };
 
@@ -26,6 +24,11 @@ function initScopedTabs(rootSelector, buttonSelector, panelSelector) {
       activate(targetId);
     });
   });
+
+  const defaultBtn = root.querySelector(`${buttonSelector}.active`) || buttons[0];
+  if (defaultBtn?.dataset.target) {
+    activate(defaultBtn.dataset.target);
+  }
 }
 
 function initScrollNav() {
