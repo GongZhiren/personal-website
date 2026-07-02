@@ -413,7 +413,8 @@ h1 {
   box-sizing: border-box;
 }
 
-.pub-card img.anchorpath-main {
+.pub-card img.anchorpath-main,
+.pub-card img.cocurve-main {
   object-fit: contain;
   object-position: center center;
   background: #fff;

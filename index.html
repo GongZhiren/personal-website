@@ -316,6 +316,36 @@
           </article>
 
           <article class="pub-card">
+            <img class="cocurve-main" src="./assets/cocurve_main.png" alt="CoCurve capability retention figure" loading="lazy">
+            <div class="pub-main">
+              <h3>CoCurve: Cross-Module Co-Pruning Curvature for Training-Free Structured LLM Pruning</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Zihao Zeng, Zijie Wang, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-cocurve">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <a class="pub-link" href="https://gongzhiren.github.io/CoCurve-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/CoCurve-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-cocurve" class="tldr-panel">
+                Almost every structured-pruning method scores each unit in isolation, assuming set damage is additive — the
+                wrong granularity for a Transformer's shared residual stream. CoCurve prunes attention and FFN units jointly:
+                a single Fisher matrix whose diagonal is node saliency and whose off-diagonal entries are cross-module
+                co-pruning curvature edges, provably a Gram product recoverable from just M single-unit ablations. It leads
+                every capability class on Llama-3.1-8B at 20% and best preserves fragile code — prune the edges, not just the nodes.
+              </div>
+              <div class="pub-tags">
+                <span># Structured Pruning</span>
+                <span># Training-Free Compression</span>
+                <span># Curvature / Fisher</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="pub-card">
             <img class="anchorpath-main" src="./assets/anchorpath_main.png" alt="AnchorPath headline degradation curve" loading="lazy">
             <div class="pub-main">
               <h3>AnchorPath: Defeating the High-Sparsity Collapse of Structured LLM Pruning via Anchored Continuation</h3>
