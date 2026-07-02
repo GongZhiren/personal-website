@@ -399,7 +399,8 @@ h1 {
   border-right: 1px solid #d8e3ff;
 }
 
-.pub-card img.paper6-overview {
+.pub-card img.paper6-overview,
+.pub-card img.coax-main {
   object-fit: contain;
   background: #fff;
 }
