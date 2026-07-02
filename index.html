@@ -316,6 +316,36 @@
           </article>
 
           <article class="pub-card">
+            <img class="anchorpath-main" src="./assets/anchorpath_main.png" alt="AnchorPath headline degradation curve" loading="lazy">
+            <div class="pub-main">
+              <h3>AnchorPath: Defeating the High-Sparsity Collapse of Structured LLM Pruning via Anchored Continuation</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Zihao Zeng, Zijie Wang, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-anchorpath">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <a class="pub-link" href="https://gongzhiren.github.io/AnchorPath-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/AnchorPath-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-anchorpath" class="tldr-panel">
+                AnchorPath shows the high-sparsity collapse of training-free structured pruning is a property of the
+                one-shot paradigm — a single quadratic extrapolated across the whole budget — not the importance score.
+                Recasting compression as a calibration-only anchored continuation (a fixed dense anchor, a moving expansion
+                point, K re-anchored steps) cuts perplexity by up to two orders of magnitude versus one-shot at 50%
+                sparsity, while changing only the mask. One-shot second-order pruning is exactly the K=1 case.
+              </div>
+              <div class="pub-tags">
+                <span># Structured Pruning</span>
+                <span># Training-Free Compression</span>
+                <span># Curvature / Second-Order</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="pub-card">
             <img class="paper6-overview" src="./paper6/overview.png" alt="CrossAgentMem overview figure" loading="lazy">
             <div class="pub-main">
               <h3>Concept-Profile Guided Cross-Agent Memory Sharing for Multi-Turn Conversation</h3>

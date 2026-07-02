@@ -413,6 +413,15 @@ h1 {
   box-sizing: border-box;
 }
 
+.pub-card img.anchorpath-main {
+  object-fit: contain;
+  object-position: center center;
+  background: #fff;
+  min-height: 154px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
 .pub-main {
   padding: 12px 14px;
 }
