@@ -492,6 +492,18 @@ button.pub-link {
   border-color: #e2e7f5;
 }
 
+.pub-link.tldr-toggle {
+  color: #6a45d8;
+  background: #f4f1ff;
+  border-color: #ddd2ff;
+}
+
+.pub-link.paper-link {
+  color: #12886a;
+  background: #edf9f3;
+  border-color: #c7e9d8;
+}
+
 .tldr-panel {
   margin-top: 8px;
   color: #4e5f88;
