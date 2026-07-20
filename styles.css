@@ -414,7 +414,8 @@ h1 {
 }
 
 .pub-card img.anchorpath-main,
-.pub-card img.cocurve-main {
+.pub-card img.cocurve-main,
+.pub-card img.e2e-main {
   object-fit: contain;
   object-position: center center;
   background: #fff;
