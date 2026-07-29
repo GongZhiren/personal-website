@@ -383,9 +383,9 @@
           </article>
 
           <article class="pub-card">
-            <img class="e2e-main" src="./assets/e2e_main.png" alt="E2E-Merge accuracy across backbones and task counts" loading="lazy">
+            <img class="e2e-main" src="./assets/e2e_main.png" alt="E2E-Merge budget frontier across data, iteration, and memory" loading="lazy">
             <div class="pub-main">
-              <h3>Merging Models by Matching Functions</h3>
+              <h3>Model Consolidation under Budget: From Closed-Form Merging to End-to-End Distillation</h3>
               <p class="authors"><span class="me">Zhiren Gong</span>, Tiantong Wang, Zihao Zeng, Yiyang Duan, Chau Yuen, Wei Yang Bryan Lim</p>
               <div class="pub-meta">
                 <span class="venue-badge">Coming soon</span>
@@ -398,16 +398,17 @@
                 </div>
               </div>
               <div id="abs-e2e" class="tldr-panel">
-                Model merging has been pursued as "how to combine weights". E2E-Merge reframes it functionally: on each
-                task's unlabeled inputs, make the merged model reproduce that expert's representation. The strongest
-                closed-form mergers (RegMean/RegMean++) turn out to be a local, layer-wise approximation of this objective,
-                with Fisher and averaging as further degenerate cases; optimizing it directly recovers up to 99.9% of
-                fully fine-tuned accuracy and widens its lead as more tasks are merged — match functions, not weights.
+                Data-assisted model merging comes in two regimes: cheap closed-form merging (RegMean/RegMean++) and
+                compute-heavy end-to-end distillation (E2E-Merge). Both optimize the same task-conditioned functional
+                objective — reproduce each expert on its own inputs — so we study <em>when</em> each is worth its cost.
+                Closed-form wins under tight data/compute/memory (and on a Flan-T5 probe); distillation pays once
+                resources are ample and the structural gap is large, reaching up to 94.3% on ViT-L/14. Not a universal
+                winner — a practical accuracy–efficiency frontier.
               </div>
               <div class="pub-tags">
                 <span># Model Merging</span>
-                <span># Functional Matching</span>
-                <span># Multi-Task Models</span>
+                <span># Budget–Accuracy Frontier</span>
+                <span># Distillation vs Closed-Form</span>
               </div>
             </div>
           </article>
