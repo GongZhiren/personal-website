@@ -176,6 +176,8 @@
           <h2 class="title-with-icon"><img src="./icon/publications.png" alt="Publications icon">Selected Publications</h2>
           <div class="tab-controls">
             <button type="button" class="tab-btn" data-pub-tab="efficiency" aria-selected="true">Model Efficiency</button>
+            <button type="button" class="tab-btn" data-pub-tab="reasoning" aria-selected="false">Reasoning Efficiency</button>
+            <button type="button" class="tab-btn" data-pub-tab="theory" aria-selected="false">Theory &amp; Interpretability</button>
             <button type="button" class="tab-btn" data-pub-tab="application" aria-selected="false">Applications</button>
           </div>
         </div>
@@ -208,116 +210,6 @@
                 <span># Model Efficiency</span>
                 <span># Inference-Time Pruning</span>
                 <span># Routing</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="pub-card">
-            <img src="./assets/active_main.png" alt="Rule-Guided Active Inference figure" loading="lazy">
-            <div class="pub-main">
-              <h3>Learning Human Habits with Rule-Guided Active Inference</h3>
-              <p class="authors"><span class="me">Zhiren Gong</span>, Chao Yang, Wendi Ren, Shuang Li</p>
-              <div class="pub-meta">
-                <div class="venue-badges">
-                  <span class="venue-badge">ICLR 2026</span>
-                </div>
-                <div class="pub-links">
-                  <button class="pub-link tldr-toggle" type="button" data-target="abs-active">TL;DR</button>
-                  <a class="pub-link paper-link" href="https://openreview.net/forum?id=FZXwkBH6s7" target="_blank" rel="noreferrer">Paper</a>
-                  <a class="pub-link" href="https://gongzhiren.github.io/ActiveInference-website/" target="_blank" rel="noreferrer">Project Page</a>
-                  <a class="pub-link" href="https://github.com/GongZhiren/human-action-active-inference" target="_blank" rel="noreferrer">Code</a>
-                </div>
-              </div>
-              <div id="abs-active" class="tldr-panel">
-                This work combines active inference with explicit rule constraints to model habit dynamics in sequential
-                decision settings, improving action quality and latency in realistic environments.
-              </div>
-              <div class="pub-tags">
-                <span># Active Inference</span>
-                <span># Decision Intelligence</span>
-                <span># Interpretable Planning</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="pub-card">
-            <img src="./assets/sot_main.png" alt="SoT project figure" loading="lazy">
-            <div class="pub-main">
-              <h3>State of Thought Enables Endogenous Reasoning</h3>
-              <p class="authors"><span class="me">Zhiren Gong</span>, Yikun Hou, Zeng Zihao, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
-              <div class="pub-meta">
-                <span class="venue-badge">Coming soon</span>
-                <div class="pub-links">
-                  <button class="pub-link tldr-toggle" type="button" data-target="abs-sot">TL;DR</button>
-                  <span class="pub-link disabled">Paper</span>
-                  <a class="pub-link" href="https://gongzhiren.github.io/SoT-website/" target="_blank" rel="noreferrer">Project Page</a>
-                  <a class="pub-link" href="https://gongzhiren.github.io/SoT-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
-                  <span class="pub-link disabled">Code</span>
-                </div>
-              </div>
-              <div id="abs-sot" class="tldr-panel">
-                SoT studies endogenous state-conditioned reasoning to improve quality-efficiency trade-offs across
-                backbones and benchmark families.
-              </div>
-              <div class="pub-tags">
-                <span># Reasoning</span>
-                <span># Efficiency</span>
-                <span># State Modeling</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="pub-card">
-            <img src="./assets/lotr_main.png" alt="LoTR project figure" loading="lazy">
-            <div class="pub-main">
-              <h3>LoTR: Logic-of-Thought Routing for Plug-and-Play Reasoning of LLMs</h3>
-              <p class="authors"><span class="me">Zhiren Gong</span>, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
-              <div class="pub-meta">
-                <span class="venue-badge">Coming soon</span>
-                <div class="pub-links">
-                  <button class="pub-link tldr-toggle" type="button" data-target="abs-lotr">TL;DR</button>
-                  <span class="pub-link disabled">Paper</span>
-                  <a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/" target="_blank" rel="noreferrer">Project Page</a>
-                  <a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
-                  <span class="pub-link disabled">Code</span>
-                </div>
-              </div>
-              <div id="abs-lotr" class="tldr-panel">
-                LoTR enhances existing external reasoning paradigms by routing internal computation pathways according to
-                evolving logic states at each reasoning step.
-              </div>
-              <div class="pub-tags">
-                <span># Plug-and-Play</span>
-                <span># Logic Routing</span>
-                <span># LLM Reasoning</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="pub-card">
-            <img class="coax-main" src="./assets/coax_main.png?v=3" alt="Conditional Co-Ablation project figure" loading="lazy">
-            <div class="pub-main">
-              <h3>Conditional Co-Ablation: Recovering Self-Repair Backups in Transformer Circuits</h3>
-              <p class="authors"><span class="me">Zhiren Gong</span>, Zihao Zeng, Chau Yuen, Wei Yang Bryan Lim</p>
-              <div class="pub-meta">
-                <span class="venue-badge">Preprint</span>
-                <div class="pub-links">
-                  <button class="pub-link tldr-toggle" type="button" data-target="abs-coax">TL;DR</button>
-                  <a class="pub-link paper-link" href="https://arxiv.org/abs/2607.01940" target="_blank" rel="noreferrer">Paper</a>
-                  <a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/" target="_blank" rel="noreferrer">Project Page</a>
-                  <a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
-                  <a class="pub-link" href="https://github.com/GongZhiren/Conditional-Co-Ablation" target="_blank" rel="noreferrer">Code</a>
-                </div>
-              </div>
-              <div id="abs-coax" class="tldr-panel">
-                CoAx (conditional co-ablation) recovers dormant self-repair backup components that first-order
-                ablation scores miss, improving backup-head discovery, repair-aware attribution, capability knockout,
-                and structured pruning across transformer circuits.
-              </div>
-              <div class="pub-tags">
-                <span># Mechanistic Interpretability</span>
-                <span># Self-Repair</span>
-                <span># Circuit Discovery</span>
               </div>
             </div>
           </article>
@@ -412,6 +304,90 @@
               </div>
             </div>
           </article>
+        </div>
+
+        <div id="reasoning-panel" class="pub-panel" data-pub-panel="reasoning">
+          <article class="pub-card">
+            <img src="./assets/sot_main.png" alt="SoT project figure" loading="lazy">
+            <div class="pub-main">
+              <h3>State of Thought Enables Endogenous Reasoning</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Yikun Hou, Zeng Zihao, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-sot">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <a class="pub-link" href="https://gongzhiren.github.io/SoT-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/SoT-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-sot" class="tldr-panel">
+                SoT studies endogenous state-conditioned reasoning to improve quality-efficiency trade-offs across
+                backbones and benchmark families.
+              </div>
+              <div class="pub-tags">
+                <span># Reasoning</span>
+                <span># Efficiency</span>
+                <span># State Modeling</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="pub-card">
+            <img src="./assets/active_main.png" alt="Rule-Guided Active Inference figure" loading="lazy">
+            <div class="pub-main">
+              <h3>Learning Human Habits with Rule-Guided Active Inference</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Chao Yang, Wendi Ren, Shuang Li</p>
+              <div class="pub-meta">
+                <div class="venue-badges">
+                  <span class="venue-badge">ICLR 2026</span>
+                </div>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-active">TL;DR</button>
+                  <a class="pub-link paper-link" href="https://openreview.net/forum?id=FZXwkBH6s7" target="_blank" rel="noreferrer">Paper</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/ActiveInference-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://github.com/GongZhiren/human-action-active-inference" target="_blank" rel="noreferrer">Code</a>
+                </div>
+              </div>
+              <div id="abs-active" class="tldr-panel">
+                This work combines active inference with explicit rule constraints to model habit dynamics in sequential
+                decision settings, improving action quality and latency in realistic environments.
+              </div>
+              <div class="pub-tags">
+                <span># Active Inference</span>
+                <span># Decision Intelligence</span>
+                <span># Interpretable Planning</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="pub-card">
+            <img src="./assets/lotr_main.png" alt="LoTR project figure" loading="lazy">
+            <div class="pub-main">
+              <h3>LoTR: Logic-of-Thought Routing for Plug-and-Play Reasoning of LLMs</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-lotr">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-lotr" class="tldr-panel">
+                LoTR enhances existing external reasoning paradigms by routing internal computation pathways according to
+                evolving logic states at each reasoning step.
+              </div>
+              <div class="pub-tags">
+                <span># Plug-and-Play</span>
+                <span># Logic Routing</span>
+                <span># LLM Reasoning</span>
+              </div>
+            </div>
+          </article>
 
           <article class="pub-card">
             <img class="paper6-overview" src="./paper6/overview.png" alt="CrossAgentMem overview figure" loading="lazy">
@@ -435,6 +411,36 @@
                 <span># Multi-Agent Reasoning</span>
                 <span># Context Efficiency</span>
                 <span># Memory Systems</span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div id="theory-panel" class="pub-panel" data-pub-panel="theory">
+          <article class="pub-card">
+            <img class="coax-main" src="./assets/coax_main.png?v=3" alt="Conditional Co-Ablation project figure" loading="lazy">
+            <div class="pub-main">
+              <h3>Conditional Co-Ablation: Recovering Self-Repair Backups in Transformer Circuits</h3>
+              <p class="authors"><span class="me">Zhiren Gong</span>, Zihao Zeng, Chau Yuen, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Preprint</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-coax">TL;DR</button>
+                  <a class="pub-link paper-link" href="https://arxiv.org/abs/2607.01940" target="_blank" rel="noreferrer">Paper</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/" target="_blank" rel="noreferrer">Project Page</a>
+                  <a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a>
+                  <a class="pub-link" href="https://github.com/GongZhiren/Conditional-Co-Ablation" target="_blank" rel="noreferrer">Code</a>
+                </div>
+              </div>
+              <div id="abs-coax" class="tldr-panel">
+                CoAx (conditional co-ablation) recovers dormant self-repair backup components that first-order
+                ablation scores miss, improving backup-head discovery, repair-aware attribution, capability knockout,
+                and structured pruning across transformer circuits.
+              </div>
+              <div class="pub-tags">
+                <span># Mechanistic Interpretability</span>
+                <span># Self-Repair</span>
+                <span># Circuit Discovery</span>
               </div>
             </div>
           </article>
@@ -490,6 +496,36 @@
                 <span># Benchmark</span>
                 <span># Reliability</span>
                 <span># Scientific Reasoning</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="pub-card">
+            <img class="maribench-main" src="./assets/maribench_main.png" alt="MariBench: over-escalation on benign controls versus Level-2 accuracy across 16 models" loading="lazy">
+            <div class="pub-main">
+              <h3>MariBench: Benchmarking LLM Agents for Maritime Operational Judgment over Raw AIS Data</h3>
+              <p class="authors">He Lu, <span class="me">Zhiren Gong</span>, Fuyao Zhang, Tianbing Xia, Yufan Huang, Wei Yang Bryan Lim, Ran Yan</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-maribench">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <span class="pub-link disabled">Project Page</span>
+                  <span class="pub-link disabled">Tutorial</span>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-maribench" class="tldr-panel">
+                MariBench is the first interactive agent benchmark for maritime operational judgment over raw AIS — 380 cases
+                from a year of real vessel traffic, hidden behind callable tools and scored on both process and answer across
+                three levels (grounding, judgment, action). Across 17 models from nine providers, grounding is near ceiling
+                (79–100%) yet judgment stalls at 45–62%: the dominant failure is over-escalation, flagging benign artifacts
+                as anomalies on a median of 87% of controls — which greater capability does not fix and human experts largely avoid.
+              </div>
+              <div class="pub-tags">
+                <span># Agent Benchmark</span>
+                <span># Operational Judgment</span>
+                <span># Over-Escalation</span>
               </div>
             </div>
           </article>
@@ -597,7 +633,6 @@
               </div>
             </div>
           </article>
-
         </div>
         </div>
       </section>

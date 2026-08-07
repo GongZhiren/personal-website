@@ -275,9 +275,10 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-.tab-controls { display: flex; gap: 8px; }
+.tab-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .tab-controls .tab-btn {
   border: 1px solid #d5e2ff;
@@ -415,7 +416,8 @@ h1 {
 
 .pub-card img.anchorpath-main,
 .pub-card img.cocurve-main,
-.pub-card img.e2e-main {
+.pub-card img.e2e-main,
+.pub-card img.maribench-main {
   object-fit: contain;
   object-position: center center;
   background: #fff;
