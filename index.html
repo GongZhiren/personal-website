@@ -418,7 +418,7 @@
 
         <div id="theory-panel" class="pub-panel" data-pub-panel="theory">
           <article class="pub-card">
-            <img class="coax-main" src="./assets/coax_main.png?v=3" alt="Conditional Co-Ablation project figure" loading="lazy">
+            <img class="coax-main" src="./assets/coax_main.png?v=4" alt="Conditional Co-Ablation project figure" loading="lazy">
             <div class="pub-main">
               <h3>Conditional Co-Ablation: Recovering Self-Repair Backups in Transformer Circuits</h3>
               <p class="authors"><span class="me">Zhiren Gong</span>, Zihao Zeng, Chau Yuen, Wei Yang Bryan Lim</p>
@@ -433,14 +433,18 @@
                 </div>
               </div>
               <div id="abs-coax" class="tldr-panel">
-                CoAx (conditional co-ablation) recovers dormant self-repair backup components that first-order
-                ablation scores miss, improving backup-head discovery, repair-aware attribution, capability knockout,
-                and structured pruning across transformer circuits.
+                Self-repair means the ablation used to test a circuit can change which circuit carries the
+                behavior, so a circuit that explains the intact model may be incomplete under that very test.
+                CoAx formalizes this as <em>conditional circuit completion</em> and ranks components by how much
+                their ablation effect grows once a supplied primary set is removed &mdash; label-free and
+                forward-only. It recovers GPT-2-small's documented IOI backups at 0.941 ROC-AUC (vs. 0.815 for
+                the strongest intact-state baseline), the recovered heads causally carry the repair, and adding
+                them cuts circuit incompleteness from 0.75 to 0.21.
               </div>
               <div class="pub-tags">
                 <span># Mechanistic Interpretability</span>
                 <span># Self-Repair</span>
-                <span># Circuit Discovery</span>
+                <span># Circuit Completion</span>
               </div>
             </div>
           </article>
