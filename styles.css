@@ -263,6 +263,13 @@ h1 {
   gap: 8px;
 }
 
+.news-topic {
+  color: #6b7a90;
+  font-size: 0.86em;
+  font-style: italic;
+  white-space: nowrap;
+}
+
 .news-line img {
   width: 16px;
   height: 16px;
