@@ -717,3 +717,14 @@ button.pub-link {
   .pub-meta{ gap: 8px; }
   .pub-links{ gap: 6px; }
 }
+
+/* --- definitive mobile fix: block layout so text never overlaps the figure (iOS Safari) --- */
+@media (max-width: 860px){
+  #publications .pub-card{ display:block !important; }
+  #publications .pub-card > img{
+    width:100% !important; height:auto !important; max-height:340px !important;
+    object-fit:contain !important; object-position:center !important;
+    border-right:none !important; border-bottom:1px solid #d8e3ff !important;
+    background:#fff !important;
+  }
+}
