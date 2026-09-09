@@ -706,3 +706,14 @@ button.pub-link {
     gap: 4px;
   }
 }
+
+/* --- publications: mobile/overflow robustness --- */
+.pub-main{ min-width: 0; }
+.pub-main h3, .authors, .tldr-panel{ overflow-wrap: anywhere; }
+.section-head{ flex-wrap: wrap; }
+.tab-controls{ flex-wrap: wrap; }
+@media (max-width: 780px){
+  .pub-card > img{ max-height: 300px; }
+  .pub-meta{ gap: 8px; }
+  .pub-links{ gap: 6px; }
+}

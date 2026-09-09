@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2028%2028%27%3E%3Crect%20width%3D%2728%27%20height%3D%2728%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%20stroke%3D%27%23cfe6f2%27%20stroke-width%3D%271%27/%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2714%27%20r%3D%279%27%20fill%3D%27none%27%20stroke%3D%27%2346c5d9%27%20stroke-width%3D%272%27%20stroke-dasharray%3D%2737%2020%27%20transform%3D%27rotate%28-58%2014%2014%29%27/%3E%3Cline%20x1%3D%2714%27%20y1%3D%2714%27%20x2%3D%2714%27%20y2%3D%276.5%27%20stroke%3D%27%235e8dff%27%20stroke-width%3D%271.1%27/%3E%3Cline%20x1%3D%2714%27%20y1%3D%2714%27%20x2%3D%2721.5%27%20y2%3D%2714%27%20stroke%3D%27%2363dfbf%27%20stroke-width%3D%271.1%27/%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2714%27%20r%3D%273.4%27%20fill%3D%27%233aa88f%27/%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%276%27%20r%3D%271.7%27%20fill%3D%27%235e8dff%27/%3E%3Ccircle%20cx%3D%2722%27%20cy%3D%2714%27%20r%3D%271.7%27%20fill%3D%27%233aa88f%27/%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2722%27%20r%3D%271.7%27%20fill%3D%27%2346c5d9%27/%3E%3Ccircle%20cx%3D%276%27%20cy%3D%2714%27%20r%3D%271.7%27%20fill%3D%27%2363dfbf%27/%3E%3C/svg%3E">
   <title>Zhiren Gong | Academic Homepage</title>
   <meta name="description" content="Personal academic website of Zhiren Gong.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260308">
+  <link rel="stylesheet" href="./styles.css?v=20260910">
 </head>
 <body>
   <div class="page-bg"></div>
@@ -202,9 +203,7 @@
                 </div>
               </div>
               <div id="abs-subspace" class="tldr-panel">
-                SubspacePath Pruner introduces an inference-time pruning mechanism that couples representation probes with
-                parameter pathways, enabling scenario-adaptive routing that retains robustness while reducing unnecessary
-                computation.
+                <strong>SubspacePath Pruner</strong> is an <strong>inference-time, training-data-free</strong> structured pruner: a lightweight probe maps each scenario's representation subspace to a sparse, <strong>head-wise reasoning pathway</strong>, so the model keeps only the attention heads a given domain needs. This scenario-adaptive routing <strong>preserves accuracy while cutting computation</strong>, with no per-scenario fine-tuning.
               </div>
               <div class="pub-tags">
                 <span># Model Efficiency</span>
@@ -230,11 +229,7 @@
                 </div>
               </div>
               <div id="abs-cocurve" class="tldr-panel">
-                Almost every structured-pruning method scores each unit in isolation, assuming set damage is additive — the
-                wrong granularity for a Transformer's shared residual stream. CoCurve prunes attention and FFN units jointly:
-                a single Fisher matrix whose diagonal is node saliency and whose off-diagonal entries are cross-module
-                co-pruning curvature edges, provably a Gram product recoverable from just M single-unit ablations. It leads
-                every capability class on Llama-3.1-8B at 20% and best preserves fragile code — prune the edges, not just the nodes.
+                Most structured pruners score each unit <em>in isolation</em>, the wrong granularity for a Transformer's shared residual stream. <strong>CoCurve</strong> prunes attention and FFN units <strong>jointly</strong> via a Fisher matrix whose off-diagonal entries are cross-module <em>co-pruning curvature</em> edges, recoverable from just M single-unit ablations. It leads every capability class on <strong>Llama-3.1-8B at 20% sparsity</strong> and best preserves fragile code.
               </div>
               <div class="pub-tags">
                 <span># Cross-Module Co-Pruning</span>
@@ -260,11 +255,7 @@
                 </div>
               </div>
               <div id="abs-anchorpath" class="tldr-panel">
-                AnchorPath shows the high-sparsity collapse of training-free structured pruning is a property of the
-                one-shot paradigm — a single quadratic extrapolated across the whole budget — not the importance score.
-                Recasting compression as a calibration-only anchored continuation (a fixed dense anchor, a moving expansion
-                point, K re-anchored steps) cuts perplexity by up to two orders of magnitude versus one-shot at 50%
-                sparsity, while changing only the mask. One-shot second-order pruning is exactly the K=1 case.
+                <strong>AnchorPath</strong> shows the high-sparsity collapse of training-free pruning is a property of the <strong>one-shot paradigm</strong> — one quadratic extrapolated across the whole budget — not the importance score. Recast as a <strong>calibration-only anchored continuation</strong> (a fixed anchor, K re-anchored steps), it cuts perplexity by <strong>up to two orders of magnitude</strong> at 50% sparsity, changing only the mask.
               </div>
               <div class="pub-tags">
                 <span># High-Sparsity Collapse</span>
@@ -290,12 +281,7 @@
                 </div>
               </div>
               <div id="abs-e2e" class="tldr-panel">
-                Data-assisted model merging comes in two regimes: cheap closed-form merging (RegMean/RegMean++) and
-                compute-heavy end-to-end distillation (E2E-Merge). Both optimize the same task-conditioned functional
-                objective — reproduce each expert on its own inputs — so we study <em>when</em> each is worth its cost.
-                Closed-form wins under tight data/compute/memory (and on a Flan-T5 probe); distillation pays once
-                resources are ample and the structural gap is large, reaching up to 94.3% on ViT-L/14. Not a universal
-                winner — a practical accuracy–efficiency frontier.
+                Data-assisted model merging spans two regimes — <strong>cheap closed-form merging</strong> and <strong>compute-heavy end-to-end distillation (E2E-Merge)</strong> — both optimizing the same task-conditioned objective. We map <em>when</em> each is worth its cost: closed-form wins under tight data, compute, or memory; distillation pays once resources are ample, reaching <strong>94.3% on ViT-L/14</strong>. Not a universal winner, but a practical accuracy–efficiency <strong>frontier</strong>.
               </div>
               <div class="pub-tags">
                 <span># Model Merging</span>
@@ -323,8 +309,7 @@
                 </div>
               </div>
               <div id="abs-sot" class="tldr-panel">
-                SoT studies endogenous state-conditioned reasoning to improve quality-efficiency trade-offs across
-                backbones and benchmark families.
+                <strong>State of Thought (SoT)</strong> lets an LLM steer its own reasoning: a compact <strong>dynamics-geometric state</strong> read from the model's internal information transfer drives a <strong>582-parameter</strong> controller that selects the sparse historical evidence each step needs and decides when to stop. Across 3 LLMs and a VLM it <strong>raises accuracy while cutting tokens 65.5% and latency 47.6%</strong>.
               </div>
               <div class="pub-tags">
                 <span># Reasoning</span>
@@ -351,8 +336,7 @@
                 </div>
               </div>
               <div id="abs-active" class="tldr-panel">
-                This work combines active inference with explicit rule constraints to model habit dynamics in sequential
-                decision settings, improving action quality and latency in realistic environments.
+                <strong>Learning Human Habits</strong> combines <strong>active inference</strong> with explicit <strong>rule constraints</strong> to model how habits form and drive behavior in sequential decision settings. The rule-guided formulation makes planning both <strong>more accurate and lower-latency</strong> in realistic environments, while keeping the learned policy interpretable.
               </div>
               <div class="pub-tags">
                 <span># Active Inference</span>
@@ -378,8 +362,7 @@
                 </div>
               </div>
               <div id="abs-lotr" class="tldr-panel">
-                LoTR enhances existing external reasoning paradigms by routing internal computation pathways according to
-                evolving logic states at each reasoning step.
+                <strong>LoTR (Logic-of-Thought Routing)</strong> is a plug-and-play layer for LLM reasoning: instead of following a fixed prompt script, it <strong>routes internal computation pathways</strong> according to the evolving logic state at each step. This lets existing reasoning paradigms adapt on the fly, <strong>improving reasoning quality without extra training</strong>.
               </div>
               <div class="pub-tags">
                 <span># Plug-and-Play</span>
@@ -404,8 +387,7 @@
                 </div>
               </div>
               <div id="abs-paper6" class="tldr-panel">
-                CrossAgentMem improves multi-agent reasoning quality while controlling context overhead, achieving stronger
-                accuracy under a bounded token budget through memory-aware collaboration.
+                <strong>CrossAgentMem</strong> shares memory across agents in multi-turn conversation, guided by <strong>concept profiles</strong> that decide what is worth passing on. This memory-aware collaboration <strong>lifts multi-agent reasoning accuracy under a bounded token budget</strong>, controlling context overhead rather than letting it grow.
               </div>
               <div class="pub-tags">
                 <span># Multi-Agent Reasoning</span>
@@ -433,13 +415,7 @@
                 </div>
               </div>
               <div id="abs-coax" class="tldr-panel">
-                Self-repair means the ablation used to test a circuit can change which circuit carries the
-                behavior, so a circuit that explains the intact model may be incomplete under that very test.
-                CoAx formalizes this as <em>conditional circuit completion</em> and ranks components by how much
-                their ablation effect grows once a supplied primary set is removed &mdash; label-free and
-                forward-only. It recovers GPT-2-small's documented IOI backups at 0.941 ROC-AUC (vs. 0.815 for
-                the strongest intact-state baseline), the recovered heads causally carry the repair, and adding
-                them cuts circuit incompleteness from 0.75 to 0.21.
+                In transformer circuits, <strong>self-repair</strong> means the very ablation used to test a circuit can shift which components carry the behavior, so a circuit that explains the intact model may be incomplete. <strong>CoAx</strong> formalizes this as <strong>conditional circuit completion</strong>, ranking components by how much their effect grows once a primary set is removed — label-free and forward-only. It recovers GPT-2-small's IOI backups at <strong>0.941 ROC-AUC</strong> and cuts circuit incompleteness from <strong>0.75 to 0.21</strong>.
               </div>
               <div class="pub-tags">
                 <span># Mechanistic Interpretability</span>
@@ -464,8 +440,7 @@
                 </div>
               </div>
               <div id="abs-paper4" class="tldr-panel">
-                This paper provides a theory for why sparse MoE architectures can reduce sample complexity barriers
-                compared with dense models via geometry-aware routing and exponent-collapse behavior.
+                This work develops a <strong>theory of sample efficiency for Mixture-of-Experts</strong>: geometry-aware routing lets sparse MoE models <strong>cross learning barriers with far fewer samples than dense networks</strong>, through an <em>information-exponent collapse</em> that lowers the effective complexity of the target function.
               </div>
               <div class="pub-tags">
                 <span># Mixture of Experts</span>
@@ -493,8 +468,7 @@
                 </div>
               </div>
               <div id="abs-xdomain" class="tldr-panel">
-                XDomainBench provides a systematic benchmark for stress-testing large models under cross-domain scientific
-                composition, revealing where and why reasoning collapses as composition complexity increases.
+                <strong>XDomainBench</strong> stress-tests large models on <strong>cross-domain scientific knowledge composition</strong> — combining concepts across fields. It systematically reveals <strong>where and why reasoning collapses</strong> as compositional complexity grows, turning a diffuse failure mode into a measurable, diagnosable benchmark.
               </div>
               <div class="pub-tags">
                 <span># Benchmark</span>
@@ -520,11 +494,7 @@
                 </div>
               </div>
               <div id="abs-maribench" class="tldr-panel">
-                MariBench is the first interactive agent benchmark for maritime operational judgment over raw AIS — 380 cases
-                from a year of real vessel traffic, hidden behind callable tools and scored on both process and answer across
-                three levels (grounding, judgment, action). Across 17 models from nine providers, grounding is near ceiling
-                (79–100%) yet judgment stalls at 45–62%: the dominant failure is over-escalation, flagging benign artifacts
-                as anomalies on a median of 87% of controls — which greater capability does not fix and human experts largely avoid.
+                <strong>MariBench</strong> is the first interactive agent benchmark for <strong>maritime operational judgment over raw AIS</strong> — 380 real cases hidden behind callable tools, scored on both process and answer across three levels. Across 17 models, grounding is near-ceiling (<strong>79–100%</strong>) yet judgment stalls at <strong>45–62%</strong>: the dominant failure is <strong>over-escalation</strong>, flagging benign artifacts as anomalies — which scale doesn't fix but human experts avoid.
               </div>
               <div class="pub-tags">
                 <span># Agent Benchmark</span>
@@ -548,8 +518,7 @@
                 </div>
               </div>
               <div id="abs-paper1" class="tldr-panel">
-                This work studies task-unified RF sensing with vision-language models, aiming to align channel-level signal
-                structures with caption-level semantic outputs in a single framework.
+                <strong>Channel Gains to Captions</strong> unifies multi-level <strong>RF sensing</strong> with vision-language models, aligning channel-level signal structure with caption-level semantics in a <strong>single task-unified framework</strong> — one model that reads wireless signals and describes what they mean.
               </div>
               <div class="pub-tags">
                 <span># RF Sensing</span>
@@ -573,8 +542,7 @@
                 </div>
               </div>
               <div id="abs-paper2" class="tldr-panel">
-                A GAN-based method reconstructs 3D radio maps from sparse aircraft measurements under trajectory constraints,
-                improving reconstruction quality under realistic sensing conditions.
+                A <strong>GAN-based</strong> method reconstructs dense <strong>3D radio maps</strong> from sparse aircraft measurements collected under <strong>constrained flight trajectories</strong>, recovering signal-strength fields that limited sampling misses and improving reconstruction quality under realistic sensing conditions.
               </div>
               <div class="pub-tags">
                 <span># Wireless AI</span>
@@ -599,8 +567,7 @@
                 </div>
               </div>
               <div id="abs-paper5" class="tldr-panel">
-                C2U in RAG studies compositional concept unlearning in retrieval-augmented generation to selectively remove
-                target knowledge while preserving utility on retained concepts.
+                <strong>C2U in RAG</strong> studies <strong>compositional concept unlearning</strong> for retrieval-augmented generation: it selectively removes targeted knowledge — including concepts that emerge only from combinations — while <strong>preserving utility on everything meant to be retained</strong>.
               </div>
               <div class="pub-tags">
                 <span># RAG</span>
@@ -625,8 +592,7 @@
                 </div>
               </div>
               <div id="abs-paper3" class="tldr-panel">
-                This work analyzes capability collapse when LLM-style systems face physical-world, non-semantic modalities,
-                and studies how to build safer and more robust cognition in such settings.
+                When LLM systems meet the <strong>physical world</strong>, task-level competence breaks down on non-semantic, embodied signals. This work argues for moving <strong>beyond task-level toward situation-level</strong> understanding — modeling the broader situation a decision sits in — to build more <strong>robust and reliable</strong> physical-world cognition.
               </div>
               <div class="pub-tags">
                 <span># LLM + Physical World</span>
