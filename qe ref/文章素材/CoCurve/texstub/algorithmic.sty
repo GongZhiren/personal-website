@@ -1,0 +1,27 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{algorithmic}[2024/01/01 minimal stub]
+% Each control line is a new \item with inline bold keywords (no auto-numbering/indent).
+\newenvironment{algorithmic}[1][0]{%
+  \par\begingroup
+  \begin{list}{}{%
+    \setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}%
+    \setlength{\itemsep}{1.6pt}\setlength{\parsep}{0pt}%
+    \setlength{\leftmargin}{1.6em}\setlength{\itemindent}{0pt}%
+    \setlength{\labelwidth}{0pt}\setlength{\labelsep}{0pt}}%
+}{\end{list}\endgroup\par}
+\newcommand{\STATE}{\item}
+\newcommand{\STATEx}{\item[]}
+\newcommand{\REQUIRE}{\item \textbf{Require:}~}
+\newcommand{\ENSURE}{\item \textbf{Ensure:}~}
+\newcommand{\RETURN}{\item \textbf{return}~}
+\newcommand{\PRINT}{\item \textbf{print}~}
+\newcommand{\FOR}[1]{\item \textbf{for} #1 \textbf{do}}
+\newcommand{\ENDFOR}{\item \textbf{end for}}
+\newcommand{\WHILE}[1]{\item \textbf{while} #1 \textbf{do}}
+\newcommand{\ENDWHILE}{\item \textbf{end while}}
+\newcommand{\IF}[1]{\item \textbf{if} #1 \textbf{then}}
+\newcommand{\ELSIF}[1]{\item \textbf{else if} #1 \textbf{then}}
+\newcommand{\ELSE}{\item \textbf{else}}
+\newcommand{\ENDIF}{\item \textbf{end if}}
+\newcommand{\COMMENT}[1]{\hfill\textit{// #1}}
+\endinput

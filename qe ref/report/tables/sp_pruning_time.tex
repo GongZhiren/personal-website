@@ -1,0 +1,31 @@
+\begin{table}[tbp]
+\centering\singlespacing\scriptsize
+\caption{Pruning time and measured speedup across methods and backbones. Pruning time is mean $\pm$ SEM over pruning ratios; speedup is reported as light/aggressive pruning, averaged over six datasets. \SubspacePath{} separates reusable offline preparation from lightweight per-scenario compilation.}
+\label{tab:sp-runtime}
+\setlength{\tabcolsep}{2.4pt}\renewcommand{\arraystretch}{1.04}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Pruning time (s)$\downarrow$} & \textbf{LLaMA-3.1-8B} & \textbf{LLaMA-2-13B} & \textbf{Qwen2.5-7B} & \textbf{Qwen2.5-14B} & \textbf{Method type}\\
+\midrule
+SparseGPT & 287.842{\scriptsize$\pm$2.683} & 403.481{\scriptsize$\pm$5.952} & 282.518{\scriptsize$\pm$2.961} & 487.479{\scriptsize$\pm$1.891} & one-shot unstructured\\
+DaSS & 0.181{\scriptsize$\pm$0.079} & 0.567{\scriptsize$\pm$0.108} & 0.142{\scriptsize$\pm$0.090} & 0.613{\scriptsize$\pm$0.111} & dependency-aware\\
+Wanda & 0.137{\scriptsize$\pm$0.109} & 0.525{\scriptsize$\pm$0.164} & 0.098{\scriptsize$\pm$0.067} & 0.558{\scriptsize$\pm$0.207} & structured\\
+LLM-Pruner & 0.340{\scriptsize$\pm$0.055} & 0.593{\scriptsize$\pm$0.158} & 0.266{\scriptsize$\pm$0.032} & 0.599{\scriptsize$\pm$0.099} & gradient structured\\
+RIA & 0.083{\scriptsize$\pm$0.033} & 0.275{\scriptsize$\pm$0.107} & 0.078{\scriptsize$\pm$0.031} & 0.290{\scriptsize$\pm$0.078} & activation-guided\\
+Probe Pr. & 0.504{\scriptsize$\pm$0.007} & 0.715{\scriptsize$\pm$0.009} & 0.427{\scriptsize$\pm$0.045} & 0.845{\scriptsize$\pm$0.008} & probe-based\\
+\rowcolor{SoftBlue}\textbf{\SubspacePath{}} & \textbf{0.039{\scriptsize$\pm$0.011}} & \textbf{0.060{\scriptsize$\pm$0.013}} & \textbf{0.027{\scriptsize$\pm$0.009}} & \textbf{0.068{\scriptsize$\pm$0.009}} & reusable offline + per scenario\\
+\midrule
+\textbf{Measured speedup$\uparrow$} & \textbf{LLaMA-3.1-8B} & \textbf{LLaMA-2-13B} & \textbf{Qwen2.5-7B} & \textbf{Qwen2.5-14B} & \textbf{light/aggressive}\\
+\midrule
+SparseGPT & 1.01/1.00 & 0.99/1.00 & 1.01/1.00 & 1.01/0.99 & --\\
+DaSS & 0.72/0.55 & 0.40/0.83 & 0.53/0.45 & 0.63/1.07 & --\\
+Wanda & 0.48/0.19 & 0.39/0.42 & 0.22/0.13 & 0.28/0.32 & --\\
+LLM-Pruner & 0.61/0.64 & 0.96/0.80 & 0.66/0.67 & 0.96/0.66 & --\\
+RIA & 0.36/0.19 & 0.40/0.74 & 0.13/0.29 & 0.29/0.32 & --\\
+Probe Pr. & 0.77/0.77 & 1.25/0.96 & 1.25/0.82 & 1.10/0.74 & --\\
+\rowcolor{SoftBlue}\textbf{\SubspacePath{}} & \textbf{1.41/1.35} & \textbf{3.22/1.51} & \textbf{2.01/0.88} & \textbf{1.38/1.29} & --\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

@@ -1,0 +1,72 @@
+{
+ "Qwen2-VL-2B": {
+  "units": 1528,
+  "AA": 0.1886,
+  "AF": 0.1427,
+  "FF": 0.1194,
+  "AF_over_within": 0.9266,
+  "cross_tower": 0.0834,
+  "within_tower": 0.1451,
+  "cross_over_within": 0.5751
+ },
+ "Qwen2.5-VL-3B": {
+  "units": 1672,
+  "AA": 0.2436,
+  "AF": 0.2096,
+  "FF": 0.1924,
+  "AF_over_within": 0.9617,
+  "cross_tower": 0.1606,
+  "within_tower": 0.2207,
+  "cross_over_within": 0.7278
+ },
+ "Qwen2.5-VL-7B": {
+  "units": 1584,
+  "AA": 0.2214,
+  "AF": 0.199,
+  "FF": 0.1845,
+  "AF_over_within": 0.9803,
+  "cross_tower": 0.1491,
+  "within_tower": 0.1997,
+  "cross_over_within": 0.7466
+ },
+ "Qwen3-VL-8B": {
+  "units": 1728,
+  "AA": 0.1721,
+  "AF": 0.1513,
+  "FF": 0.137,
+  "AF_over_within": 0.9793,
+  "cross_tower": 0.1224,
+  "within_tower": 0.1777,
+  "cross_over_within": 0.6888
+ },
+ "InternVL3-8B": {
+  "units": 1328,
+  "AA": 0.277,
+  "AF": 0.2482,
+  "FF": 0.2247,
+  "AF_over_within": 0.9892,
+  "cross_tower": 0.21,
+  "within_tower": 0.2451,
+  "cross_over_within": 0.8565
+ },
+ "LLaVA-NeXT-7B": {
+  "units": 1536,
+  "AA": 0.1576,
+  "AF": 0.1308,
+  "FF": 0.1118,
+  "AF_over_within": 0.9707,
+  "cross_tower": 0.116,
+  "within_tower": 0.1419,
+  "cross_over_within": 0.8177
+ },
+ "LLaVA-1.5-7B": {
+  "units": 2304,
+  "AA": 0.2568,
+  "AF": 0.2018,
+  "FF": 0.169,
+  "AF_over_within": 0.948,
+  "cross_tower": 0.2081,
+  "within_tower": 0.2333,
+  "cross_over_within": 0.8921
+ }
+}

@@ -1,0 +1,38 @@
+Given the current historical observation sequence $\{O_{t-H+1:t-1}\}$, the historical action sequence $\{a_{t-H+1:t-1}\}$, and the new state predictions $\hat{O}_t$, $S_t$ and belief parameter $\theta_t$ obtained via the world model and belief inference, we first retrieve from the habitual‐rule repository \(R\) the set of all rules whose antecedents match:
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Single‐rule hit:} If \(R = \{r\}\), then
+    \[
+      a_t = r.\mathrm{action}
+      \quad\text{(skip rollout).}
+    \]
+  \item \textbf{No‐rule hit:} If \(R = \emptyset\), we perform a multi‐step Beam Search (see Appendix 2) of depth \(P\), iteratively expanding:
+    \[
+      B_i = \mathrm{Top}\!-\!K\bigl\{\,(a,\;\mathrm{score}+F_i,\;\theta_{t+i},\;S_{t+i})
+      \mid (a,\;\mathrm{score},\;\theta_{t+i-1},\;S_{t+i-1}) \in B_{i-1},\;a\in A \bigr\},
+    \]
+    ultimately obtaining
+    \[
+      \{\,a^*_{t:t+P-1}\}
+      = \arg\min_{a_{t:t+P-1}}\sum_{\tau=0}^{P-1}F(\tau),
+      \quad a_t = a^*_t.
+    \]
+  \item \textbf{Multi‐rule hit:} If \(\lvert R\rvert > 1\), then for each rule action \(a_r\) we compute its single‐step free energy $F_t(a_r)
+      = \alpha\,\mathrm{VFE}(a_r)
+      + \beta\,\mathrm{EFE}(a_r)
+      + \gamma_t\,\mathrm{KL},$
+    apply an ``energy modulation'' based on the rule weight \(w_r\):
+    \[
+      \tilde{F}(a_r)
+      = F(a_r)
+      - \lambda\,\ln w_r,\quad \lambda>0,
+    \]
+    and finally sample within the rule set according to a Soft‐Min distribution:
+    \[
+      p_t(a_r)
+      = \frac{\exp\bigl(-\tilde{F}_t(a_r)\bigr)}
+             {\sum_{r'}\exp\bigl(-\tilde{F}_t(a_{r'})\bigr)},
+    \]
+    so that higher‐weight rules are more likely to be adopted, still preserving free‐energy optimality.
+\end{enumerate}
+This design preserves the efficiency of rule‐based instantaneous decisions, yet—when no rule applies or uncertainty is high—enables flexible, far‐sighted planning via the world model.  It thus embodies the core principle of ``biologically plausible, rule‐guided active inference.'' 

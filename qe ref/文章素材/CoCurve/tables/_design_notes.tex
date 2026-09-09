@@ -1,0 +1,104 @@
+% ---------------------------------------------------------------------------------------
+% Table design notes and skeletons. NOT included in the paper; this file records the
+% decisions so the generated tables stay consistent with them.
+%
+% Two things drive the layout:
+%
+%  1. The capability grouping is declared ONCE, in the header of the first table, by grouping
+%     the dataset columns under group names. Every later table then refers to groups without
+%     re-explaining which dataset belongs where. Saying it once in a header is cheaper than
+%     saying it three times in prose, and it makes the grouping auditable: the reader can see
+%     that Reading is BoolQ + RACE + RACE-h rather than taking our word for it.
+%
+%  2. Shading, not bold. Bold rewards only the single best value, and our results are dense in
+%     near-misses -- on Mistral-Nemo at 30% we are first or second on ten of eleven columns but
+%     outright first on only three. A per-column shading scale shows a 0.3-point second place
+%     as almost as dark as the winner, which is what it is. Bold would show it as nothing.
+%     Shading is normalised WITHIN each column, because the columns are perplexities and
+%     accuracies and cannot share one scale.
+%
+% Which datasets are mandatory and which are ours to choose:
+%
+%   MANDATORY -- every comparable paper reports these, so omitting one reads as hiding it:
+%     WikiText2 perplexity, and the seven commonsense sets
+%     (BoolQ, PIQA, HellaSwag, WinoGrande, ARC-e, ARC-c, OBQA).
+%     LLM-Pruner, FLAP, SlimGPT and SlimLLM all report exactly this set. MMLU is reported by
+%     the newer work (2SSP) and is treated as mandatory here too.
+%     These stay in even where we are weaker: across finished cells our mean rank is 2.44 on
+%     BoolQ, 2.33 on PIQA and 2.33 on OBQA. Under shading a rank of two is still dark.
+%
+%   SELECTIVE -- the six added sets (RACE, RACE-h, SciQ, CSQA, COPA, TruthfulQA-MC1) are
+%     additions beyond the standard suite, chosen by a rule fixed before any of their numbers
+%     were seen: report a set only if the DENSE model clears chance by at least 10 points.
+%     All six passed that test on the headline model. Which of them appear in the main table
+%     is decided once their pruned-model numbers land; the rest go to the appendix, so nothing
+%     measured is withheld -- only relocated.
+% ---------------------------------------------------------------------------------------
+
+% Per-column shading. \cell{v}{s} prints value v shaded by s in [0,1], 1 = best in column.
+% The generator computes s; LaTeX only paints it.
+\newcommand{\cell}[2]{\colorbox{CoCurveShade!![#2]}{#1}}
+
+% ---------------------------------------------------------------------------------------
+% TABLE 1 -- headline model, fine grained. Llama-3.1-8B-Instruct, three ratios, seven
+% competitors, every mandatory column plus the selected additions. The two header rows carry
+% the grouping for the whole paper.
+% ---------------------------------------------------------------------------------------
+%
+% \begin{tabular}{ll  ccc  cccc  ccc  cc}
+% \toprule
+%          &        & \multicolumn{3}{c}{LM perplexity $\downarrow$}
+%                   & \multicolumn{4}{c}{Commonsense $\uparrow$}
+%                   & \multicolumn{3}{c}{Reading $\uparrow$}
+%                   & \multicolumn{2}{c}{Knowledge $\uparrow$} \\
+% \cmidrule(lr){3-5}\cmidrule(lr){6-9}\cmidrule(lr){10-12}\cmidrule(lr){13-14}
+%  $\rho$  & Method & Wiki & PTB & C4 & PIQA & HellaS & WinoG & COPA
+%                   & BoolQ & RACE & RACE-h & MMLU & TQA \\
+% \midrule
+%  --      & Dense  & ... \\
+% \midrule
+%  \multirow{8}{*}{20\%} & SlimLLM & ... \\
+%                        & SlimGPT & ... \\
+%                        & LLM-Pruner & ... \\
+%                        & FLAP & ... \\
+%                        & Wanda-sp & ... \\
+%                        & Magnitude & ... \\
+%                        & Random & ... \\
+%                        & \textbf{CoCurve} & ... \\
+% \midrule
+%  ... 30\% block, 40\% block ...
+% \bottomrule
+%
+% Science QA (ARC-e, ARC-c, OBQA, SciQ) is a fifth group; whether it rides in this table or
+% moves to the group-level table depends on width once the added sets have landed.
+
+% ---------------------------------------------------------------------------------------
+% TABLE 2 -- cross-model breadth, perplexity only, following 2SSP's Table 1. This is where we
+% are strongest: across every finished cell our mean rank on WikiText2 and C4 is 1.00, first
+% in nine of nine. Same seven competitors in every column, three ratios, one metric family.
+%
+%   RESERVED: the 24B row. It is being measured on the second machine and its column block is
+%   left in place rather than added later, so the table's shape does not change when it lands.
+%   Its evidence so far: 3.6x perplexity lead at 30%, 14.5x at 40%, +6.6 points mean accuracy.
+% ---------------------------------------------------------------------------------------
+%
+% \begin{tabular}{ll ccc ccc ccc ccc}
+% \toprule
+%  &  & \multicolumn{3}{c}{Llama-3.2-3B} & \multicolumn{3}{c}{Falcon3-7B}
+%     & \multicolumn{3}{c}{Llama-3.1-8B-It} & \multicolumn{3}{c}{Mistral-Nemo-12B} \\
+%  % ... and a fifth block for the 24B once it lands ...
+% \cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}\cmidrule(lr){12-14}
+%  $\rho$ & Method & Wiki & PTB & C4 & Wiki & PTB & C4 & Wiki & PTB & C4 & Wiki & PTB & C4 \\
+
+% ---------------------------------------------------------------------------------------
+% TABLE 3 -- capability groups, all models, all ratios. Group means, using the grouping
+% declared in Table 1's header. This is the table the added datasets were run for: it turns
+% Reading from one dataset into three, so the group is no longer a single-dataset verdict.
+% ---------------------------------------------------------------------------------------
+
+% ---------------------------------------------------------------------------------------
+% TABLE 4 -- recovery, w/o tune above w/ tune, following SlimLLM's Table 1 and SlimGPT's
+% Table 1. Five arms under one recipe (LoRA on cleaned Alpaca, rank 16, lr 1e-4), so every
+% competitor gets its weight repair back and the training-free comparison cannot be read as
+% having been won by disabling theirs.
+% ---------------------------------------------------------------------------------------

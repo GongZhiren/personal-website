@@ -1,0 +1,217 @@
+\section{Method}
+\label{sec:method}
+
+We target dense decoder-only LLMs and prune two kinds of structured units: attention units
+(a head in multi-head attention, or a KV-aligned query-head group in grouped-query
+attention~\citep{ainslie2023gqa}) and FFN groups (contiguous blocks of intermediate
+channels). Let $\Uset=\{u_1,\dots,u_M\}$ collect all such units across all layers, with a removable
+parameter cost $c_u=\Param(u)$ each. Each unit carries a keep gate $m_u$ scaling its write into the residual stream, and we write
+$s_u=1-m_u$ for the pruning variable: $s_u{=}0$ keeps unit $u$ and $s_u{=}1$ zeroes its write. The
+deployed mask is binary, $s\in\{0,1\}^M$. The gate is real-valued, so $\mathcal{R}$ below is defined on
+a neighbourhood of $\mathbf 0$ in $\mathbb{R}^M$ and $\mathbf 0$ is an interior point rather than a
+vertex of the cube, which is what makes its expansion well posed. Speedups are measured on models whose weight matrices are
+physically sliced, not on masked full-size ones (\cref{app:units}).
+
+\subsection{Pruning risk as second-order self-distillation}
+\label{sec:method-risk}
+
+Let $f_0$ be the frozen full model (the teacher) with next-token distribution
+$p_0(\cdot\mid x_{\le t})=\mathrm{softmax}(z_0(x,t))$ over a vocabulary of size $V$, and let $f_s$ be
+the masked model with distribution $p_s$. Given a small unlabeled calibration set
+$\mathcal{C}$ and a deterministic set of token positions $\mathcal{T}(x)$ per sequence, we define the
+pruning risk as the token-level self-distillation KL divergence
+\begin{equation}
+\mathcal{R}(s)=\mathbb{E}_{x\in\mathcal{C}}\Big[\tfrac{1}{|\mathcal{T}(x)|}
+\textstyle\sum_{t\in\mathcal{T}(x)}\KL\big(p_0(\cdot\mid x_{\le t})\,\|\,p_s(\cdot\mid x_{\le t})\big)\Big].
+\label{eq:risk}
+\end{equation}
+This objective is label-free and ties directly to output behaviour. Its defining property is its local
+geometry. The masked model equals the teacher at $s=\mathbf{0}$, so the two distributions coincide there. Since
+$\KL$ is non-negative and vanishes only at equality, $\mathbf 0$ is an interior minimiser of
+$\mathcal{R}$, and both the value and the gradient vanish there:
+\begin{equation}
+\mathcal{R}(\mathbf{0})=0,\qquad \nabla_s\mathcal{R}(\mathbf{0})=0.
+\label{eq:vanish}
+\end{equation}
+A second-order Taylor expansion around the full model has no first-order term, and the leading
+behaviour is a pure quadratic:
+\begin{equation}
+\mathcal{R}(s)\;\approx\;\tfrac{1}{2}\,s^\top \Hmat^\star\, s,
+\qquad
+\Hmat^\star=\nabla_s^2\mathcal{R}(s)\big|_{s=\mathbf{0}}\in\mathbb{R}^{M\times M}.
+\label{eq:quadratic}
+\end{equation}
+For binary masks $s_u^2=s_u$, so expanding \cref{eq:quadratic} gives the central decomposition
+\begin{equation}
+\mathcal{R}(s)\approx
+\underbrace{\tfrac12\textstyle\sum_{u}\Hmat^\star_{uu}\,s_u}_{\text{node saliency (diagonal)}}
+\;+\;
+\underbrace{\textstyle\sum_{u<v}\Hmat^\star_{uv}\,s_u s_v}_{\text{co-pruning edges (off-diagonal)}}.
+\label{eq:decomp}
+\end{equation}
+
+\begin{remark}[Node saliency is the diagonal special case]
+Dropping the off-diagonal terms reduces \cref{eq:decomp} to a sum of independent saliencies
+$\tfrac12\sum_u \Hmat^\star_{uu}s_u$, i.e.\ an Optimal-Brain-Damage--style criterion~\citep{lecun1989obd}
+lifted to structured units (formalized in \cref{prop:obd}). The cross-module edges $\Hmat^\star_{uv}$ encode how the
+removal of $u$ and $v$ interacts: $\Hmat^\star_{uv}>0$ means co-pruning is more harmful than the
+units' individual terms predict; $\Hmat^\star_{uv}<0$ means their perturbations partly cancel under the
+Fisher metric; $\Hmat^\star_{uv}\approx 0$ means they are second-order independent. A low-saliency
+\emph{bridge} unit (small $\Hmat^\star_{uu}$) with many strong edges is thus protected by an accurate estimator, because pruning it
+together with its partners is costly, exactly the failure mode node-first scoring misses.
+\end{remark}
+
+\subsection{Estimating the edge matrix from single-unit ablations}
+\label{sec:method-estimate}
+
+The exact Hessian $\Hmat^\star$ in \cref{eq:quadratic} \emph{is} the Fisher curvature of \cref{eq:risk}, not a
+Gauss--Newton approximation of it: the KL gradient in logit space vanishes at $s=\mathbf 0$
+(\cref{prop:vanish}), so the term a Gauss--Newton step would drop is exactly zero there. And it has a
+closed form we can evaluate. For one token position the KL Fisher in logit space is
+$F_{x,t}=\mathrm{diag}(p_0)-p_0 p_0^\top$, and to second order the KL between teacher and masked model is the Fisher-weighted norm of the logit
+perturbation $\Delta z_s:=z_0-z_s$, that is $\KL(p_0\|p_s)\approx\tfrac12\,\Delta z_s^\top F\,\Delta z_s$
+(\cref{prop:fisher}). The key practical step is that this perturbation is, to leading order,
+additive across units: if $\delta z_u(x,t)=z_0(x,t)-z_{-u}(x,t)$ is the logit shift from
+masking unit $u$ alone, then $\Delta z_s\approx\sum_u s_u\,\delta z_u$. Writing
+$J_u=\partial z_s/\partial s_u|_{s=\mathbf 0}$, the exact entry is
+$\Hmat^\star_{uv}=\mathbb E_{x,t}[J_u^\top F_{x,t}J_v]$. Replacing $J_u$ by the observed
+full-ablation displacement $\delta z_u$ gives the finite-ablation estimator used by the algorithm,
+\begin{equation}
+\Hmat_{uv}:=\mathbb{E}_{x,t}\big[\,\delta z_u(x,t)^\top F_{x,t}\,\delta z_v(x,t)\,\big].
+\label{eq:huv}
+\end{equation}
+Whitening the perturbation into its probability-weighted, mean-centred form
+$\widetilde{\delta z}_u=\sqrt{p_0}\odot(\delta z_u-\mathbb{E}_{y\sim p_0}[\delta z_{u,y}])$ turns the
+Fisher inner product into a plain dot product (\cref{app:estimation}), giving
+\begin{equation}
+\Hmat_{uv}=\tfrac{1}{P}\,\bar{D}_u^\top \bar{D}_v,
+\qquad \bar{D}_u=\mathrm{vec}\big(\{\widetilde{\delta z}_u(x,t)\}_{x,t}\big),
+\label{eq:gram}
+\end{equation}
+where $\bar D$ is the matrix with columns $\bar D_u$ and $P$ is the total number of calibration
+positions: we keep a fixed number of positions per sequence, so $P$ is that count times the number of
+sequences ($128\times128$ here) and pooling the positions is the same average as the nested one in
+\cref{eq:risk}. The entire $M\times M$ edge matrix is therefore a Gram matrix of \emph{single-unit}
+feature vectors. It estimates $\Hmat^\star$ with $M$ single-unit ablation passes, one per unit, rather than $O(M^2)$ pairwise
+ablations, and needs no gradients or Hessian-vector products. From here on $\Hmat$ denotes this
+estimated matrix, and
+\cref{app:th-est} separates the two approximations involved and measures both. The $V\times V$ Fisher is never materialised: features live on the teacher's top-$r$ logit
+coordinates, renormalised to sum to one and shared across units, so the Gram remains valid and $F$ is
+the Fisher of that truncated distribution (\cref{rem:exact}).
+\Cref{app:estimation} gives the implementation and its complexity.
+
+\subsection{One-shot cost-normalised greedy co-pruning}
+\label{sec:method-solver}
+
+Write $\widehat{\mathcal R}_\lambda(s)=\tfrac12\sum_u\Hmat_{uu}s_u+\lambda\sum_{u<v}\Hmat_{uv}s_us_v$ for
+the surrogate risk of \cref{eq:decomp}, with the interaction strength $\lambda$ of
+\cref{sec:method-lambda}. Given a target ratio $\rho$, pruning solves the budgeted binary quadratic
+program
+\begin{equation}
+\min_{s\in\{0,1\}^M}\;\widehat{\mathcal R}_\lambda(s)
+\quad\text{s.t.}\quad \textstyle\sum_{u}c_u s_u\;\ge\;\rho\textstyle\sum_u c_u .
+\label{eq:objective}
+\end{equation}
+Attention units and FFN groups share one budget pool, so how the budget divides between the two types
+emerges from the optimisation rather than being fixed. Exact solution is intractable. We use a one-shot
+greedy solver on the fixed surrogate, with no weight updates and no re-estimation of $\Hmat$.
+Maintaining the cumulative perturbation of the current set $S$, the marginal risk of adding unit $u$
+is
+\begin{equation}
+\Delta R(u\mid S)=\tfrac12 \Hmat_{uu}+\textstyle\sum_{v\in S}\Hmat_{uv}=\tfrac12\Hmat_{uu}+g_u^{(S)},
+\label{eq:marginal}
+\end{equation}
+where $g_u^{(S)}=\sum_{v\in S}\Hmat_{uv}$ is a running interaction accumulator updated in $O(M)$ by
+$g\!\leftarrow\! g+\Hmat_{:,u^\star}$ after each selection. At each step we pick the unit with the
+smallest cost-normalised marginal risk, $u^\star=\arg\min_{u\notin S}\Delta R(u\mid S)/c_u$, and
+stop once the budget is met. The solver is $O(M|S|)$ for $|S|$ selected units, and \cref{alg:edge-taylor} (\cref{app:solver})
+summarises the full pipeline. A per-layer cap keeps removal from concentrating; it is shared by every
+method we compare, at every ratio, and specified in \cref{app:protocol}.
+
+\subsection{Interaction strength: a path, not a hyperparameter}
+\label{sec:method-lambda}
+
+The diagonal follows from single-unit ablations alone. The off-diagonal additionally assumes that
+simultaneous removals perturb the logits additively (\cref{eq:huv}), so we weight it by a single
+\emph{interaction strength} $\lambda\in[0,1]$,
+\begin{equation}
+\widehat{\mathcal R}_\lambda(s)=\tfrac12\textstyle\sum_u\Hmat_{uu}s_u
++\lambda\textstyle\sum_{u<v}\Hmat_{uv}s_u s_v,
+\label{eq:lambda}
+\end{equation}
+so that $\lambda\!=\!0$ recovers pure node saliency and $\lambda\!=\!1$ the full edge model. The $\lambda\!=\!0$ endpoint is a floor rather than an arbitrary limit. It is exactly the OBD diagonal
+selector (\cref{app:classical}), so whatever $\lambda$ we end up with, the method degrades at worst to
+a strong classical second-order baseline.
+
+Choosing it is not a fitting problem. The solver consumes only the \emph{order} the marginals
+induce, so $\lambda$ has to be chosen by what the selections it produces actually cost --- and that
+quantity turns out to be exactly computable.
+
+\textbf{The family of solutions is finite.} What the solver does consume is the ordering of the
+conditional marginals $\Delta_\lambda(u\mid S)=\tfrac12\Hmat_{uu}+\lambda\,g_u^{(S)}$. Normalised by
+cost, each candidate contributes an affine function of $\lambda$,
+\begin{equation}
+\Delta_\lambda(u\mid S)/c_u \;=\; \mu_u+\lambda\,\nu_u,
+\qquad \mu_u=\tfrac{\Hmat_{uu}}{2c_u},\qquad \nu_u=\tfrac{g_u^{(S)}}{c_u},
+\label{eq:affine}
+\end{equation}
+so within a single greedy step the arg-min can change only where two of these lines cross. Every step of the solver therefore switches at finitely many values of $\lambda$, and the solution
+$S_\lambda$ is \emph{piecewise constant}. The family $\{S_\lambda:\lambda\in[0,1]\}$ is a finite set of
+prunings, a few hundred per model rather than a continuum.
+
+\textbf{The family can be enumerated exactly.} Because \cref{eq:affine} is affine, the crossings are
+available in closed form. Starting at $\lambda\!=\!0$, the earliest crossing over all greedy steps is the right endpoint of the
+interval on which the current solution is optimal. Stepping just past it and re-solving moves to the
+next member, and repeating walks the whole family; the step past each crossing is $10^{-9}$, nearly
+three orders of magnitude below the narrowest interval on which any member of the ten enumerated
+families is optimal, $7.6\times10^{-7}$ (\cref{app:lambda}). The construction is the same critical-value walk that makes the
+LASSO path enumerable by LARS~\citep{efron2004lars}, borrowed for its mechanics rather than its
+guarantees: LARS traces the exact optimum of a convex problem and its path is piecewise linear, while
+$S_\lambda$ is the path of a greedy heuristic and is piecewise constant. The walk is CPU-only, one greedy solve per breakpoint and no
+forward passes, and what the selection then costs is one masked forward pass per distinct
+\emph{member} --- $303$ of them on Llama-3.1-8B-Instruct. Sampling $\lambda$ is not a substitute at any
+price. The median interval width is $1.4\times10^{-3}$ across the ten models, so a grid at step $0.002$
+still reaches a median of only $61\%$ of the members and as few as $35\%$: it misses solutions rather
+than costing more (\cref{app:lambda}).
+
+\textbf{Selection is then a held-out measurement.} With the family in hand there is nothing left to
+search over; we keep the member with the lowest measured held-out risk,
+\begin{equation}
+\hat\lambda=\arg\min_{\lambda\in[0,1]}\ \mathcal{R}(S_\lambda;\mathcal{C}'),
+\label{eq:lambdahat}
+\end{equation}
+where $\mathcal{R}(\cdot\,;\mathcal{C}')$ is the same token-level KL of \cref{eq:risk}, measured on a
+calibration split $\mathcal{C}'$ held out from the one that built $\Hmat$. No labels and no benchmark enter, and each $S_\lambda$ is judged by measured risk rather than by the
+surrogate that proposed it. Every member is scored on the same sequences, so differences across
+$\lambda$ are paired and we report them in paired standard errors. The cost is one masked forward pass
+per member over a small held-out set, against the $M$ ablations $\Hmat$ already requires.
+
+Two properties of this rule matter for how the results below should be read. First, the setting is
+fixed before any benchmark is seen: $\hat\lambda$ is chosen on held-out risk, so no test set enters the
+selection, and we deliberately do not pick the member that scores best downstream --- a family member
+tuned on perplexity would be a different and much weaker claim. Second, the criterion is flat near its
+optimum. Neighbouring members sit within its own noise: on the headline model the member at
+$\lambda{=}0.15$ carries $2.1\%$ more held-out risk, $1.3$ paired standard errors, and lands at a
+comparable operating point. The rule therefore does not need to be delicate to be useful, and
+\cref{app:lambda-robust} confirms that resampling the held-out set and changing the selection protocol
+move it very little.
+
+\textbf{What the resulting curve says.} The diagonal contributes one term to the marginal while the
+off-diagonal contributes $|S|$ of them, so a balanced combination would sit near
+$\lambda\sim 1/(2|S|\bar\rho_S)$, with $\bar\rho_S$ the mean curvature correlation over in-set pairs
+(\cref{prop:offdiag}) --- of order $10^{-2}$ at the ratios we prune. The criterion lands at or
+below that scale: $\hat\lambda<0.1$ on nine of the ten models and exactly $0$ on two. The off-diagonal
+is worth consulting and is damped hard, and at $\hat\lambda$ it still supplies a median $12\%$ to
+$46\%$ of the winning score. $\mathcal{R}(S_\lambda)$ has an \emph{interior} minimum on eight of the ten models we measure. Both $\lambda\!=\!0$ (no edges) and $\lambda\!=\!1$ (full trust) are
+worse than the calibrated combination, which is direct evidence that the off-diagonal carries signal
+and that it must nonetheless be damped. On the other two the selected segment begins at
+$\lambda\!=\!0$ and the procedure returns the diagonal selector unchanged. That is what \cref{eq:lambdahat} buys: the
+diagonal solution is itself a member of the family being minimised over, so the criterion cannot
+return something with higher held-out risk than node saliency alone. We measure $\mathcal{C}'$ at the deployment
+context length, so the risk we minimise is the risk the pruned model will incur; the selection is
+insensitive to that choice either way (\cref{app:lambda}).
+
+\paragraph{One matrix, two uses.} The couplings that say what not to remove together also say how the
+survivors should absorb what was removed. The same blocks of $\Hmat$ give a coupling-aware
+compensation on the kept FFN units in closed form, from one small ridge solve (\cref{app:comp}). Every
+number outside \cref{sec:exp-recovery} is selection-only.

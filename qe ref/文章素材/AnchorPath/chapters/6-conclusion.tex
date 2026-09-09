@@ -1,0 +1,6 @@
+\section{Conclusion}
+% Structured pruning collapses at high sparsity because of the \emph{one-shot paradigm} itself: a single quadratic built at the dense model and extrapolated across the whole budget must leave its trust region, and no importance score can repair an expansion carried too far.
+% Recasting pruning as an \emph{anchored continuation} pushes this ceiling back, re-linearizing along the budget against a fixed dense teacher so that a first-order drift term one-shot discards is revived and the super-exponential blow-up becomes graceful degradation.
+% Because only the mask changes, the gain is \emph{inspectable}, tracing to structural units---attention heads above all---invisible to a dense-point quadratic.
+
+Structured pruning degrades sharply at high sparsity because a surrogate built at the dense model is reused across the entire removal budget. Recasting pruning as an \emph{anchored continuation} pushes the ceiling back, refreshing perturbations along the budget against a fixed dense teacher so that the first-order drift absent from a dense-point expansion enters the selection and the compounding degradation becomes graceful. Because only the mask changes, the gain is \emph{inspectable}, tracing to structural units, attention heads above all, that a dense-point surrogate protects.

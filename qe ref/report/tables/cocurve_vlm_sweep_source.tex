@@ -1,0 +1,21 @@
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Qwen2.5-VL-7B} & \multicolumn{2}{c}{Qwen3-VL-8B} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Selector & $20\%$ & $30\%$ & $20\%$ & $30\%$ \\
+\midrule
+Dense (no pruning) & 81.6 & 81.6 & 83.4 & 83.4 \\
+\midrule
+\textbf{\method} & \textbf{74.4} & \textbf{63.6} & \textbf{71.1} & \textbf{57.7} \\
+\quad diagonal only ($\lambda{=}0$) & 73.5 & 61.1 & 66.5 & 50.1 \\
+\midrule
+LLM-Pruner & 72.2 & 57.2 & 65.8 & 47.0 \\
+Wanda-sp & 62.9 & 52.2 & 40.5 & 35.9 \\
+FLAP & 73.3 & 58.5 & 68.4 & 46.5 \\
+ShortGPT (layer drop) & 35.3 & 35.2 & 35.2 & 35.3 \\
+Magnitude & 72.9 & 58.7 & 57.0 & 37.7 \\
+Random & 64.4 & 46.2 & 53.8 & 41.2 \\
+\midrule
+\emph{\method retention of dense} & 86\% & 64\% & 76\% & 50\% \\
+\bottomrule
+\end{tabular}

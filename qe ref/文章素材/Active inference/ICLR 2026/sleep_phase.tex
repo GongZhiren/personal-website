@@ -1,0 +1,65 @@
+\textbf{Candidate Rule Pool Construction.} For each action pair $\langle p,a,\Delta F\rangle$ obtained in the Wake phase, we update each key as follows:
+\[
+\sup_{(p,a)} = \frac{N(p,a)}{\sum_{a'}N(p,a')},\quad
+\mathrm{conf}_{\mathrm{new}} =
+\begin{cases}
+   \Delta F, & \text{if first occurrence},\\
+   \lambda\,\mathrm{conf}_{\mathrm{old}}+(1-\lambda)\,\Delta F,
+      & \text{otherwise}.
+\end{cases}
+\]
+and apply simple exponential decay $\mathrm{conf}\leftarrow \lambda\,\mathrm{conf}$ to non-updated entries. Meanwhile, if a rule is triggered (see Section~4.2.2), its confidence is slightly bumped; if a rule is not triggered beyond a threshold, it is multiplied by a decay rate until it falls below the minimum confidence and is removed. We then prune by support and confidence quantiles and enforce an upper bound on pool size.
+
+\textbf{Predicate Extraction and Optimization.} Predicates discretize continuous environmental or action-related features into symbolic conditions, supporting subsequent logical rule learning and matching. This module comprises two stages: initial predicate generation and sequential predicate extraction.
+
+In the initial predicate generation stage, for each continuous environmental variable, we partition its range into $B$ equidistant bins per dimension $j=1,\dots,m$, obtaining boundaries $\{b_{0}^{j},\dots,b_{B-1}^{j}\}$ and mapping each $P_{m}$ to a bin index tuple
+\[
+\mathrm{bin}(P_{m})=(i_{1},\dots,i_{m}),\quad i_{j}=\min\{k:b_{k}^{j}\le P_{m,j}\le b_{k+1}^{j}\}.
+\]
+Based on corresponding frequencies $\sup(\pi_{k})$, we filter to form the initial predicate set
+\[
+P_{0}=\{\pi_{k}:\sup(\pi_{k})\ge \delta_{P}\}.
+\]
+
+In the sequential predicate extraction stage, for each observed action sequence $\{O_{t-l:t},a_{t-l:t}\}$ from the current rule pool, we output a concise set of predicates $P=\{(f_{i},\mathrm{op},v_{i})\}$, where $f_{i}$ is the feature name, $\mathrm{op}\in\{\le,>,\in\}$ is the logical relationship, and $v_{i}$ is a threshold or interval, thus mapping the “state–action” path to composable symbolic conditions. We then aggregate and retain the top $K$ strongest predicates, iteratively refining their descriptive power in repeated cycles.
+
+\textbf{Rule Abstraction.} For each predicate $p$ and all aggregated candidate predicates under $p$, we compute branch frequency $f$, mean support $\bar{s}$, and mean $\Delta F$. After discarding branches with low $\Delta F$ or $f<\rho$, we compute a composite normalized score:
+\[
+\begin{aligned}
+  \mathrm{score}
+    &= \sum_{k\in\{\mathrm{freq},\sup,\Delta F\}}
+       w_k \frac{v_k-\min v_k}{\max v_k-\min v_k},\quad
+  \mathrm{weight}_{(p,a)}
+    = \frac{\mathrm{score}_{(p,a)}}
+           {\sum_{a'}\mathrm{score}_{(p,a')}}\,. 
+\end{aligned}
+\]
+retaining candidates with $\mathrm{weight}\ge \delta_{\mathrm{weight}}$ to form the final rule set $R$.
+
+\textbf{Model Optimization.} Given a batch of real observations $\{O_{1:T}\}$, we sequentially invoke the world model and belief model (see Section~4.2.1):
+\[
+\begin{cases}
+\hat{O}_{t} = f_{\mathrm{env}}(O_{t-H+1:t-1},\,a_{t-H+1:t-1}),\\
+S_{t} = f_{st}(O_{t-H+1:t-1},\,\hat{O}_{t},\,a_{t-H+1:t-1},\,\theta_{t-H+1:t-1}),\\
+\theta_{t} = (\mu_{t},\sigma_{t}) = g_{\theta}(\theta_{t-1},\,\hat{O}_{t},\,S_{t}).
+\end{cases}
+\]
+We compute the free energy at each step (see Section~4.2.2):$F_{t} = \alpha\,\mathrm{VFE}_{t} + \beta\,\mathrm{EFE}_{t} + \gamma_{t}\,\mathrm{KL}_{b},$
+and accumulate the batch loss
+\[
+\ell_{\mathrm{FE}} = \frac{1}{B(T-1)}\sum_{i=1}^{B}\sum_{t=1}^{T-1}F_{t}^{(i)},
+\]
+where $\alpha,\beta$ are hyperparameters and $\gamma_{t}$ follows a linear warm-up $\gamma_{t} = \min\bigl(1,\,t/T_{\mathrm{warmup}}\bigr)\,\gamma_{\max}.$
+Optionally, we include a cross-entropy loss between policy network logits $\ell_{t,a}$ and true actions $a_{t}$:
+\[
+\ell_{\mathrm{ce}} = -\sum_{t}\log\ softmax(\ell_{t})_{a_{t}},
+\]
+though in our chosen dataset this term is negligible. The total loss is
+\[
+\ell = \ell_{\mathrm{FE}} + \lambda_{\mathrm{ce}}\,\ell_{\mathrm{ce}},
+\]
+and parameters $(\phi,\varphi)$ are updated via Adam on $\nabla_{\phi,\varphi}\ell$.
+
+
+
+In pretraining, the training set is split into $K$ equally sized blocks; on each block we perform Wake (rule discovery) followed by Sleep (model and rule refinement), progressively enriching the candidate rule pool and world model. In full training, similarly, we omit block alternation and repeatedly execute Wake–Sleep over the entire dataset in a single loop.

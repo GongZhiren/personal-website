@@ -1,0 +1,191 @@
+Official Review of Submission26546 by Reviewer EmYM
+Official Reviewby Reviewer EmYM04 Jul 2025, 03:43 (modified: 25 Jul 2025, 00:32)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer EmYMRevisions
+Summary:
+This paper proposes a “biologically-inspired” framework that combines active inference with symbolic rule learning through a wake-sleep training mechanism for modelling human sequential decision-making behaviour. The approach maintains a generative world model that predicts future observations and learns symbolic "if-then" rules that acquire habitual policies (i.e., priors over action sequences) in the form of symbolic rules. This is motivated by the idea that rules are computationally more robust for planning by reducing the search space of the future actions. To learn this, a wake-sleep cycle is introduced. During the wake phase, real trajectories are used to extract high-confidence rule candidates that significantly reduce joint free energy (up to some threshold), while the sleep phase uses generative replay to optimise model parameters and update rule confidences through exponential decay. The online policy employs a three-way switching mechanism: single-rule hits trigger immediate habitual actions, multi-rule conflicts are resolved through free-energy-guided beam search over the matched rule actions, and no-rule situations invoke full beam search planning over the entire action space. The formulation is optimised using a joint free energy function comprising variational free energy (for accurate world modelling), expected free energy (for exploration-exploitation balance), and belief consistency terms.
+
+To validate, experiments on NBA SportVU player tracking data and car-following behaviour datasets are used to show improved prediction accuracy compared to logic-based, deep neural, and existing active inference baselines, with learned rules providing interpretable behavioural insights such as basketball plays and driving patterns, though the approach relies heavily on domain-specific predicate engineering and discretisation schemes that may limit scalability to more complex environments.
+
+Strengths And Weaknesses:
+Strengths:
+
+This is an interesting paper, and I appreciate the engineering heavy lifting to get the formulation to work appropriately – particularly with the different moving parts relating to model and rule learning. The main move here is the three-way switching policy for trading-off between exploration and exploitation. Briefly, rather than using fixed exploration schedules or epsilon-greedy approaches, the system infers based on rule availability whether to use immediate execution for single rules, constrained beam search for conflicts, and full search otherwise. This invokes a computational hierarchy that adapts planning depth to problem structure and has some computational savings (Fig 2; time step per epoch). This is because when the rules apply, the beam search operates over a dramatically reduced action space - from the full action set to either a single action (immediate execution) or a small subset (multi-rule conflicts). This provides some speedup in planning time while maintaining the ability to fall back to full search when necessary.
+
+Weakness:
+
+There are several constraints with the instantiation and evaluation of the model. Primarily, the rule extraction formulation relies heavily on pre-engineered predicates and discretisation that are domain-specific. For NBA, they manually define features based on domain knowledge. For car-following, they use pre-defined action sequences as predicates. While they learn how to bin continuous features, they cannot discover what features are relevant from raw observations. This severely limits scalability to new domains or high-dimensional inputs where the relevant state abstractions are unknown. Given this, it makes sense why only two relatively simple domains with discrete action spaces were evaluated. Importantly, the baselines exclude modern model-based RL methods like Dreamer or even the active inference instantiation of Dreamer (Gumbsch, et al 2024; Sajid et al, 2021) that would be more appropriate comparisons. The car-following dataset appears constrained, and there's no evaluation on standard RL benchmarks that would allow broader comparison. The reported performance improvements may reflect good manual feature engineering rather than algorithmic superiority. For this, one would really have to look at the code which isn’t included in the submission. In terms of the actual implementation, the choice of free energy weights, 
+, appears ad-hoc without principled selection criteria. The relationship between rule quality and free energy reduction is assumed but not rigorously established. There's no analysis of when the switching mechanism will be effective or how sensitive the approach is to hyperparameter choices.
+
+Furthermore, here it would be difficult to handle high-dimensional observations like images without extensive manual preprocessing. The beam search uses small beam width (B=5) and shallow depth (P=3), which may be insufficient for complex planning problems. The rule representation assumes that meaningful behavioural patterns can be captured by simple predicate-action mappings, which may not hold in more complex domains or where particular behaviours change the predicate space. Lastly, more philosophical stance but using the wording of biologically plausible human behaviour modelling without actual qualification seems rather arbitrary. I would recommend removing it and having a paper titled rule-guided active inference. This because the "biologically plausible" framing is not only unsubstantiated but undermines the paper's credibility. The paper provides little neuroscientific evidence, and no mapping between their computational components and known brain mechanisms. The wake-sleep terminology borrows from neuroscience, but the actual implementation (alternating rule mining with model optimisation) bears little resemblance to the biological processes that inspired the original wake-sleep algorithm. The free energy principle connection is superficial - they use a standard variational objective without demonstrating any meaningful relationship to predictive coding or other neurobiological theories. Importantly, the implementation of the expected free energy also deviates from the standard implementation. This should be formalised explicitly in the supplementary.
+
+References:
+
+Gumbsch, C., Sajid, N., Martius, G., & Butz, M. V. (2024). Learning hierarchical world models with adaptive temporal abstractions from discrete latent dynamics. In The Twelfth International Conference on Learning Representations. Sajid, N., Tigas, P., Zakharov, A., Fountas, Z., & Friston, K. (2021). Exploration and preference satisfaction trade-off in reward-free learning. arXiv preprint arXiv:2106.04316.
+
+Quality: 2: fair
+Clarity: 1: poor
+Significance: 2: fair
+Originality: 2: fair
+Questions:
+Below, I list my questions and add commentary to help with the rebuttal process:
+
+The paper claims computational efficiency but lacks rigorous analysis. I'd want to see: (1) Exact measurements of search space reduction - how many nodes/states are pruned by rule application vs. full search, (2) Wall-clock timing comparisons showing actual speedup, not just accuracy improvements, (3) Analysis of how beam width and rule coverage affect computational savings, (4) Memory usage comparisons between rule-guided and standard planning. The "cognitive load" claim is particularly vague and needs operational definition in terms of how different switching strategies are being used. It might be good to read/cite the cognitive control literature for the switching strategies (example work by Falk Lieder, Sebastian Musslick, etc).
+The two-stage training (blockwise pretraining + full training) makes it unclear what's driving performance. I'd want controlled experiments: (1) Performance with no pretraining vs. pretraining, (2) How rule quality/quantity changes between stages, (3) Whether the same rules emerge with different random initializations, (4) Sensitivity analysis showing how pretraining block size affects final performance. The current results conflate the benefits of the overall approach with the specific training schedule.
+There are several evaluation improvements needed: comparison to modern model-based RL baselines (Dreamer) etc, evaluation on standard benchmarks beyond the two domains, analysis of how performance degrades with observation dimensionality, sensitivity analysis for key hyperparameters (beam width, free energy weights, rule thresholds).
+The paper claims to be "biologically plausible" but provides no connection to actual neuroscience or cognitive science literature. What neural mechanisms correspond to the wake-sleep alternation? How do the free energy computations presented relate to actual brain processes? The switching mechanism needs grounding in dual-process theories of cognition. I'd want to see citations to relevant neuroscience work and discussion of how the computational components map to known brain systems.
+Limitations:
+Yes
+
+Rating: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+No
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes
+Add:
+Official Review of Submission26546 by Reviewer Vyun
+Official Reviewby Reviewer Vyun03 Jul 2025, 04:12 (modified: 25 Jul 2025, 00:32)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer VyunRevisions
+Summary:
+The manuscript proposes a novel cognitive framework for modeling human decision-making in complex, dynamic environments by developing a novel active inference learning framework. It learns the active inference agent under the concept of minimizing free energy in two phases: wake and sleep. In the sleep phase, the agent learns to correct its active inference models using a combination of VFE, EFE, and belief dynamics update. In the wake phase, the agent learns to update the rule that is required to learn the active inference models in the sleep phase.
+
+Strengths And Weaknesses:
+Strengths:
+
+Quality: ** The proposed work is technically sound, especially the proposal of wake-sleep phases (this was a nice aspect of the work/methodology). ** The mathematical formulation is coherent and clear, especially with respect to the free energy (FE) optimization function. Pseudo-code was also provided, which was a welcome element of the paper. ** A careful ablation study was provided regarding habitual rules - this resulted in useful qualitative results.
+Clarity: ** The paper provides a detailed formulation, which makes it easier to replicate and understand (from a technical/formal perspective). ** The authors' diagrams were clear and supported the work well.
+Significance: ** This work/study takes a step further in modeling perception and action in a way that is more faithful to human behavior as compared to more traditional active inference (AIF) methods. e.g., through the incorporation of “wake” and “sleep” phases as an example. ** A rule-based policy can simplify the agent’s action sequences efficiently, potentially leading to the development of action “primitives” (this was an interesting dimension of the work, with some nice implications for follow-up efforts).
+Originality: ** The proposed rule-guided policy design, together/in tandem with beam search algorithms, appears (to the best of my knowledge) novel as well as practical.
+Weaknesses:
+
+Quality: ** There might be scalability issues (the method is computationally expensive) as each step in the wake phase requires the model to have processed a whole window as well as a whole rolled-out action plan (this is also very much related to the same scalability limitations of planning-based AIF, which required exploring rolled-out action sequences in either tree-like or chain-like fashion, as well as some forms of planning-centric model-based RL). ** The environments and dataset setting studied in this effort are rather weak. ** In environments with significant change, between any two time-steps, we might not want the state of those steps to be close to each other, therefore it might not be meaningful to have the “belief consistency” term. The authors might want to address this issue in their main manuscript.
+Clarity: ** This work's conclusion section lacks depth, as it does not synthesize the whole method. Furthermore, it also does not have future directions. The authors should revise and bolster their conclusion to address these items (particularly as this will help future readers take away the right key messages and engender follow-up work/future exploration).
+Significance: ** While the model works well in two domains, both involve structured spatio-temporal sequences. It is unclear how well the authors' approach would perform in other kinds of environments, such as robotic tasks. This should be addressed, in tandem with some commentary in the main text, this would be best addressed with the inclusion of a few representative experiments.
+Originality: None / nothing to note
+Quality: 3: good
+Clarity: 4: excellent
+Significance: 3: good
+Originality: 4: excellent
+Questions:
+Some key items that the authors should address include:
+
+The experiments should cover more environmental setups, especially w.r.t. reinforcement learning (RL) algorithms where the agent has a chance to interact with the environment in the wake phase
+The authors should/need to clarify the symbolic predicates used in this work as well as how the action sequence is determined.
+As mentioned in the strengths & weaknesses section above, the authors need to Improve the thoroughness of the conclusion (particularly addressing some of the missing elements mentioned).
+Limitations:
+The limitations section provided in this work was sufficient/adequate.
+
+Rating: 4: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.
+Confidence: 5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+N/A (none noted in this review)
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes
+Add:
+Official Review of Submission26546 by Reviewer 8vyQ
+Official Reviewby Reviewer 8vyQ30 Jun 2025, 16:56 (modified: 25 Jul 2025, 00:32)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer 8vyQRevisions
+Summary:
+This paper proposes a biologically inspired framework that combines symbolic rule-based behavior with active inference. A wake-sleep learning procedure is used to alternate between posterior inference and generative replay. Symbolic rules are extracted during the wake phase by identifying patterns that lead to reduced free energy, and the sleep phase updates the model and refines rule confidence. The method is evaluated on two real-world datasets (NBA SportVU and car-following) and demonstrates improved empirical performance compared to learning-based and logic-based baselines.
+
+Strengths And Weaknesses:
+Strenghts
+
+Ambitious framing: The integration of symbolic reasoning with variational active inference is compelling, and aligns with cognitive and neuroscientific motivations.
+Wake-sleep structure: The overall iterative learning structure, alternating between symbolic abstraction and model optimization, is a sound and interesting direction.
+Empirical performance: On both datasets, the method shows strong performance on predictive accuracy and generates interpretable, compact rule sets.
+Symbolic interpretability: The extracted rules are designed to be human-readable and domain-aligned, which is promising for applications in safety-critical or transparent AI settings.
+Weaknesses
+
+Misrepresentation of Expected Free Energy (EFE) The paper’s formulation of EFE deviates significantly from Friston’s original definition. Specifically:
+There is no explicit modeling of epistemic value (i.e., expected information gain),
+Nor any term reflecting instrumental value (alignment with preferred observations), This makes the "active inference" framing nominal rather than substantive, and raises doubts about the theoretical soundness of the exploration-exploitation dynamics claimed.
+Unclear and Unprincipled Generative Model The generative structure is poorly motivated and counterintuitive: the model predicts a next observation first, then reconstructs a latent state from it, and only then infers beliefs. This is backwards from standard generative modeling principles, where a belief over states should first be inferred from observations and then used to predict future observations. There is no clearly defined joint generative model over observations, latent states, and actions. This severely undermines the probabilistic validity and biological plausibility of the framework.
+
+Heavily Hard-Coded Symbolic Component Predicate extraction and symbolic rule mining are highly bespoke and domain-specific: In NBA, predicates rely on hand-coded spatial thresholds and custom logic for angles and distances to defenders or the rim. In car-following, predicates are just past sequences of discretized action labels. This contradicts the generality claimed and suggests the method may not scale beyond hand-tuned environments.
+
+Heavy Reliance on Supplementary Material The main paper omits many critical details: how predicates are constructed, what exactly the wake-sleep phases do at each step, how planning is implemented with beam search, etc. Understanding the core method requires reading extensive appendix sections.
+
+Quality: 1: poor
+Clarity: 1: poor
+Significance: 2: fair
+Originality: 3: good
+Questions:
+One of the main theoretical claims of this paper is being biologically plausible by using active inference. However, there are many discrepancies between active inference and what is introduced in this paper, which should be motivated / addressed:
+In Eq 6, the VFE likelihood term denotes p(O_t | S_t), but in section 4.2.1 the observation O^_t is predicted from the sequence of previous observations and actions using a separate model f_env parameterized by phi_env. So how does S_t factor in here? Also is capital S and s the same "state"?
+In Eq 6, the KL term is between q(s_t) and p(s_t). However, in section 4.2.1, the actual "belief" is denoted as theta_t, and S_t seems to rather be some intermediate hidden state output? Also what would be p(s_t)? In active inference this is typically a transition model which learns action-conditioned dynamics in the latent state space, but this doesn't appear the case?
+In Eq 7, the expected free energy is written down as an expectation over some hidden variable z_t, a Boolean variable switching between explore vs exploit, and a log likelihood term on "action reconstruction", i.e. does the predicted action match the one from the dataset. This does not relate at all to EFE as defined by Friston (i.e. https://pmc.ncbi.nlm.nih.gov/articles/PMC5167251/) where EFE is a) conditioned on a policy / action b) an expectation over future observations c) yields an expected utility and expected information gain term
+In eq 9, suddenly a "belief consistency" term pops up. I would expect such a term as a KL term in the VFE. Also, why would q(theta_{t-1}) go first in the KL as opposed to the other way around? i.e. is the past posterior seeking the mode of the new posterior?
+What does it mean to "explore" given that you don't experiment with an actual agent interacting with the environment, but rather fit a model on a static dataset? It looks like the system tries to cluster behaviors found in the dataset as either part of a set of predicates, and otherwise being modeled by the "exploration" bin? In contrast, an "exploratory action" under active inference would be an action selected based on epistemic uncertainty, rather than utility. However, in both the NBA and car-following datasets, I don't think there is a lot of uncertainty to resolve by action.
+
+Reading through the appendix, the way predicates are generated is very dataset specific. Could you define a generic way of predicate generation that would be generally applicable?
+
+Section 4.1 goes as "Continual and Life-long Learning". However, this typically refers to the setting of an agent in a non-stationary, changing data distribution, i.e. having to deal with novel tasks over time. This is nothing like the static datasets used here?
+
+Although I like the idea of combining neuro-symbolic techniques for habit formation under active inference, I think the current attempt of implementation deviates too far from the core active inference ideas to support the bio-inspired claims. Moreover, it would be much stronger if the system was also evaluated in more RL-type of environments, where the agent actually gets to select actions, and meanwhile discover predicates that e.g. capture the rules or basic strategies of the game/env at hand.
+
+Limitations:
+The 4 line conclusion was very underwhelming and didn't yield any critical assessment or discussion of the work.
+
+Rating: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+There are noticeable proofreading lapses, including:
+
+Spelling and grammar errors (e.g., “Human Beahvior Modeling”),
+Sparse figure captions,
+Inconsistent notation and equation formatting (S vs s),
+Symbols being introduced but not explained (i.e. section 3 starts with introducing symbols a_t, O_t, S_t, theta_t, A, but without explanation)
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes
+Add:
+Official Review of Submission26546 by Reviewer gZzq
+Official Reviewby Reviewer gZzq25 Jun 2025, 19:53 (modified: 25 Jul 2025, 00:32)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer gZzqRevisions
+Summary:
+This paper introduces a biologically inspired cognitive framework for modeling human behavior in dynamic environments by integrating active inference with rule-guided habitual policies. The approach alternates between wake (data-driven) and sleep (model-driven) phases, using a wake-sleep inference mechanism to jointly learn a generative world model and symbolic rules. The model is evaluated on NBA SportVU and car-following datasets, with comparisons to logic-based, deep learning, and active inference baselines.
+
+Strengths And Weaknesses:
+The problem the paper aims to address is interesting and timely, given the current interest in active inference. The proposed solution is correct, suited, and confirmed by the experimental analysis.
+
+About the experiment, however, I'd like to add a disclaimer: I am not familiar with the dataset and proposed baselines, hence I cannot judge whether the experiments are well performed and motivated. To this end, I would have appreciated a more detailed description of how the data looks like and why it is suited to test the performance of the proposed method. However, this is a minor comment.
+
+Cons:
+
+The paper is unclear and not very well explained. Both the background section and the method section are written in a confused way, as well as the explanation of the training. Would it be possible for the authors to provide an extremely polished version of the paper during the rebuttal period? It is quite unclear as it stands now, and also makes the contribution hard to judge.
+
+The manuscript is dense, with some sections (e.g., equations, algorithmic details) lacking sufficient explanation for readers less familiar with active inference or wake-sleep algorithms. There are also multiple typos and awkward phrasings are present throughout the text (see below for details).
+
+In the paper there are multiple typos that should be addressed. Also, why is Free Energy always with capital letters?
+
+"threefolds" should be "threefold" (line 59).
+
+"are governed by are governed by hard-to-interpret dynamic thus hinder the understanding..." (line 81) — duplicated phrase, should be "are governed by hard-to-interpret dynamics, thus hindering the understanding..."
+
+"To enhanced interpretability" should be "To enhance interpretability" (line 82).
+
+"plugand-play" should be "plug-and-play" (line 85).
+
+"prepossessing strategy" should be "preprocessing strategy" (line 258).
+
+"Removel of Free Energy cause the lose regularization..." should be "Removal of Free Energy causes the loss of regularization..." (line 333).
+
+Quality: 2: fair
+Clarity: 1: poor
+Significance: 2: fair
+Originality: 3: good
+Questions:
+Can the authors better explain the dataset they picked and the motivation behind them?
+
+Limitations:
+Yes
+
+Rating: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.
+Confidence: 3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.
+Ethical Concerns: NO or VERY MINOR ethics concerns only
+Paper Formatting Concerns:
+No
+
+Code Of Conduct Acknowledgement: Yes
+Responsible Reviewing Acknowledgement: Yes

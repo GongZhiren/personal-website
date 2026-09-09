@@ -1,0 +1,255 @@
+ %%%%%%%% ICML 2026 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs} % for professional tables
+\usepackage{placeins}
+\usepackage{float} % for [H] placement option
+\usepackage[hyphens]{url}
+
+\usepackage{url}
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2026} with \usepackage[nohyperref]{icml2026} above.
+\usepackage{hyperref}
+
+\usepackage[table,xcdraw]{xcolor}  
+
+\usepackage{adjustbox}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{amsmath}
+\usepackage{listings} % for code/prompt templates in appendix
+\usepackage{tabularx} % for hyperparameter tables in appendix
+\usepackage{longtable} % for multi-page tables
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Appendix block/zone title helper
+\newcommand{\AppBlock}[1]{%
+  \par\addvspace{0.9em}%
+  {\noindent\Large\bfseries #1\par}%
+  \addvspace{0.6em}%
+}
+
+% Use the following line for the initial blind version submitted for review:
+% \usepackage{icml2026}
+
+% For preprint, use
+% \usepackage[preprint]{icml2026}
+
+% If accepted, instead use the following line for the camera-ready submission:
+\usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{pifont}
+
+% display math spacing
+%\setlength{\abovedisplayskip}{6pt plus 2pt minus 1pt}
+%\setlength{\belowdisplayskip}{8pt plus 2pt minus 1pt}
+%\setlength{\abovedisplayshortskip}{4pt plus 1pt minus 1pt}
+%\setlength{\belowdisplayshortskip}{6pt plus 2pt minus 1pt}
+
+\usepackage[compact]{titlesec}
+% section / subsection / subsubsection spacing
+\titlespacing*{\section}{0pt}{0.8ex plus 0.2ex minus 0.2ex}{0.6ex plus 0.2ex}
+\titlespacing*{\subsection}{0pt}{0.7ex plus 0.2ex minus 0.2ex}{0.4ex plus 0.2ex}
+\titlespacing*{\subsubsection}{0pt}{0.6ex plus 0.2ex minus 0.2ex}{0.3ex plus 0.2ex}
+\titleformat{\subsubsection}
+{\normalfont\bfseries}
+{\thesubsubsection}{0.6em}{}
+
+\setlength{\textfloatsep}{8pt}
+\setlength{\intextsep}{8pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt} % figure* / table*
+% \setlength{\parskip}{2pt} 
+
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\usepackage{enumitem}
+\setlist[itemize]{nosep, topsep=2pt, leftmargin=*, labelsep=0.5em}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{SubspacePath Pruner: Inference-time Pruning via Probe-based Representation–Parameter Coupling}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{SubspacePath Pruner: Inference-time Pruning\\via Probe-based Representation–Parameter Coupling}
+
+  % It is OKAY to include author information, even for blind submissions: the
+  % style file will automatically remove it for you unless you've provided
+  % the [accepted] option to the icml2026 package.
+
+  % List of affiliations: The first argument should be a (short) identifier you
+  % will use later to specify author affiliations Academic affiliations
+  % should list Department, University, City, Region, Country Industry
+  % affiliations should list Company, City, Region, Country
+
+  % You can specify symbols, otherwise they are numbered in order. Ideally, you
+  % should not use this facility. Affiliations will be numbered in order of
+  % appearance and this is the preferred way.
+  \icmlsetsymbol{equal}{*}
+
+\begin{icmlauthorlist}
+  \icmlauthor{Zhiren Gong}{ccds,igp}
+  \icmlauthor{Yikun Hou}{ccds,umu}
+  \icmlauthor{Fan Wu}{ccds}
+  \icmlauthor{Che Wang}{ccds}
+  \icmlauthor{Fuyao Zhang}{ccds}
+  \icmlauthor{Tiantong Wu}{ccds}
+  \icmlauthor{Yurong Hao}{ccds}
+  \icmlauthor{Jiaming Zhang}{ccds}
+  \icmlauthor{Yiyang Duan}{ccds}
+  \icmlauthor{Tiantong Wang}{ccds}
+  \icmlauthor{Fei Huang}{alibaba}
+  \icmlauthor{Chau Yuen}{eee}
+  \icmlauthor{Wei Yang Bryan Lim}{ccds}
+\end{icmlauthorlist}
+\vspace{4mm}
+
+\icmlaffiliation{ccds}{College of Computing and Data Science, Nanyang Technological University, Singapore}
+\icmlaffiliation{igp}{Interdisciplinary Graduate Programme, Nanyang Technological University, Singapore}
+\icmlaffiliation{eee}{School of Electrical and Electronic Engineering, Nanyang Technological University, Singapore}
+\icmlaffiliation{umu}{Department of Mathematics and Mathematical Statistics, Ume{\aa} University, Sweden}
+\icmlaffiliation{alibaba}{Alibaba Group, China}
+
+\icmlcorrespondingauthor{Zhiren Gong}{zhiren001@e.ntu.edu.sg}
+\icmlcorrespondingauthor{Jiaming Zhang}{jiaming.zhang@ntu.edu.sg}
+\icmlcorrespondingauthor{Wei Yang Bryan Lim}{bryan.limwy@ntu.edu.sg}
+
+  % You may provide any keywords that you find helpful for describing your
+  % paper; these are used to populate the "keywords" metadata in the PDF but
+  % will not be shown in the document
+  \icmlkeywords{Machine Learning, ICML}
+]
+
+% \author{Yikun Hou \\
+% Department of Mathematics and Mathematical Statistics\\
+% Umeå University\\
+% Umeå, 90187, Sweden \\
+% \texttt{\{yikun.hou\}@umu.se} \\
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column listing the
+% affiliations and the copyright notice. The command takes one argument, which
+% is text to display at the start of the footnote. The \icmlEqualContribution
+% command is standard text for equal contribution. Remove it (just {}) if you
+% do not need this facility.
+
+% Use ONE of the following lines. DO NOT remove the command.
+% If you have no special notice, KEEP empty braces:
+\printAffiliationsAndNotice{\relax}  % no special notice (required even if empty)
+% Or, if applicable, use the standard equal contribution text:
+% \printAffiliationsAndNotice{\icmlEqualContribution}
+
+\begin{abstract}
+\vspace{-2mm}
+Large-scale dedicated application of LLMs in diverse scenarios increasingly demands specialized model inference behavior under strict constraints of accuracy, latency, and memory. However, the heterogeneous and long-tailed nature of real-world specialized scenarios makes it difficult to obtain training data and optimize models. 
+We study a practical \emph{inference-time} specialization setting: given an LLM base, we compile a reusable, budget-bounded pathway/subnetwork within a specific scenario.
+Our approach is motivated by an empirical coupling phenomenon: input scenario sets aligned with similar \emph{representation subspaces} (e.g., domain) in embedding space tend to activate a consistent and sparse set of internal \emph{reasoning pathways} in model parameter space.
+%This suggests a practical bridge between representation subspaces in embedding-space and execution paths parameter-space.
+To build the bridge between them, we propose probe-based \textsc{SubspacePath Pruner} with two core components:
+(1) \textbf{Domain-Basis Synthesis (DBS)} constructs a quasi-orthogonal basis of domain axes in embedding space, serving as a stable coordinate system.
+(2) \textbf{Probe-based Scenario Pruning (PSP)} uses efficient layer-wise linear probes to estimate axis alignment and compute budgeted head-wise pathways for a specific scenario.
+Experiments on LLaMA-2-13B show \textbf{29.3} average Recall on cross-domain tests (vs. 24.7 dense) and \textbf{21.6} on cross-dataset tests (vs. 25.5 dense) with \textbf{1.27$\times$} speedup at \textbf{~30\%} pruning ratio.
+We have code available in \href{https://github.com/GongZhiren/SubspacePathPruner}{GitHub repository} and project page in \href{https://gongzhiren.github.io/SubspacePathPruner-website/}{SubspacePath Pruner}.
+\vspace{-2mm}
+
+\end{abstract}
+\input{chapters/1-intro}
+\input{chapters/2-related}
+\input{chapters/3-preliminary}
+\input{chapters/4-methodology}
+\input{chapters/5-experiment}
+\input{chapters/6-conclusion}
+
+% In the unusual situation where you want a paper to appear in the
+% references without citing it in the main text, use \nocite
+
+% Follow the tamplate, Do not use clear page
+% Reference paper is uploaded as 'example_paper.pdf'
+
+%\section*{Accessibility}
+
+%Authors are kindly asked to make their submissions as accessible as possible
+% for everyone including people with disabilities and sensory or neurological
+% differences. Tips of how to achieve this and what to pay attention to will be
+% provided on the conference website \url{http://icml.cc/}.
+
+%\section*{Software and Data}
+
+%If a paper is accepted, we strongly encourage the publication of software and
+%data with the camera-ready version of the paper whenever appropriate. This can
+%be done by including a URL in the camera-ready copy. However, \textbf{do not}
+%include URLs that reveal your institution or identity in your submission for
+%review. Instead, provide an anonymous URL or upload the material as
+%``Supplementary Material'' into the OpenReview reviewing system. Note that
+%reviewers are not required to look at this material when writing their review.
+
+\clearpage
+\section*{Acknowledgements}
+This research is supported by the RIE2025 Industry Alignment Fund –
+Industry Collaboration Projects (IAF-ICP) (Award I2301E0026), administered by A*STAR, as well
+as supported by Alibaba Group and NTU Singapore through Alibaba-NTU Global e-Sustainability
+CorpLab (ANGEL). 
+This research is also supported by the Ministry of Education, Singapore, under its Academic Research Fund Tier 2 (Award MOE-T2EP20125-0005).
+Yikun Hou was supported by the Wallenberg AI, Autonomous Systems, and Software Program (WASP), funded by the Knut and Alice Wallenberg Foundation. Partial computations were enabled by the Berzelius resource provided by the Knut and Alice Wallenberg Foundation at the National Supercomputer Centre.
+
+
+\section*{Impact Statement}
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here.
+
+
+\bibliography{example_paper}
+\bibliographystyle{icml2026}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDIX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\appendix
+\onecolumn
+\input{chapters/appendix}
+
+
+
+\end{document}
+

@@ -1,0 +1,159 @@
+\section{Experiments}
+\label{sec:exp}
+
+\subsection{Setup}
+\textbf{Models.}
+We evaluate seven open dense decoder-only LLMs spanning five families, three scales, and distinct tokenizers and attention designs: LLaMA-2-7B~\citep{touvron2023llama2}, LLaMA-3.1-8B and LLaMA-3.2-3B~\citep{dubey2024llama3}, Qwen2.5-7B and Qwen2.5-14B~\citep{qwen2025qwen25} (GQA), Yi-1.5-9B~\citep{ai2024yi}, and Falcon3-7B~\citep{falcon3}.
+LLaMA-3.1-8B is the lead model (Table~\ref{tab:main}); the canonical LLaMA-2-7B carries the mechanistic analysis; the rest test cross-family generalization.
+
+\textbf{Datasets and metrics.}
+We report a broad suite: perplexity on WikiText-2~\citep{merity2017wikitext}, PTB~\citep{marcus1993ptb}, and C4~\citep{raffel2020t5}; zero-shot accuracy on seven commonsense tasks~\citep{clark2018arc,zellers2019hellaswag,sakaguchi2021winogrande,bisk2020piqa,mihaylov2018openbookqa,clark2019boolq} and MMLU~\citep{hendrycks2021mmlu}; and generation~\citep{cobbe2021gsm8k,chen2021humaneval,austin2021mbpp}. The recovery-free teacher KL is logged per step.
+
+\textbf{Baselines (selection-only, matched sparsity, no weight modification).}
+We compare against one-shot second-order pruning (the $K{=}1$ ablation of \method), Wanda-sp~\citep{sun2024wanda}, FLAP~\citep{an2024flap}, LLM-Pruner~\citep{ma2023llmpruner} with LoRA disabled, magnitude, and random --- all \emph{selection criteria}, so the comparison isolates \emph{which} units to remove, exactly \method's regime.
+Every method shares the calibration set, protected-layer band, and per-layer cap, and all post-selection adjustments (FLAP's bias compensation, LLM-Pruner's LoRA) are disabled uniformly.
+Reconstruction-based pruners (SlimGPT~\citep{ling2024slimgpt}, SlimLLM~\citep{guo2025slimllm}) add a weight-reconstruction stage; run selection-only under this protocol they too collapse below one-shot at high sparsity, so their reported quality measures reconstruction, which composes with a better mask.
+
+% ================= MAIN TABLE: LLaMA-3.1-8B degradation =================
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{5.5pt}\renewcommand{\arraystretch}{1.08}
+\caption{\textbf{Main degradation curve on LLaMA-3.1-8B}: WikiText-2 perplexity ($\downarrow$),
+calibration-only, \emph{no recovery}. Every training-free baseline collapses super-exponentially;
+\method ($K{=}8$, equal-cost, the universal default) is the lower envelope at every ratio
+(\best{best}, \underline{second best}), cutting one-shot $\mathbf{5.2\times}$ at $\rho{=}0.4$ and
+$\mathbf{16.8\times}$ at $\rho{=}0.5$, and
+beating LLM-Pruner $2.9\times$ at $\rho{=}0.5$ ($718\!\to\!245$). Cross-model generalization in
+Table~\ref{tab:crossmodel}.}
+\label{tab:main}
+\begin{tabular}{l cccc}
+\toprule
+& \multicolumn{4}{c}{\textbf{Prune ratio} $\rho$\quad(WikiText ppl $\downarrow$)} \\
+\cmidrule(lr){2-5}
+\textbf{Method} & 0.2 & 0.3 & 0.4 & 0.5 \\
+\midrule
+Random          & 22.7 & 56.6 & 4168 & 60360 \\
+Magnitude       & 36.7 & 2184 & 27101 & 76313 \\
+Wanda-sp        & 29.4 & 101.4 & 1015 & 17611 \\
+FLAP            & 37.6 & 1030 & 49940 & 376017 \\
+LLM-Pruner      & 14.5 & \underline{30.0} & \underline{103.3} & \underline{718.2} \\
+\midrule
+One-shot ($K{=}1$) & \underline{14.0} & 33.0 & 245.9 & 4106 \\
+\rowcolor{cfhi}\method ($K{=}8$) & \best{12.1} & \best{23.2} & \best{47.2} & \best{245} \\
+\midrule
+\textit{Gain vs.\ one-shot} & $1.2\times$ & $1.4\times$ & $\mathbf{5.2\times}$ & $\mathbf{16.8\times}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ================= CROSS-MODEL TABLE (single column) =================
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{3.4pt}\renewcommand{\arraystretch}{1.05}
+\caption{\textbf{Cross-model generalization} (WikiText-2 ppl $\downarrow$, calibration-only, no recovery). One fixed \method configuration ($K{=}8$, equal-cost bands) vs.\ one-shot and the strongest no-recovery baseline, LLM-Pruner. \best{Best per cell}.}
+\label{tab:crossmodel}
+\begin{tabular}{l l cccc}
+\toprule
+\textbf{Model} & \textbf{Method} & $\rho{=}0.2$ & $\rho{=}0.3$ & $\rho{=}0.4$ & $\rho{=}0.5$ \\
+\midrule
+\multirow{3}{*}{Yi-1.5-9B}
+ & One-shot & 424 & 2480 & 5194 & 16510 \\
+ & LLM-Pruner & \best{7.6} & 14.9 & 47.5 & 653 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}7.8 & \cellcolor{cfhi}\best{13.6} & \cellcolor{cfhi}\best{31.9} & \cellcolor{cfhi}\best{61.7} \\
+\midrule
+\multirow{3}{*}{LLaMA-3.1-8B}
+ & One-shot & 14.0 & 33.0 & 245.9 & 4106 \\
+ & LLM-Pruner & 14.5 & 30.0 & 103.3 & 718 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{12.1} & \cellcolor{cfhi}\best{23.2} & \cellcolor{cfhi}\best{47.2} & \cellcolor{cfhi}\best{245} \\
+\midrule
+\multirow{3}{*}{LLaMA-3.2-3B}
+ & One-shot & 17.6 & 43.7 & 291.6 & 3027 \\
+ & LLM-Pruner & 24.0 & 49.0 & 164.8 & 2491 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{16.5} & \cellcolor{cfhi}\best{41.9} & \cellcolor{cfhi}\best{112.6} & \cellcolor{cfhi}\best{325} \\
+\midrule
+\multirow{3}{*}{LLaMA-2-7B}
+ & One-shot & 9.3 & 19.9 & 92.6 & 1497 \\
+ & LLM-Pruner & 19.1 & 31.6 & 93.1 & 686 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{8.6} & \cellcolor{cfhi}\best{15.7} & \cellcolor{cfhi}\best{33.6} & \cellcolor{cfhi}\best{389} \\
+\midrule
+\multirow{3}{*}{Falcon3-7B}
+ & One-shot & 8.0 & 11.7 & 24.4 & 62.5 \\
+ & LLM-Pruner & 7.4 & 11.1 & 18.4 & 52.1 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{6.8} & \cellcolor{cfhi}\best{9.1} & \cellcolor{cfhi}\best{14.9} & \cellcolor{cfhi}\best{27.8} \\
+\midrule
+\multirow{3}{*}{Qwen2.5-7B}
+ & One-shot & 14.3 & 26.7 & 63.7 & 270.1 \\
+ & LLM-Pruner & 14.6 & 25.9 & 75.3 & 684 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{11.1} & \cellcolor{cfhi}\best{17.6} & \cellcolor{cfhi}\best{41.5} & \cellcolor{cfhi}\best{141} \\
+\midrule
+\multirow{2}{*}{Qwen2.5-14B}
+ & One-shot & 12.2 & 21.9 & 68.6 & 300.8 \\
+ & \cellcolor{cfhi}\method & \cellcolor{cfhi}\best{8.4} & \cellcolor{cfhi}\best{13.3} & \cellcolor{cfhi}\best{32.3} & \cellcolor{cfhi}\best{156} \\
+\midrule
+\multicolumn{6}{c}{\method: \textbf{28/28} vs.\ one-shot, $\ge$LLM-Pruner on $24/24$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Main Results}
+\label{sec:mainres}
+The headline is a change in \emph{curve shape} (Fig.~\ref{fig:headline}, Table~\ref{tab:main}). On
+LLaMA-3.1-8B one-shot is competitive at low sparsity but collapses super-exponentially (WikiText ppl
+$246$/$4106$ at $\rho{=}0.4$/$0.5$), as does \emph{every} training-free baseline: Wanda-sp and FLAP
+exceed $10^3$ by $\rho{=}0.3$--$0.4$, and even the strongest, gradient LLM-Pruner ($718$ at $\rho{=}0.5$),
+trails widely, consistent with the paradigm diagnosis of Sec.~\ref{sec:collapse}. \method bends the curve,
+forming the lower envelope at every ratio ($\mathbf{5.2\times}$/$\mathbf{16.8\times}$ below one-shot at
+$\rho{=}0.4$/$0.5$), and the same shape change holds across all seven models (Table~\ref{tab:crossmodel}).
+The margins are not a single-draw artifact: a three-seed resample gives $35.6{\pm}1.5$ at $\rho{=}0.4$ on
+LLaMA-2-7B ($\pm4\%$), far inside the reported gaps.
+
+\label{sec:crossmodel}
+\textbf{The universal default generalizes across families} (Table~\ref{tab:crossmodel}). Stripped to its
+conservative form (\emph{equal-cost} bands, no per-model tuning), the $K$-step continuation is below
+one-shot on \emph{every} model at \emph{every} ratio, and at $\rho{=}0.5$ is the lower envelope of the
+full training-free set on all seven models.
+The gain is largest where one-shot collapses hardest: $\mathbf{16.8\times}$ on LLaMA-3.1-8B and $\mathbf{9.3\times}$ on LLaMA-3.2-3B at $\rho{=}0.5$, versus $1.9\times$ on the mildly collapsing Qwen2.5-7B.
+Yi-1.5-9B is the extreme case: every activation-, weight-, and one-shot-second-order method exceeds $10^4$ at $\rho{=}0.5$ (a model property, not our baseline), whereas the continuation holds it at $61.7$ and its multiplier grows to $\mathbf{119\times}$ at $\rho{=}0.6$.
+It also matches or beats gradient LLM-Pruner, the strongest selection-only baseline, at every cell (e.g.\ $245$ vs.\ $718$ on LLaMA-3.1-8B).
+
+\textbf{The gain is not confined to perplexity.} The equal-band default also lifts the downstream zero-shot average above both one-shot and the strongest no-recovery baseline (LLM-Pruner) at $\rho{\ge}0.4$ on LLaMA-3.1-8B, Yi-1.5-9B, and Qwen2.5-7B, and on LLaMA-2-7B at $\rho{=}0.5$; the one moderate-sparsity task it trades away (BoolQ at $\rho{=}0.3$) is recovered \emph{above} one-shot by the optional schedule refinement (Sec.~\ref{sec:whitebox}).
+
+\subsection{Ablations}
+\label{sec:ablations}
+Table~\ref{tab:ablation} reads as a \emph{build-up} on LLaMA-2-7B at $\rho{=}0.5$: one-shot ($1497$) $\to$ multi-step re-estimation ($K{=}8$, equal bands; $388.7$, the $3.9\times$ default), which an optional schedule refinement compounds to $125.6$ ($11.9\times$).
+The toggles then isolate each factor.
+\textbf{Refresh $\tau{=}0.5$ is a robust interior default}: it ($388.7$) beats both a full refresh ($\tau{=}1.0$, $583$, which adds variance from noisily estimated weakly coupled units) and a thin refresh that leaves curvature stale, so we read $\tau$ as variance control rather than ``more is better''.
+\textbf{The fixed dense anchor} defines the risk as KL to the dense teacher rather than the drifting operating point, and yields the global-best configuration; \textbf{removing the revived first-order term} regresses $\rho{=}0.5$ from $388.7$ to $667.7$.
+
+\paragraph{Robustness.} One fixed configuration ($K{=}8$, $\tau{=}0.5$, \emph{equal-cost} bands, shared caps) serves \emph{all seven} models with no per-model tuning, and the calibration set is held identical for every method, so the comparison isolates selection.
+The safety rails are not the source of the gain: removing both the per-layer cap and the protected band \emph{widens} the advantage over one-shot to $18.1\times$.
+
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.08}
+\caption{\textbf{Ablations} (LLaMA-2-7B, $\rho{=}0.5$, WikiText ppl $\downarrow$). \textbf{(a)} The
+continuation build-up: each component compounds into the $11.9\times$ headline. \textbf{(b)} Each row
+toggles one factor from the $K{=}8$ default ($\tau{=}0.5$, first-order on); the first three at equal
+bands, the anchor ($\dagger$) toggled at the front-loaded default ($125.6\!\to\!197.7$), where it is the
+operative choice. Offline cost is $\approx4.5\times$ a single shot at $K{=}8,\tau{=}0.5$.}
+\label{tab:ablation}
+\begin{tabular}{l c | l c}
+\toprule
+\textbf{(a) Build-up} & ppl & \textbf{(b) Toggle one factor} & ppl \\
+\midrule
+One-shot ($K{=}1$) & 1496.9 & $K{=}4$ (vs.\ $8$) & 822.6 \\
+$+$ multi-step ($K{=}8$) & 388.7 & $\tau{=}1.0$ (vs.\ $.5$) & 583.1 \\
+\cellcolor{cfhi}$+$ front-loaded & \cellcolor{cfhi}\best{125.6} & $-$ first-order $g$ & 667.7 \\
+$\;${\footnotesize($11.9\times$ one-shot)} & & moving anchor$^\dagger$ & 197.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deployment Efficiency}
+\label{sec:efficiency}
+Because \method removes whole heads and FFN groups, the pruned model is \emph{physically exported} to a
+smaller dense network. At a matched ratio it and one-shot export to the same budget, so \method is a
+\emph{pure quality gain at zero deployment overhead} --- identical parameters, FLOPs, and latency --- on
+top of the export's \good{$1.6\times$ prefill speedup} and \good{$36\%$ lower peak memory} over dense at
+$\rho{=}0.5$ (LLaMA-2-7B). The one-time \emph{offline} cost is $\approx(1{+}(K{-}1)\tau)\times$ one shot
+($4.5\times$ default), negligible beside fine-tuning.

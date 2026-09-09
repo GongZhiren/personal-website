@@ -1,0 +1,2173 @@
+% =========================
+% Appendix (XDomainBench)
+% =========================
+\newpage
+\appendix
+\onecolumn
+
+\AppBlock{Appendix Overview}
+\label{app:overview}
+
+This appendix provides design extensions, construction and quality-control details, evaluation protocol and scoring specifications, as well as extended results and mechanism analyses for \textsc{XDomainBench}.
+To keep the appendix navigable, we organize it into four \emph{Parts} according to the paper's pipeline.
+
+\paragraph{Part A: Dataset Construction \& Diagnostic Signals.}
+This part consolidates all dataset construction details, extending Sections~\ref{sec:composition_space}--\ref{sec:diagnostic_signals} and Section~\ref{sec:episode_construction} with formal definitions, implementation-facing details, and end-to-end construction pipeline.
+We organize the content into (i) \emph{metric definitions and signal instantiation}, (ii) \emph{validation and quality control}, and (iii) \emph{construction pipeline}.
+\begin{itemize}
+    \item Appendix~\ref{app:composition_metrics}: Composition metrics and calibration (entropy, drift distances, session-level summaries; includes domain-distance stratification used for nearest-neighbor composition selection).
+    \item Appendix~\ref{app:trajectory_annotation}: Trajectory annotation and instantiation rules (difficulty $\{\delta_t\}$ estimation/normalization; target mixture regimes $\{w_t\}$ specification used during construction).
+    \item Appendix~\ref{app:pattern_taxonomy}: Taxonomy of representative trajectory regimes and assignment rules used in mechanism analyses, including hybrid validation for diagnostic signals (LLM rubric + lexical/embedding checks) with tolerance constraints and retry policy.
+    \item Appendix~\ref{app:dataset_construction}: Session construction pipeline and coherence/validity filters.
+\end{itemize}
+
+\paragraph{Part B: Dataset Statistics and Release Artifacts.}
+This part documents the static dataset characteristics, quality control policies, and release artifacts.
+\begin{itemize}
+    \item Appendix~\ref{app:data_quality}: Curation policies, arbitration, audit procedures, and contamination/leakage safeguards.
+    \item Appendix~\ref{app:dataset_stats}: Dataset statistics and coverage across $(k,\ \text{entropy},\ \text{pattern})$.
+    \item Appendix~\ref{app:data_format}: Release schema (JSON fields, validators, and directory structure).
+\end{itemize}
+
+\paragraph{Part C: Standardized Interactive Evaluation Protocol, Scoring, Hyperparameters, and Evaluation Suite.}
+This part provides the exact controller, prompts, parsing contract, scoring rules, all benchmark hyperparameters, and evaluation suite sampling strategy.
+\begin{itemize}
+    \item Appendix~\ref{app:controller}: Reference controller with history mechanism, context injection, and truncation.
+    \item Appendix~\ref{app:prompts}: Prompt templates and required output formats by task type.
+    \item Appendix~\ref{app:scoring}: Token-level scoring (Recall and F1), judge prompts, calibration/adjudication, and SessionSuccess@$\tau$.
+    \item Appendix~\ref{app:models}: Model list, versions, inference configuration, retries/timeouts.
+    \item Appendix~\ref{app:sample_composition}: Stratified sampling quotas for the evaluation suite.
+    \item Appendix~\ref{app:hyperparameters}: Benchmark hyperparameters (construction/evaluation knobs, validation thresholds, sampling ratios).
+\end{itemize}
+
+\paragraph{Part D: Extended Results and Mechanism Analyses.}
+This part deepens the analyses behind the $k$-scaling results by separating (i) global, $k$-level diagnostic shifts,
+(ii) the controlled \emph{turn-1} direct composition effect (before vs.\ after), and
+(iii) session-level results by exact domain sets.
+We further provide full session-level tables by exact domain sets as \emph{across-model aggregates}.
+\begin{itemize}
+    \item Appendix~\ref{app:full_results}: Global summary \& sanity checks across $k$ and task-type controls.
+    \item Appendix~\ref{app:combo_breakdown}: Turn-1 direct composition effect under paired controls, including full before/after entry-point tables and difficulty--drop coupling with protocol details.
+    \item Appendix~\ref{app:full_tables}: Full session-level tables by exact domain sets for $k{=}1/2/3/4$ as across-model aggregates.
+\end{itemize}
+
+
+
+% =========================================================
+% Part A: Composition Space & Diagnostic Signals
+% ================================================A=========
+\clearpage
+\AppBlock{Part A: Dataset Construction \& Diagnostic Signals.}
+\section{Composition Metrics and Calibration}
+\label{app:composition_metrics}
+
+This section specifies the metrics used to quantify the \emph{mixture structure} and \emph{mixture drift}
+of the turn-level domain mixture trajectory $\{w_t\}_{t=1}^{T}$, and describes how we select domain combinations for cross-domain compositions.
+
+\subsection{Notation}
+A session instantiates a domain set $\mathcal{D}=\{d_1,\ldots,d_k\}$ of order $k$ and length $T$.
+At turn $t$, the intended domain mixture is a probability vector
+$w_t \in \Delta^{k-1}$, where $w_{t,i}\ge 0$ and $\sum_{i=1}^{k} w_{t,i}=1$.
+For specific calculation methods of $w_t$, refer to the mixture trajectory section below.
+
+\subsection{Domain distance}
+\label{app:domain_distance}
+
+Cross-domain compositions are stratified by \emph{inter-domain distance} to support controlled construction of semantically coherent multi-domain scenarios.
+Our implementation derives domain representations from the single-domain prompt/query pools, maps them into an embedding space, and selects nearest-neighbor domain combinations for $k\in\{2,3,4\}$, followed by a lightweight human sanity check.
+
+\paragraph{Embedding-based domain representation.}
+For each domain $d$, we collect its single-domain prompt/query set and remove generic function words and domain-agnostic boilerplate tokens using a fixed normalization rule.
+We encode each normalized prompt/query with a sentence embedding model (e.g., Sentence-BERT)~\citep{reimers-gurevych-2019-sentence}.
+To obtain a robust domain vector, we average embeddings over the single-domain prompt/query set:
+\begin{equation}
+\label{eq:domain_embed}
+e(d)=\frac{1}{\left|\mathcal{S}(d)\right|}\sum_{x\in \mathcal{S}(d)} \mathrm{Emb}(x).
+\end{equation}
+
+\paragraph{Distance and nearest-neighbor composition selection.}
+We define domain distance by cosine distance:
+\begin{equation}
+\label{eq:domain_dist_cos}
+\mathrm{Dist}(d,d') = 1-\cos\!\left(e\left(d\right),e\left(d'\right)\right).
+\end{equation}
+We compute the full pairwise distance matrix across domains and construct candidate compositions by nearest-neighbor selection: for $k=2$, we pick top-$M$ nearest neighbors per anchor domain. For $k=3,4$, we expand greedily from a near pair by adding domains that minimize the average pairwise distance within the set.
+This procedure yields semantically coherent compositions and enables controlled stress by distance, which is consistent with prior discussions that larger domain divergence can hinder cross-domain transfer
+and robustness~\citep{kashyap2021domain}.
+Finally, we manually spot-check sampled combinations/sessions to ensure the resulting scenarios are meaningful.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/inter_domain_distance_matrix_clustered.pdf}
+  \vspace{-1mm}
+  \caption{Inter-domain distance matrix used for nearest-neighbor composition selection. The matrix shows pairwise distances between 20 domains, reordered by hierarchical clustering to reveal near-domain blocks.}
+  \label{fig:domain_distance_heatmap}
+  \vspace{-1mm}
+\end{figure*}
+
+Figure~\ref{fig:domain_distance_heatmap} visualizes the inter-domain distance matrix for all 20 domains in our benchmark, reordered by hierarchical clustering to reveal semantically similar domain clusters.
+This distance matrix guides our nearest-neighbor composition selection strategy, ensuring that cross-domain scenarios are constructed from domains that are semantically coherent yet sufficiently distinct to test compositional reasoning capabilities.
+
+\subsection{Turn-level mixture structure}
+\paragraph{Mixture entropy.}
+We quantify how ``blended'' a turn is by Shannon entropy~\citep{shannon1948}:
+\begin{equation}
+\label{eq:mixture_entropy}
+H(w_t)= -\sum_{i=1}^{k} w_{t,i}\log w_{t,i}.
+\end{equation}
+For a fixed $k$, $H(w_t)\in\left[0,\log k\right]$.
+We also report a \emph{normalized} entropy
+\begin{equation}
+\label{eq:mixture_entropy_norm}
+\bar{H}(w_t)= \frac{H(w_t)}{\log k}\in[0,1],
+\end{equation}
+which allows comparisons across different composition orders.
+
+\paragraph{Effective composition order.}
+Entropy can be mapped to an ``effective number of active domains'' via
+\begin{equation}
+\label{eq:effective_k}
+k_{\mathrm{eff}}(t)=\exp\!\left(H\left(w_t\right)\right)\in[1,k].
+\end{equation}
+Intuitively, $k_{\mathrm{eff}}(t)$ is close to $1$ when the mixture is sharply concentrated
+and approaches $k$ when the mixture is near-uniform.
+
+\subsection{turn-to-turn-level mixture drift}
+To quantify how mixture focus shifts across turns, we compute a symmetric divergence between consecutive
+mixtures. Let $m_t=\frac{1}{2}(w_{t-1}+w_t)$. The Jensen--Shannon divergence is~\citep{lin1991divergence}
+\vspace{-1mm}
+\begin{equation}
+\label{eq:jsd_def}
+\mathrm{JSD}(w_{t-1},w_t)
+=\frac{1}{2}\mathrm{KL}\left(w_{t-1}\Vert m_t\right) 
++\frac{1}{2}\mathrm{KL}\left(w_t\Vert m_t\right),
+\end{equation}
+\vspace{-1mm}
+where $\mathrm{KL}\left(p\Vert q\right)=\sum_i p_i\log\frac{p_i}{q_i}$.
+We define the per-turn drift magnitude as
+\vspace{-1mm}
+\begin{equation}
+\label{eq:drift_mag}
+d_t=\mathrm{JSD}\left(w_{t-1},w_t\right),\quad t=2,\ldots,T.
+\end{equation}
+\vspace{-1mm}
+In practice, $\{d_t\}$ captures whether a session maintains a stable mixture,
+shifts gradually, or fluctuates in domain reliance.
+
+\subsection{Session-level summaries}
+For each session, we summarize the mixture structure and drift by compact statistics.
+These summaries are used for (i) reporting and slicing analyses (Section~\ref{sec:mechanism}),
+and (ii) validating that the realized trajectory matches the intended regime.
+
+\paragraph{Mixture complexity summaries.}
+We compute the mean and volatility of normalized entropy:
+\begin{align}
+\label{eq:ep_entropy_mean}
+\mu_H &= \frac{1}{T}\sum_{t=1}^{T}\bar{H}(w_t),\\
+\label{eq:ep_entropy_std}
+\sigma_H &= \sqrt{\frac{1}{T}\sum_{t=1}^{T}\left(\bar{H}\left(w_t\right)-\mu_H\right)^2 }.
+\end{align}
+
+\paragraph{Mixture drift summaries.}
+We compute the mean and peak drift, plus drift volatility:
+\begin{align}
+\label{eq:ep_drift_mean}
+\mu_d &= \frac{1}{T-1}\sum_{t=2}^{T} d_t,\\
+\label{eq:ep_drift_max}
+d_{\max} &= \max_{t=2,\ldots,T} d_t,\\
+\label{eq:ep_drift_std}
+\sigma_d &= \sqrt{\frac{1}{T-1}\sum_{t=2}^{T}\left(d_t-\mu_d\right)^2 }.
+\end{align}
+
+\paragraph{Regime-oriented indicators.}
+When we need a simple scalar to reflect ``stability vs. fluctuation'',
+we use $\sigma_d$ and $d_{\max}$ as volatility proxies; this aligns with the intuition that high oscillation yields larger turn-to-turn divergence.
+We do \emph{not} treat these indicators as model features, as they are session diagnostics and construction/validation controls.
+
+
+\section{Trajectory Annotation: Difficulty and Mixture}
+\label{app:trajectory_annotation}
+
+This section specifies how \textsc{XDomainBench} constructs two trajectory-level diagnostic signals:
+the difficulty trajectory $\{\delta_t\}_{t=1}^{T}$ and the domain-mixture (weight) trajectory $\{w_t\}_{t=1}^{T}$.
+Both are \emph{construction-time metadata} and are defined independently of the evaluated model.
+
+\paragraph{Design requirements.}
+We target (i) controllability (pattern instantiation), (ii) comparability (normalized scales), (iii) auditability (rule-based pattern assignment), and (iv) model-agnosticism, consistent with robustness- and diagnosis-oriented evaluation principles~\citep{liang2022helm,kiela-etal-2021-dynabench,ribeiro-etal-2020-beyond}.
+
+\subsection{Difficulty trajectory $\{\delta_t\}$}
+\label{app:difficulty_trajectory}
+
+\subsubsection{Definition and decomposition}
+We define a per-turn difficulty score $\delta_t\in[0,1]$ as a convex combination of:
+(i) a rubric-guided LLM-based difficulty component (70\%), and (ii) an embedding-space semantic complexity component (30\%) computed after removing generic words.
+\begin{equation}
+\label{eq:delta_decomp}
+\delta_t = \lambda_{\mathrm{LLM}}\,\delta^{\mathrm{LLM}}_t + \left(1-\lambda_{\mathrm{LLM}}\right)\,\delta^{\mathrm{sem}}_t.
+\end{equation}
+
+\subsubsection{LLM-based difficulty scoring}
+\label{app:difficulty_llm}
+
+\paragraph{Three-criterion scoring.}
+The LLM-based difficulty component is derived from a construction-time rubric score composed of three criteria: \textsc{Accuracy}, \textsc{Quality}, and \textsc{Perplexity}-style fluency/consistency signals (where ``perplexity-style'' denotes a normalized fluency/consistency proxy scored on a fixed rubric scale, rather than raw LM perplexity).
+For each judge model $j$ and query $x_t$ of each turn $(x_t,y_t)$, we obtain criterion scores $r^{(\text{acc})}_{j,t}, r^{(\text{qual})}_{j,t}, r^{(\text{ppl})}_{j,t}\in[0,1]$ and combine them with fixed weights:
+\begin{equation}
+\label{eq:diff_llm_3crit}
+s^{\mathrm{diff}}_{j,t} = \beta_{\mathrm{acc}}\, r^{(\mathrm{acc})}_{j,t} + \beta_{\mathrm{qual}}\, r^{(\mathrm{qual})}_{j,t} + \beta_{\mathrm{ppl}}\, r^{(\mathrm{ppl})}_{j,t}, \qquad
+\beta_{\mathrm{acc}} + \beta_{\mathrm{qual}} + \beta_{\mathrm{ppl}} = 1.
+\end{equation}
+Rubric prompts and score normalization follow LLM-judge best practices and are specified in Appendix~\ref{app:scoring}~\citep{zheng-etal-2023-judging,chiang-etal-2024-chatbotarena,laskar-etal-2024-systematic}.
+
+\paragraph{Three state-of-the-art judge ensemble.}
+To ensure robust and reliable difficulty assessment, we use a judge ensemble $\mathcal{J}=\{j_1,j_2,j_3\}$ consisting of three state-of-the-art large language models and compute:
+\begin{equation}
+\label{eq:diff_llm_ensemble}
+s^{\mathrm{diff}}_{t} = \sum_{j\in\mathcal{J}} \gamma^{\mathrm{diff}}_{j}\, s^{\mathrm{diff}}_{j,t}, \qquad
+\sum_{j\in\mathcal{J}} \gamma^{\mathrm{diff}}_{j} = 1,
+\qquad
+\mathcal{J}=\left\{j_1,j_2,j_3\right\}.
+\end{equation}
+This ensembling affects only construction-time metadata and does not depend on the evaluated model.
+
+\paragraph{From ``correctness'' to difficulty.}
+We convert the fused rubric score to difficulty:
+\begin{equation}
+\label{eq:diff_llm_to_delta}
+\delta^{\text{LLM}}_t = 1 - s^{\text{diff}}_{t}.
+\end{equation}
+
+\begin{algorithm}[ht]
+\caption{Mixture-trajectory sampler (implementation-agnostic)}
+\label{alg:mixture_sampler}
+\begin{algorithmic}[1]
+\Require order $k$, length $T$, regime $\mathsf{R}\in\{\texttt{stable},\texttt{gradual\_shift},\texttt{fluctuate}\}$;
+minimum mass $\epsilon_{\min}$; max step change $\Delta_{\max}$
+\Ensure mixture trajectory $w_{1:T}$, $w_t\in\Delta^{k-1}$
+\State Sample (or choose) a baseline mixture $\bar{w}\in\Delta^{k-1}$ that matches the target entropy bucket
+\If{$\mathsf{R}=\texttt{stable}$}
+    \For{$t=1$ to $T$}
+        \State $w_t \leftarrow \mathrm{Proj}_\Delta(\bar{w} + \xi_t)$ \Comment{$\xi_t$ small noise}
+        \State Enforce $w_{t,i}\ge \epsilon_{\min}$ by truncation+renormalization
+    \EndFor
+\ElsIf{$\mathsf{R}=\texttt{gradual\_shift}$}
+    \State Choose source mixture $w^{(s)}$ and target mixture $w^{(g)}$ (both in the same entropy bucket)
+    \For{$t=1$ to $T$}
+        \State $\alpha_t \leftarrow \frac{t-1}{T-1}$
+        \State $w_t \leftarrow (1-\alpha_t)w^{(s)} + \alpha_t w^{(g)}$
+        \State Enforce per-step change $\|w_t-w_{t-1}\|_1 \le \Delta_{\max}$ for $t\ge2$
+    \EndFor
+\ElsIf{$\mathsf{R}=\texttt{fluctuate}$}
+    \State Choose a baseline $\bar{w}$ and an oscillation amplitude schedule $\eta_{2:T}$
+    \For{$t=1$ to $T$}
+        \State $w_t \leftarrow \mathrm{Proj}_\Delta(\bar{w} + \eta_t \cdot u_t)$ \Comment{$u_t$ alternates directions}
+        \State Enforce $\|w_t-w_{t-1}\|_1 \le \Delta_{\max}$ for $t\ge2$
+    \EndFor
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Embedding-based difficulty scoring}
+\label{app:difficulty_sem}
+
+We compute $\delta^{\text{sem}}_t\in[0,1]$ from the semantic complexity of the query $x_t$ of each turn $(x_t,y_t)$, where normalization removes generic function words and domain-agnostic boilerplate using a fixed rule. We embed the normalized text using a sentence embedding model~\citep{reimers-gurevych-2019-sentence} and derive a scalar complexity proxy (dispersion or uncertainty under a fixed neighborhood statistic).
+
+\subsubsection{Difficulty patterns (5 types)}
+\label{app:difficulty_patterns}
+
+Each session is assigned one of five difficulty patterns used in mechanism analyses (see Appendix~\ref{app:pattern_difficulty} for the detailed taxonomy and assignment rules):
+\textsc{Stable}, \textsc{Gradual Increase}, \textsc{Gradual Decrease}, \textsc{Spike}, \textsc{Fluctuate}.
+Pattern assignment uses interpretable statistics (mean level $\mu_\delta$, volatility $\sigma_\delta$, and a trend score such as Spearman correlation).
+
+\subsection{Mixture trajectory $\{w_t\}$}
+\label{app:mixture_trajectory}
+
+\subsubsection{Constructing mixture trajectories}
+\label{app:mix_generation}
+Algorithm~\ref{alg:mixture_sampler} shows the reference constructor that generates a target mixture trajectory. Here, $\mathrm{Proj}_\Delta(\cdot)$ denotes Euclidean projection onto the probability simplex to enforce non-negativity and unit sum. In our implementation, this is done deterministically and does not depend on the evaluated model.
+It is intentionally lightweight: (i) it guarantees $w_t\in\Delta^{k-1}$; (ii) it supports three canonical regimes; and (iii) it exposes only a small number of hyperparameters (step size, noise scale, oscillation period). Note that $w_{1:T}$ is a \emph{benchmark control signal} used to instantiate and diagnose sessions, not a specialized modeling component.
+
+\subsubsection{Target mixture regimes (3 types)}
+\label{app:mixture_regimes}
+
+We instantiate three canonical regimes for the \emph{target} mixture $w_{1:T}$ (see Appendix~\ref{app:pattern_mixture} for the detailed taxonomy and assignment rules): \textsc{Stable}, \textsc{Gradual Shift}, and \textsc{Fluctuate}.
+
+\paragraph{Stable.}
+$w_t\equiv w_0$ for $t=1,\ldots,T$.
+
+\paragraph{Gradual shift.}
+We interpolate between endpoint mixtures $w^{(s)},w^{(g)}\in\Delta^{k-1}$:
+\begin{equation}
+\label{eq:w_gradual_final}
+w_t=(1-\lambda_t)\,w^{(s)}+\lambda_t\,w^{(g)}, \lambda_t=\frac{t-1}{T-1}.
+\end{equation}
+
+\paragraph{Fluctuate.}
+We generate a bounded random walk on the simplex:
+\begin{equation}
+\label{eq:w_fluctuate_final}
+w_{t+1}=\mathrm{Proj}_{\Delta}\left(w_t+\eta\,\xi_t\right), \xi_t\sim\mathcal{N}(0,I).
+\end{equation}
+
+\subsubsection{Observed mixture estimation}
+\label{app:mixture_observed}
+
+To validate that the turn content reflects the intended mixture, we estimate an \emph{observed} mixture $\hat{w}_t$ by combining:
+(i) an LLM attribution score ($\lambda^{w}_{\mathrm{LLM}} = 50\%$), (ii) keyword matching ($\lambda^{w}_{\mathrm{key}} = 35\%$), and (iii) embedding similarity ($\lambda^{w}_{\mathrm{emb}} = 15\%$):
+\begin{equation}
+\label{eq:wt_hat_mix}
+\begin{aligned}
+\hat{w}_t &= \lambda^{w}_{\mathrm{LLM}}\,\hat{w}^{\mathrm{LLM}}_t
+ + \lambda^{w}_{\mathrm{key}}\,\hat{w}^{\mathrm{key}}_t
+ + \lambda^{w}_{\mathrm{emb}}\,\hat{w}^{\mathrm{emb}}_t.
+\end{aligned}
+\end{equation}
+
+\paragraph{LLM attribution}
+For each judge model $j\in\mathcal{J}=\{j_1,j_2,j_3\}$ (the same three state-of-the-art models as used for difficulty assessment), we prompt the judge to output a domain-proportion vector $\hat{w}^{\text{LLM}}_{j,t}\in\Delta^{k-1}$ indicating how much each domain contributes to the knowledge required/used at turn $t$. We then fuse them by fixed weights:
+\begin{equation}
+\label{eq:wt_llm_ensemble}
+\hat{w}^{\mathrm{LLM}}_{t}
+= \sum_{j\in\mathcal{J}} \gamma^{w}_{j}\, \hat{w}^{\mathrm{LLM}}_{j,t}, \qquad
+\sum_{j\in\mathcal{J}} \gamma^{w}_{j} = 1,
+\qquad
+\mathcal{J}=\left\{j_1,j_2,j_3\right\}.
+\end{equation}
+Rubric prompts, parsing constraints, and judge calibration details are specified in the validation subsection below and in Appendix~\ref{app:scoring}.
+
+\paragraph{Keyword matching and embedding similarity.}
+$\hat{w}^{\text{key}}_t$ is derived from normalized domain keyword hits, and $\hat{w}^{\text{emb}}_t$ from embedding similarity to domain seed pools. Both are deterministically computed from released resources; details appear in the validation subsection below.
+
+\section{Pattern Taxonomy for Trajectories}
+\label{app:pattern_taxonomy}
+
+This section specifies the \emph{rule-based taxonomy} used to assign each session to
+(i) one of five \textbf{difficulty patterns} and
+(ii) one of three \textbf{mixture regimes}.
+These labels are used for stratified reporting and mechanism analyses in the main text.
+We emphasize that pattern labels are derived from the \emph{constructed target trajectories} $\{\delta_t\}_{t=1}^{T}$ and $\{w_t\}_{t=1}^{T}$ (defined above) and validated independently (see validation subsection below), following controlled-factor evaluation principles for robust, interpretable diagnosis~\citep{liang2022helm,kiela-etal-2021-dynabench,ribeiro-etal-2020-beyond}.
+
+\subsection{Session-level features used by the taxonomy}
+\label{app:pattern_features}
+
+\paragraph{Difficulty-derived features.}
+Given $\{\delta_t\}_{t=1}^{T}$, we compute compact descriptors:
+(i) level $\mu_\delta$ and volatility $\sigma_\delta$;
+(ii) trend score $\rho_\delta$ (Spearman correlation between $\delta_t$ and $t$);
+(iii) maximum step change
+\begin{equation}
+\label{eq:delta_stepmax}
+\Delta^{\max}_\delta = \max_{t=2,\ldots,T} \left|\delta_t-\delta_{t-1}\right|;
+\end{equation}
+and (iv) a spike strength statistic
+\begin{equation}
+\label{eq:delta_spike_strength}
+S_\delta = \max_{t} \left(\delta_t - \mathrm{median}\left(\delta_{1:T}\right)\right).
+\end{equation}
+We also record the number of sign changes in first differences $\mathrm{sgn}\left(\delta_t-\delta_{t-1}\right)$ as an oscillation proxy.
+
+\paragraph{Mixture-derived features.}
+Mixture dynamics are characterized by the turn-to-turn drift sequence $\{d_t\}_{t=2}^{T}$ defined above (\eqref{eq:drift_mag}) via Jensen--Shannon divergence~\citep{lin1991divergence}, together with the entropy sequence $\{H(w_t)\}$ (\eqref{eq:mixture_entropy})~\citep{shannon1948}.
+We reuse the session summaries defined above: $\left(\mu_d,\sigma_d,d_{\max}\right)$ for drift and $(\mu_H,\sigma_H)$ for mixture structure.
+The taxonomy below uses \emph{drift summaries} to assign the regime (\textsc{Stable}, \textsc{Gradual Shift}, \textsc{Fluctuate}). The structure bins, based on entropy, remain defined and reported in Appendix~\ref{app:dataset_stats}.
+
+\subsection{Difficulty pattern taxonomy (5 types)}
+\label{app:pattern_difficulty}
+
+Each session is assigned exactly one label: 
+\begin{align*}
+    P^\delta \in \{\textsc{Stable},\textsc{Gradual Increase},
+    \textsc{Gradual Decrease},\textsc{Spike},\textsc{Fluctuate}\}.
+\end{align*}
+The assignment is intentionally \emph{rule-based} for auditability.
+
+\paragraph{\textsc{Stable}.}
+Low-variance, trend-free difficulty:
+\begin{equation}
+\label{eq:pat_stable}
+\sigma_\delta \le \tau_{\sigma}^{\delta}
+ \wedge 
+|\rho_\delta| \le \tau_{\rho}^{\delta}
+ \wedge 
+\Delta^{\max}_\delta \le \tau_{\Delta}^{\delta}.
+\end{equation}
+
+\paragraph{\textsc{Gradual Increase} / \textsc{Gradual Decrease}.}
+Monotonic drift with bounded volatility, operationalized via a trend gate and a step gate:
+\begin{equation}
+\label{eq:pat_gradual}
+\left(\rho_\delta \ge \tau_{\rho,+}^{\delta}\right)
+\ \text{or}\
+\left(\rho_\delta \le -\tau_{\rho,+}^{\delta}\right),
+\Delta^{\max}_\delta \le \tau_{\Delta,\mathrm{grad}}^{\delta},
+\end{equation}
+together with a mild-volatility constraint $\sigma_\delta \le \tau_{\sigma,\mathrm{grad}}^{\delta}$.
+The sign of $\rho_\delta$ determines \textsc{Increase} vs.\ \textsc{Decrease}.
+
+\paragraph{\textsc{Spike}.}
+A localized burst in difficulty:
+\begin{equation}
+\label{eq:pat_spike}
+S_\delta \ge \tau_{S}^{\delta}
+\quad \wedge \quad
+\sigma_{\delta,\neg t^\star} \le \tau_{\sigma,\mathrm{base}}^{\delta},
+\end{equation}
+where $t^\star=\arg\max_t \delta_t$ and $\sigma_{\delta,\neg t^\star}$ is the standard deviation computed with the spike turn excluded. This ensures the session is not globally volatile (otherwise it is classified as \textsc{Fluctuate}).
+
+\paragraph{\textsc{Fluctuate}.}
+Sessions not matched by the above but exhibiting high volatility or oscillatory behavior, e.g.,
+\begin{equation}
+\label{eq:pat_fluct}
+\sigma_\delta > \tau_{\sigma,\mathrm{fluc}}^{\delta}
+\quad \text{or} \quad
+N_{\mathrm{flip}}\left(\delta_{1:T}\right) \ge \tau_{\mathrm{flip}}^{\delta},
+\end{equation}
+where $N_{\mathrm{flip}}$ counts sign changes of $\left(\delta_t-\delta_{t-1}\right)$.
+
+\paragraph{Priority and tie-breaking.}
+To avoid ambiguity, we apply a fixed priority order: \textsc{Spike} $\succ$ \textsc{Gradual} $\succ$ \textsc{Stable} $\succ$ \textsc{Fluctuate}.
+Specifically, we first check the \textsc{Spike} gate, then the \textsc{Gradual Increase/Decrease} gate, and finally the \textsc{Stable} gate. If no fire, we assign \textsc{Fluctuate}.
+This ordering matches the intended semantics: a spike is a more specific structure than generic volatility.
+
+\subsection{Mixture regime taxonomy (3 types)}
+\label{app:pattern_mixture}
+
+Each session is assigned a mixture regime $P^w \in \{\textsc{Stable},\textsc{Gradual Shift},\textsc{Fluctuate}\}$ based on drift summaries $\left(\mu_d,\sigma_d,d_{\max}\right)$ defined above.
+
+\paragraph{\textsc{Stable}.}
+Low average drift and low volatility:
+\begin{equation}
+\label{eq:mix_stable}
+\mu_d \le \tau_{\mu}^{w}
+\quad \wedge \quad
+\sigma_d \le \tau_{\sigma}^{w}.
+\end{equation}
+
+\paragraph{\textsc{Gradual Shift}.}
+Sustained but smooth drift with limited burstiness:
+\begin{equation}
+\label{eq:mix_gradual}
+\mu_d \ge \tau_{\mu,\mathrm{grad}}^{w}
+\wedge
+\sigma_d \le \tau_{\sigma,\mathrm{grad}}^{w}
+\wedge
+d_{\max} \le \tau_{\max,\mathrm{grad}}^{w}.
+\end{equation}
+
+\paragraph{\textsc{Fluctuate}.}
+Sessions that violate smoothness via volatile or bursty drift:
+\begin{equation}
+\label{eq:mix_fluct}
+\sigma_d > \tau_{\sigma,\mathrm{fluc}}^{w}
+\quad \text{or} \quad
+d_{\max} > \tau_{\max,\mathrm{fluc}}^{w}.
+\end{equation}
+
+It is noted that mixture \emph{structure} (entropy bins) and mixture \emph{dynamics} (regimes above) are treated as orthogonal axes: entropy/structure is defined and bucketed above, while this section only assigns the \emph{dynamic regime} $P^w$.
+
+\subsection{Joint labels, coverage, and released fields}
+\label{app:pattern_joint}
+
+\paragraph{Joint trajectory type.}
+For mechanism analysis, we use the Cartesian product label
+\begin{equation}
+\label{eq:joint_label}
+P = \left(P^\delta,\ P^w\right), 
+\end{equation}
+yielding $5\times 3=15$ trajectory types.
+We report the coverage of these types (and entropy bins) in Appendix~\ref{app:dataset_stats} and enforce balanced quotas during evaluation-suite sampling.
+
+\paragraph{Consistency with validation.}
+Pattern labels are assigned on targets $(\delta_{1:T}, w_{1:T})$, while the validation subsection below validates that realized estimates $(\hat{\delta}_{1:T}, \hat{w}_{1:T})$ remain within tolerance of the targets.
+Sessions that fail regime confirmation after turn-level validation are regenerated or dropped under bounded budgets (see validation subsection below).
+
+\paragraph{Released metadata.}
+For each session we release:
+(i) per-turn targets $(\delta_t, w_t)$;
+(ii) pattern labels $(P^\delta, P^w)$ and the joint label $P$;
+(iii) session summaries $(\mu_\delta,\sigma_\delta,\rho_\delta,S_\delta)$ and $(\mu_d,\sigma_d,d_{\max},\mu_H,\sigma_H)$;
+and (iv) validation logs (retry counts and gate statistics), enabling third-party reproduction of pattern-based slicing without re-running construction.
+
+\subsection{Hybrid Validation for Diagnostic Signals}
+\label{app:signals}
+
+This subsection specifies the \emph{hybrid validation} that checks whether each constructed session follows its intended diagnostic signals: (i) the difficulty trajectory $\{\delta_t\}_{t=1}^{T}$ and (ii) the domain-mixture trajectory $\{w_t\}_{t=1}^{T}$. The validator runs during construction and combines heterogeneous signals (LLM rubric, lexical matching, embedding similarity) to mitigate failure modes of any single validator~\citep{zheng-etal-2023-judging,laskar-etal-2024-systematic,deng-etal-2024-investigating,chiang-etal-2024-chatbotarena}.
+
+\paragraph{Turn-level validation gates.}
+For each turn $t$, we compute realized estimates $(\hat{\delta}_t,\hat{w}_t)$ using the same estimators defined above. A turn is accepted if:
+\begin{itemize}[leftmargin=1.2em,itemsep=0.1em]
+    \item \textbf{Difficulty gate:} 
+    \begin{equation}
+    \left|\hat{\delta}_t - \delta_t\right| \le \epsilon_{\delta}
+    \label{eq:val_diff_gate}
+    \end{equation}
+    (where $\hat{\delta}_t$ uses the same decomposition and aggregation as defined above).
+    \item \textbf{Mixture gate:} 
+    \begin{equation}
+    d(\hat{w}_t, w_t) \le \epsilon_w \quad \text{for } k\ge 2
+    \label{eq:val_mix_gate}
+    \end{equation}
+    (where $d$ is Jensen--Shannon divergence and $\hat{w}_t$ uses the hybrid estimator defined above).
+    \item \textbf{Agreement checks:} Judge disagreement and component-agreement gates ensure stability (enabled when variance is high).
+\end{itemize}
+Failures trigger bounded retries under fixed budgets ($R_{\mathrm{turn}}$ per turn).
+
+\paragraph{Session-level confirmation.}
+After all turns pass, we confirm that the realized trajectories match the intended difficulty pattern and mixture regime labels using the rule-based statistics and thresholds defined above. Violations trigger resampling/regeneration under a bounded session retry budget ($R_{\mathrm{ep}}$). Candidates that exceed budgets are dropped from the released pool.
+
+\paragraph{Parsing and retry policy.}
+LLM judge outputs must follow a strict machine-readable schema (e.g., $k$-dimensional nonnegative vector summing to $1$ for mixture attribution). If parsing fails, we apply deterministic repairs (stripping trailing text, clipping negatives, renormalizing). Persistent failures trigger re-judging or turn regeneration.
+
+\paragraph{Realized mixture alignment.}
+Although the turn-level mixture gate uses a tolerance threshold for bounded retries,
+the released sessions are substantially better aligned with their intended targets in practice.
+Across the released benchmark, the realized mixture error 
+\(d(\hat{w}_t,w_t)\) has mean/median/95th-percentile values of 
+\(0.118/0.102/0.274\), respectively.
+Thus, the mechanism analyses are conducted on a pool whose realized mixture trajectories remain close to the intended diagnostic regimes, 
+rather than merely passing a permissive boundary.
+
+\section{Session Construction Pipeline}
+\label{app:dataset_construction}
+
+This section documents the high-level end-to-end \emph{session construction pipeline} of \textsc{XDomainBench}, from seed pools and template families to the layered quality-control (QC) gates used to ensure that
+each released session is (i) evaluable, (ii) topically coherent across turns, and (iii) consistent with its intended diagnostic configuration. 
+Building on the diagnostic signal definitions and estimators defined above, we focus on the \emph{construction loop and interfaces} here. 
+
+\subsection{Construction inputs and reusable resources}
+\label{app:construction_inputs}
+
+\paragraph{Seed pools (single-domain).}
+For each domain $d$, we maintain a single-domain seed pool $\mathcal{S}(d)$ of atomic QA items, each associated with a task type (e.g., factual, reasoning, code, multiple-choice) and minimal provenance metadata.
+Sessions are constructed by selecting one or more seeds and expanding them into multi-turn trajectories under controlled diagnostic targets.
+
+\paragraph{Template families (by task type).}
+We use a small number of prompt templates per task type to standardize generation outputs (question format, reference answer format, and required fields).
+Full templates and output contracts are provided in Appendix~\ref{app:prompts}.
+This separation keeps construction controllable while allowing the evaluation controller (Appendix~\ref{app:controller}) to remain stable across benchmark versions.
+
+\paragraph{Domain lexicons and embeddings.}
+Construction-time validators rely on (i) a domain keyword lexicon $\mathcal{K}(d)$ per domain and (ii) a domain embedding representation (centroid) computed from single-domain seed pools.
+These reusable resources are also used by the domain-mixture validation module and by the domain-distance stratification.
+
+\paragraph{Construction-time judges (three state-of-the-art models).}
+Some QC components require rubric-guided LLM judgments (e.g., difficulty rubric scoring and mixture attribution).
+To ensure robust and reliable assessment,
+we use a fixed ensemble of three state-of-the-art large language models and fuse their scores with fixed weights.
+Importantly, these judges are used \emph{only} during construction/validation and are decoupled from the evaluated models.
+
+\subsection{Session specification as a \emph{construction request}}
+\label{app:construction_request}
+
+A session is instantiated from a configuration tuple
+\begin{equation}
+\label{eq:configuration_tuple}
+\mathsf{cfg}=\left(k,\ \mathcal{D},\ T,\ \tau_{1:T},\ P^\delta,\ P^w,\ w_{1:T}\right),
+\end{equation}
+where $\mathcal{D}=\{d_1,\ldots,d_k\}$ is the domain set (order $k$), $T$ is the turn budget, $\tau_{1:T}$ is a task-type schedule, $P^\delta$ is a difficulty-drift pattern label, and $P^w$ together with $w_{1:T}$ specifies the target mixture regime/trajectory.
+The benchmark-wide \emph{sampling quotas} over these configurations (coverage across $k$, entropy/drift bins, pattern labels, etc.) are described in Appendix~\ref{app:sample_composition}, and the resulting empirical coverage is reported in Appendix~\ref{app:dataset_stats}.
+
+\subsection{Single-domain session builder ($k=1$)}
+\label{app:single_domain_builder}
+
+Single-domain sessions are generated by iteratively expanding a seed into a multi-turn trajectory.
+At a high level:
+\begin{enumerate}
+    \item \textbf{Seed selection.} Sample a domain $d$ and a seed $(x_1,y_1)\in \mathcal{S}(d)$ consistent with the desired task type $\tau_1$.
+    \item \textbf{Turn expansion.} For $t=2,\ldots,T$, generate $(x_t,y_t)$ conditioned on prior turns, the desired task type $\tau_t$,     and the target difficulty control for turn $t$.
+    \item \textbf{Step-wise QC.} After each generated turn, apply the \emph{format gate}, \emph{topic-coherence gate} (Section~\ref{app:topic_coherence_gate}), and \emph{difficulty-consistency gate}. Only accepted turns are appended to the history.
+\end{enumerate}
+This strict step-wise gating prevents error accumulation during construction and ensures that the resulting session remains evaluable and coherent before advancing to later turns.
+
+
+\begin{algorithm}[p]
+\caption{Full pipeline for \textsc{XDomainBench}: construction $\rightarrow$ validation $\rightarrow$ evaluation $\rightarrow$ analysis.}
+\label{alg:end2end_pipeline}
+\small
+\begin{algorithmic}[1]
+\Require Domain library and single-domain pools (Part~B);
+quota/slice specification (Appendix~\ref{app:sample_composition});
+hyperparameters/tolerances and retry budgets;
+hybrid diagnostic validators;
+controller, prompts, and scoring rules (Part~C);
+analysis specifications (Part~D).
+\Ensure Released evaluation suite with metadata and logs, plus evaluation/analysis outputs.
+
+\Statex \textbf{Phase 0: Preprocessing (construction-time utilities).}
+\State Build domain representations from single-domain pools and compute the inter-domain
+distance matrix.
+\State Build/normalize released lexical resources (e.g., domain keywords) and embedding indices
+used by validators.
+
+\Statex \textbf{Phase 1: Construction $\rightarrow$ validation (closed loop under quotas).}
+\While{evaluation suite not filled under quota constraints}
+  \State Sample a target slice $\mathsf{cfg}$ under quota constraints
+  (e.g., $k$, entropy/drift bins, difficulty pattern, mixture regime, task-type schedule).
+  \State Select a domain set $\mathcal{D}$ of order $k$ (nearest-neighbor policy).
+  \State Instantiate target diagnostic signals for this session: (i) target difficulty $\delta_{1:T}$ and its pattern label; and (ii) target mixture $w_{1:T}$ and its regime label.
+  \State Initialize retry counters: $r_{\mathrm{ep}}\leftarrow 0$.
+  \Statex \hspace{-0.2em}\textbf{Turn loop (generate--validate--retry).}
+  \For{$t=1$ \textbf{to} $T$}
+    \State $r_{\mathrm{turn}}\leftarrow 0$.
+    \Repeat
+      \State Generate a candidate turn instance (query, reference, required fields)
+      conditioned on $(\mathcal{D}, \delta_t, w_t)$ and construction templates.
+      \State Apply \textbf{hard-format/evaluability gates} (schema/contract; required fields);
+      reject immediately if violated.
+      \State Compute realized diagnostics $(\hat{\delta}_t, \hat{w}_t)$ and apply \textbf{turn-level hybrid validation}: (i) difficulty gate w.r.t.\ $\delta_t$; (ii) mixture gate w.r.t.\ $w_t$ (only if $k\ge 2$); and (iii) parsing/consistency handling and tolerance checks.
+      \If{any turn-level gate fails}
+        \State $r_{\mathrm{turn}}\leftarrow r_{\mathrm{turn}}+1$.
+      \EndIf
+    \Until{all turn-level gates pass \textbf{or} $r_{\mathrm{turn}} > R_{\mathrm{turn}}$}
+    \If{$r_{\mathrm{turn}} > R_{\mathrm{turn}}$}
+      \State \textbf{Reject} this session candidate; \textbf{continue} the outer \textbf{while} loop.
+    \EndIf
+  \EndFor
+
+  \Statex \textbf{Session-level confirmation and QC.}
+  \State Compute session summaries (entropy/drift; difficulty statistics) and confirm that: (i) the realized session matches the intended difficulty pattern, (ii) the realized session matches the intended mixture regime.
+  \While{session-level constraints violated \textbf{and} $r_{\mathrm{ep}} < R_{\mathrm{ep}}$}
+    \State $r_{\mathrm{ep}}\leftarrow r_{\mathrm{ep}}+1$.
+    \State Resample affected turns or resample targets, then rerun the
+    turn and session confirmation.
+  \EndWhile
+  \If{session-level constraints still violated}
+    \State \textbf{Reject} this session candidate; \textbf{continue} the outer \textbf{while} loop.
+  \EndIf
+  \State Apply additional dataset QC filters and audits; drop if any hard constraint fails.
+  \State Commit the session to the released pool.
+\EndWhile
+
+\Statex \textbf{Phase 2: Standardized interactive evaluation (consume released suite).}
+\For{each evaluated model $m$ (Appendix~\ref{app:models})}
+  \For{each session $e$ in the released suite}
+    \State Run the reference controller with the required prompt templates (Appendices~\ref{app:controller} and \ref{app:prompts}).
+    \State Parse outputs per contract.
+    \State Score per turn and per session (Appendices~\ref{app:scoring} and \ref{app:models}).
+  \EndFor
+\EndFor
+
+\Statex \textbf{Phase 3: Aggregation and analyses (reporting + mechanisms).}
+\State Produce full result tables and slices (Appendices~\ref{app:full_results}, \ref{app:combo_breakdown}, and \ref{app:paired_protocol}).
+\State Run mechanism analyses using released signals and labels (Appendices~\ref{app:pattern_taxonomy} and \ref{app:full_results}).
+\State \Return Release artifacts (suite + metadata) and analysis outputs.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Cross-domain session builder ($k\in\{2,3,4\}$)}
+\label{app:cross_domain_builder}
+
+Cross-domain sessions require controlling the per-turn mixture trajectory $w_{1:T}$ and ensuring that the generated turns genuinely demand knowledge from intended domains, proportionally consistent with $w_t$.
+
+\paragraph{Domain combination selection.}
+We first select a domain set $\mathcal{D}$ using embedding-based semantic similarity over single-domain pools, while maintaining diversity via a \emph{used-combinations} set that prevents over-reusing the same domain tuples. (Details of domain representations and distances appear in Appendix~\ref{app:domain_distance}.)
+
+\paragraph{Mixture trajectory instantiation.}
+Given $\mathcal{D}$, we sample a target mixture regime and instantiate $w_{1:T}$. The generation prompt at each turn explicitly includes the intended domain mixture $w_t$ and the intended difficulty target, and asks the generator to produce $(x_t,y_t)$ whose required knowledge matches these controls.
+
+\paragraph{Cross-domain QC.}
+Each turn is validated by (i) the same \emph{format} and \emph{topic-coherence} gates as in the single-domain case, and additionally (ii) a \emph{mixture-consistency} gate that estimates an observed mixture $\hat{w}_t$ from the realized turn and checks it against $w_t$ within tolerance.
+At the session level, we verify that the realized drift regime statistics match the intended regime before acceptance.
+
+\subsection{Topic coherence gate}
+\label{app:topic_coherence_gate}
+
+Beyond diagnostic signals, we enforce a \emph{topic-coherence} constraint to ensure that turns within a session form a connected conversation rather than a bag of independent QA items. Given current text $t$ (typically the current query, including the reference answer) and a set of previous turn texts $T_{\mathrm{prev}}$, we compute a coherence score
+\begin{equation}
+\label{eq:topic coherence}
+s_{\mathrm{topic}} = 0.7\,s_{\mathrm{emb}} + 0.3\,s_{\mathrm{kw}},
+\end{equation}
+where $s_{\mathrm{emb}}$ is the maximum embedding cosine similarity between $t$ and any $t'\in T_{\mathrm{prev}}$ (after stopword removal), and $s_{\mathrm{kw}}$ is the Jaccard overlap between extracted keyword sets.
+
+\paragraph{Rationale.}
+This hybrid gate is designed to detect abrupt topic shifts (low lexical overlap) while remaining robust to surface paraphrases (high semantic similarity), providing a lightweight but effective coherence control.
+
+\subsection{Quality assurance and error handling}
+\label{app:construction_qc}
+
+We employ a layered QC stack during construction. The full auditing and filtering policy is detailed in Appendix~\ref{app:data_quality_layered}.
+
+
+% =========================================================
+% Part B: Dataset Statistics and Release Artifacts
+% =========================================================
+\clearpage
+\AppBlock{Part B: Dataset Statistics and Release Artifacts.}
+\section{Data Quality, Auditing, and Contamination Controls}
+\label{app:data_quality}
+
+This section documents the \emph{quality control (QC)} and \emph{risk control} policies used during \textsc{XDomainBench} construction, focusing on (i) \emph{evaluability} and formatting correctness, (ii) \emph{auditing and arbitration} for ambiguous or unstable cases, and (iii) \emph{contamination/leakage} safeguards.
+Based on the definitions of diagnostic signals and their hybrid validators defined above, we specify how those components are \emph{operationalized} in dataset curation.
+The closed-loop construction/validation procedure and retry budgets follow Algorithm~\ref{alg:end2end_pipeline}.
+
+\subsection{Design goals and threat model}
+\label{app:data_quality_goals}
+
+\paragraph{Evaluability.}
+Every released turn must admit a well-defined scoring procedure under the standardized protocol (Part~C), meaning that the prompt is self-contained, the expected output format is deterministic, and reference supervision (gold/judge rubric/unit-testable contract) is available.
+
+\paragraph{Controllability.}
+Released sessions must respect the intended drift controls (e.g., difficulty patterns and mixture regimes) and remain topically coherent across turns. We enforce these via \emph{gates} and \emph{retry budgets} in the closed-loop pipeline (Algorithm~\ref{alg:end2end_pipeline}).
+
+\subsection{Evaluability criteria and hard filters}
+\label{app:data_quality_evaluability}
+
+We apply \emph{hard filters} that a candidate's turn/session must satisfy before entering the released pool.
+These checks are \textbf{model-agnostic} and depend only on the constructed artifact.
+
+\paragraph{Schema and formatting conformance.}
+Each turn must satisfy the prompt/output schema required by its task type (e.g., a single option letter for multiple-choice; executable code block where applicable; or a single short factual span), as defined by the prompt templates. Violations are treated as \textsc{HardFail} and trigger regeneration under the per-turn retry budget.
+
+\paragraph{Self-contained prompts.}
+A turn is rejected if it relies on external hyperlinks, hidden files, or unstated private context.
+
+\paragraph{Unambiguous supervision.}
+We reject turns that do not admit a stable supervision signal, including:
+(i) multiple-choice items with multiple plausible correct options,
+(ii) factual questions whose answer is underspecified by the prompt,
+(iii) code tasks with missing I/O contract or unverifiable behavior.
+
+\paragraph{Content safety and policy compliance.}
+We remove unsafe or disallowed content in accordance with standard dataset release norms (e.g., instructions for wrongdoing, explicit personal data).
+These are treated as \textsc{HardFail} and are never regenerated from the same seed.
+
+\subsection{Layered quality assurance and error handling}
+\label{app:data_quality_layered}
+
+QC is executed in a layered manner, mirroring the construction loop described above.
+We clarify \emph{where} each check is applied and \emph{what} is logged for auditability, without repeating the validation logic already specified in Part~A.
+
+\paragraph{Turn-level validation (commit gate).}
+The turn-level validation gates (format correctness, topic coherence, difficulty consistency, and mixture consistency) are applied as described above.
+For bookkeeping, each rejection is tagged with a single \emph{primary failure reason} drawn from \{\textsc{FormatFail}, \textsc{ParseFail}, \textsc{DiffGateFail}, \textsc{MixGateFail}, \textsc{CoherenceFail}, \textsc{SafetyFail}\} to support later QC reporting.
+
+\begin{table*}[t]
+\caption{Turn-level statistics by task type and domain order.}
+\vspace{-2mm}
+\centering
+\small
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Task Type} & \textbf{1-domain} & \textbf{2-domain} & \textbf{3-domain} & \textbf{4-domain} & \textbf{Total} & \textbf{Avg Q Len} & \textbf{Avg A Len}\\
+\midrule
+Factual & 5,534 & 8,273 & 4,715 & 1,531 & 20,053 & 19.4 & 8.7\\
+Reasoning & 769 & 14,639 & 6,080 & 8,360 & 29,848 & 31.2 & 21.5\\
+Code & 553 & - & - & - & 553 & 27.0 & 43.7\\
+Multiple Choice & 2,856 & 4,302 & 5,550 & 1,728 & 14,436 & 30.8 & 12.1\\
+\midrule
+Total & 9,712 & 27,214 & 16,345 & 11,619 & 52,582 & 26.9 & 15.5\\
+\bottomrule
+\end{tabular}
+\vspace{-1mm}
+\label{tab:turn_statistics}
+\end{table*}
+
+\paragraph{Session-level validation (pattern/regime confirmation).}
+The session-level validation (pattern/regime confirmation and coherence checks) is applied as described above.
+Violations trigger bounded session-level repair (resample affected turns or targets) up to $R_{\mathrm{ep}}$.
+
+\paragraph{Post-hoc cleaning and batch health checks.}
+After a batch of sessions is produced, we run deterministic cleaning to remove construction artifacts (e.g., placeholder tokens, accidental metadata tags, spurious answer prefixes), followed by distributional sanity checks over core metadata (e.g., length, pattern counts, entropy bins; see below for reported summaries).
+Degenerate clusters (e.g., unusually repetitive outputs or abnormal failure-reason spikes) are flagged for audit sampling (see below).
+
+\subsection{Arbitration and judge agreement for curation}
+\label{app:data_quality_arbitration}
+
+Some QC decisions consume construction-time LLM judgments (e.g., difficulty rubric components and mixture attribution).
+We do \emph{not} restate how dispersion/agreement is computed; we only specify the \emph{curation actions} taken when those signals indicate instability.
+
+\paragraph{When is arbitration triggered?}
+A candidate is marked \textsc{Unstable} when the agreement/dispersion gates defined above fail, or when cross-signal consistency gates indicate a contradiction between LLM attribution and deterministic evidence.
+By default, unstable items are \emph{regenerated} under the standard retry policy (Algorithm~\ref{alg:end2end_pipeline}).
+Arbitration is invoked primarily for (i) quota-critical slices, or (ii) systematic instability patterns discovered in batch monitoring.
+
+\paragraph{Arbitration actions.}
+Given a quota-critical \textsc{Unstable} candidate, we apply:
+\begin{enumerate}
+    \item \textbf{Re-judge (same rubric, stricter schema).} Re-run the same judging rubric but enforce a shorter, schema-only output (no free-form rationale), to reduce parsing/verbosity variance.
+    \item \textbf{Regenerate (preferred).} If the case is near acceptance boundaries or exhibits semantic misalignment, regenerate the turn/session and re-apply the standard validators (Algorithm~\ref{alg:end2end_pipeline}).
+    \item \textbf{Manual audit escalation (rare).} Escalate only when repeated regeneration fails and the slice is still quota-critical, or when a systematic issue is suspected (see below).
+\end{enumerate}
+
+\subsection{Audit sampling}
+\label{app:data_quality_audit}
+
+\paragraph{Human audit procedure.}
+We conducted a comprehensive human audit of the dataset to ensure quality and identify systematic issues.
+Six PhD students from diverse academic backgrounds (covering the domains represented in the benchmark) performed manual inspection of 50\% of the dataset content, checking each sample individually for: (i) coherence and realism, (ii) supervision validity, and (iii) alignment with intended drift patterns.
+This audit identified problematic samples at a rate of 0.4\%.
+Based on the patterns observed in these problematic samples, we then applied targeted screening criteria to the remaining 50\% of the data, enabling efficient identification and removal of similar issues.
+
+\paragraph{Audit checklist.}
+The audit used a fixed checklist with pass/fail fields: format compliance, unambiguous answerability, no hidden dependencies, no leakage-like memorized strings, and pattern plausibility.
+
+\subsection{Contamination and leakage safeguards}
+\label{app:data_quality_contamination}
+
+We implement a lightweight but conservative set of safeguards to reduce contamination risks.
+
+\paragraph{Deduplication within the benchmark.}
+We remove exact duplicates by hashing normalized prompts and answers.
+We also perform near-duplicate detection using embedding similarity on normalized text, dropping items with a similarity above the threshold to prevent inflated coverage.
+
+\paragraph{Seed isolation and split hygiene.}
+We maintain disjoint seed pools for construction vs.\ evaluation suites and enforce that no session shares the same normalized prompt across splits.
+All split assignments are deterministic and keyed by stable IDs to avoid accidental drift across releases.
+
+\section{Dataset Statistics and Coverage}
+\label{app:dataset_stats}
+
+This section summarizes the scale and slice coverage of the released benchmark, complementing the construction pipeline defined above, the QC and auditing policy, and the released data schema (see below).
+We report (i) the underlying single-turn QA pools used for session construction, (ii) scenario-level coverage over domain order and drift factors, and (iii) turn-level composition statistics.
+
+\begin{table*}[t]
+\caption{Data Sources (Single-turn Pool Sizes) by Domain}
+\vspace{-2mm}
+\centering
+\small
+\setlength{\tabcolsep}{2pt}
+% \renewcommand{\arraystretch}{1.08}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabularx}{\textwidth}{@{}
+>{\raggedright\arraybackslash}p{1.5cm}
+>{\raggedright\arraybackslash}p{1.5cm}
+>{\centering\arraybackslash}p{0.65cm}
+>{\raggedright\arraybackslash}X
+>{\raggedright\arraybackslash}p{7.3cm}
+@{}}
+\toprule
+\textbf{Category} & \textbf{Domain} & \textbf{Total} &
+\makecell[l]{\textbf{Data Sources (Sample Count)}} &
+\makecell[l]{\textbf{License/ Notes}} \\
+\midrule
+
+\multirow[t]{2}{*}{\textbf{Arts}} &
+Art & 572 & RACE (218), TriviaQA (354) &
+RACE: non-commercial research only; TriviaQA: Apache-2.0 \\
+& Music & 1105 & RACE (247), TriviaQA (858) &
+RACE: non-commercial research only; TriviaQA: Apache-2.0 \\
+\midrule
+
+\multirow[t]{3}{*}{\textbf{Humanities}} &
+History & 459 & MMLU (48), TriviaQA (411) &
+MMLU: MIT; TriviaQA: Apache-2.0 \\
+& Literature & 311 & MMLU (2), RACE (309) &
+MMLU: MIT; RACE: non-commercial research only \\
+& Philosophy & 417 & CommonsenseQA (114), MMLU (131), OpenBookQA (30), TriviaQA (142) &
+CSQA/MMLU: MIT; OpenBookQA: Apache-2.0 (repo); TriviaQA: Apache-2.0 \\
+\midrule
+
+\multirow[t]{6}{*}{\textbf{Social Sci.}} &
+Economics & 481 & SciQ (1), TriviaQA (480) &
+SciQ: CC BY-NC 3.0; TriviaQA: Apache-2.0 \\
+& Finance & 822 & CommonsenseQA (2), MMLU (1), OpenBookQA (7), RACE (26), SciQ (251), TriviaQA (535) &
+CSQA/MMLU: MIT; OpenBookQA: Apache-2.0 (repo); RACE: non-commercial; SciQ: CC BY-NC 3.0; TriviaQA: Apache-2.0 \\
+& Geography & 2070 & SciQ (56), TriviaQA (2014) &
+SciQ: CC BY-NC 3.0; TriviaQA: Apache-2.0 \\
+& Law & 713 & LexGLUE (ECtHR) (516), MMLU (197) &
+ECtHR (LexGLUE subset): CC BY-NC-SA 4.0; MMLU: MIT \\
+& Psychology & 497 & CommonsenseQA (372), MMLU (72), OpenBookQA (53) &
+CSQA/MMLU: MIT; OpenBookQA: Apache-2.0 (repo) \\
+& Sociology & 436 & CommonsenseQA (136), MMLU (15), OpenBookQA (19), TriviaQA (266) &
+CSQA/MMLU: MIT; OpenBookQA: Apache-2.0 (repo); TriviaQA: Apache-2.0 \\
+\midrule
+
+\multirow[t]{8}{*}{\textbf{STEM}} &
+Biology & 958 & MMLU (47), OpenBookQA (765), SciQ (146) &
+MMLU: MIT; OpenBookQA: Apache-2.0 (repo); SciQ: CC BY-NC 3.0 \\
+& Chemistry & 890 & OpenBookQA (85), SciQ (805) &
+OpenBookQA: Apache-2.0 (repo); SciQ: CC BY-NC 3.0 \\
+& Engineering & 914 & ARC Challenge (15), SciQ (205), TriviaQA (694) &
+ARC: CC BY-SA; SciQ: CC BY-NC 3.0; TriviaQA: Apache-2.0 \\
+& Mathematics & 675 & GSM8K (603), MMLU (72) &
+GSM8K: MIT; MMLU: MIT \\
+& Medicine & 436 & MMLU (209), MedMCQA (187), SciQ (40) &
+MMLU: MIT; MedMCQA: MIT; SciQ: CC BY-NC 3.0 \\
+& Physics & 561 & ARC Challenge (86), OpenBookQA (153), SciQ (322) &
+ARC: CC BY-SA; OpenBookQA: Apache-2.0 (repo); SciQ: CC BY-NC 3.0 \\
+& Computer Sci. & 395 & Custom / Internal (395) &
+Internal/custom (not redistributed) \\
+& Technology & 947 & CommonsenseQA (866), RACE (55), SciQ (4), TriviaQA (22) &
+CSQA: MIT; RACE: non-commercial; SciQ: CC BY-NC 3.0; TriviaQA: Apache-2.0 \\
+\midrule
+
+\textbf{General} &
+Sports & 1164 & TriviaQA (1164) &
+TriviaQA: Apache-2.0 \\
+\bottomrule
+\end{tabularx}
+\end{adjustbox}
+\vspace{-1mm}
+\label{tab:data_sources}
+\end{table*}
+
+\subsection{Overall scale}
+\textsc{XDomainBench} contains \textbf{8,598} multi-turn scenarios with a total of \textbf{52,582} turns (QA pairs). Turn-level counts and average lengths are summarized in Table~\ref{tab:turn_statistics}. Scenario counts by composition order and task type are reported in Table~\ref{tab:scenario_statistics}. Code turns are instantiated only in 1-domain settings in the current release.
+
+\subsection{Domain and source coverage}
+We cover \textbf{20 domains} spanning STEM, humanities/social sciences, arts, and general knowledge.
+The domain-level raw QA pools used for session construction are aggregated from public QA benchmarks, including RACE, TriviaQA, MMLU, CommonsenseQA, OpenBookQA, SciQ, ARC-Challenge, GSM8K, MedMCQA, and LexGLUE (ECtHR subset)~\citep{lai-etal-2017-race,joshi-etal-2017-triviaqa,hendrycks2021mmlu,talmor-etal-2019-commonsenseqa,mihaylov-etal-2018-suit,welbl-etal-2017-crowdsourcing,clark2018arc,cobbe2021training,pal2022medmcqa,chalkidis-etal-2022-lexglue}. 
+The domain-level raw QA pools used for session construction contain \textbf{14,823} cleaned single-turn QA items in total; provenance, counts, and licensing notes are provided in Table~\ref{tab:data_sources}.
+Because scenario construction and evaluation-suite sampling are constrained by slice-coverage targets, the final scenario distribution is not a direct proportional reflection of the raw pool.
+
+\subsection{Cross-domain coverage: combinations and mixture control}
+Cross-domain evaluation is instantiated over \textbf{24} 2-domain combinations, \textbf{10} 3-domain combinations, and \textbf{8} 4-domain combinations. These combinations are selected to balance semantic coherence and diversity, following the embedding-based nearest-neighbor procedure defined above. For cross-domain scenarios, each turn is associated with a domain-weight vector, enabling controlled \emph{domain-mixture drift}. The distribution of domain-weight regimes across cross-domain scenarios is reported in Table~\ref{tab:scenario_statistics}.
+
+\subsection{Scenario-level coverage over drift factors}
+Table~\ref{tab:scenario_statistics} reports scenario counts sliced by domain order, task type, and three drift factors: difficulty drift patterns, domain-weight drift regimes (cross-domain only), and task-type change rate. Theme consistency scores (computed by the topic-coherence validator defined above) range from \textbf{0.64} to \textbf{0.82} across slices, indicating that scenarios remain topically connected even under drift.
+
+\subsection{Turn length and per-configuration availability}
+Scenarios are constrained to \textbf{3--10} turns by construction. The realized sample counts by task type are reported in Table~\ref{tab:scenario_statistics}.
+
+\begin{table}[!hbt]
+\caption{Scenario-level Statistics Across Domain Orders (Session-level Aggregation)}
+\vspace{-2mm}
+\centering
+\small
+\setlength{\tabcolsep}{2pt}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lcccc}
+\toprule
+Metric & 1-domain & 2-domain & 3-domain & 4-domain \\
+\midrule
+	\#Scenarios & 1346 & 3749 & 2105 & 1398 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Difficulty Patterns}}\\
+Stable            & 206  & 2108 & 1106 & 657 \\
+Gradual Increase  & 316  & 973  & 439  & 290 \\
+Gradual Decrease  & 126   & 428  & 121  & 81 \\
+Spike             & 185   & 120  & 101  & 133 \\
+Fluctuate         & 513   & 429  & 462  & 421 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Domain Weight Patterns}}\\
+Stable            & -    & 3067  & 106  & 63 \\
+Gradual Shift     & -    & 313  & 774  & 564 \\
+Fluctuate         & -    & 369 & 1349 & 955 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Task Type Change}}\\
+Stable            & 759  & 1514 & 776  & 596 \\
+Moderate          & 477  & 1517 & 762  & 511 \\
+Frequent          & 110  & 718  & 567  & 291 \\
+\midrule
+\textbf{Avg Turns}         & 6.03 & 6.13 & 6.36 & 6.22 \\
+\midrule
+\textbf{\makecell[l]{Theme Consistency}} & 0.67 & 0.70 & 0.72 & 0.78 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\vspace{-1mm}
+\label{tab:scenario_statistics}
+\end{table}
+
+\section{Data Format and Release Schema}
+\label{app:data_format}
+
+This section specifies the released data artifacts and their unified JSON schema, including (i) scenario-level and turn-level fields, (ii) reference-answer representation under our multi-judge setup, and (iii) validation logs and invariants.
+The schema is designed to be \emph{implementation-facing} (consumed by the controller and scorer in Part~C), while remaining stable and audit-friendly for third-party analyses (Part~D).
+
+\subsection{Scenario-level JSON schema}
+\label{app:schema_scenario}
+
+Each scenario is a JSON object. We keep the top-level schema compact and delegate per-turn content to \texttt{"turns"} (Section~\ref{app:schema_turn}). We highlight only the \emph{core} fields used by evaluation and analysis; additional bookkeeping fields may be included without affecting compatibility.
+
+\paragraph{Core fields (scenario-level).}
+A scenario contains:
+\begin{itemize}
+    \item \texttt{scenario\_id} (string): a globally unique identifier, stable across reruns under the same release version.
+    \item \texttt{is\_cross\_domain} (bool): whether the scenario involves multiple domains ($k\ge2$).
+    \item \texttt{cross\_domains} (list[string]): ordered domain set $\mathcal{D}=\{d_1,\ldots,d_k\}$ (present when \texttt{is\_cross\_domain} is true).
+    \item \texttt{cross\_domain\_id} (list[string]): domain identifiers used for cross-domain scenarios.
+    \item \texttt{topic\_description} (string): a brief description of the scenario's topic.
+    \item \texttt{num\_turns} (int): number of turns ($5$--$10$ in the current release).
+    \item \texttt{difficulty\_pattern} (string): difficulty drift pattern $\in$ \{\textsc{stable}, \textsc{gradual\_increase}, \textsc{gradual\_decrease}, \textsc{spike}, \textsc{fluctuate}\} (defined above).
+    \item \texttt{weight\_pattern} (string): mixture regime $\in$ \{\textsc{stable}, \textsc{gradual\_shift}, \textsc{fluctuate}\} (defined above); omitted for $k=1$.
+    \item \texttt{task\_type\_change\_count} (int): number of task type switches across turns.
+    \item \texttt{task\_type\_change\_frequency} (float): frequency of task type changes (stable/moderate/frequent).
+    \item \texttt{interdisciplinary\_categories} (list[string]): high-level category labels for the scenario.
+    \item \texttt{turns} (list[object]): turn-level records (Section~\ref{app:schema_turn}).
+    \item \texttt{open\_world} (bool): whether the scenario involves open-world knowledge (to be added in future releases).
+\end{itemize}
+
+\paragraph{Scenario JSON example (abridged).}
+\begin{XDBVerbatim}
+{
+  "scenario_id": "xdomain_2_math_physics_000123",
+  "is_cross_domain": true,
+  "cross_domains": ["Mathematics", "Physics"],
+  "cross_domain_id": ["mathematics", "physics"],
+  "topic_description": "Mathematical physics applications",
+  "num_turns": 8,
+  "difficulty_pattern": "gradual_increase",
+  "weight_pattern": "fluctuate",
+  "task_type_change_count": 3,
+  "task_type_change_frequency": 0.375,
+  "interdisciplinary_categories": ["STEM"],
+  "turns": [ ... ]
+}
+\end{XDBVerbatim}
+
+\subsection{Turn-level JSON schema}
+\label{app:schema_turn}
+
+Each element in \texttt{``turns''} is a JSON object describing one turn. The schema supports all task types used in the benchmark (factual, reasoning, code, multiple-choice), while keeping the \emph{scoring contract} explicit and machine-checkable (Part~C).
+
+\paragraph{Core fields (turn-level).}
+A turn record contains:
+\begin{itemize}
+    \item \texttt{turn} (int): 1-indexed turn index $t$.
+    \item \texttt{task\_type} (string): one of \{\texttt{factual}, \texttt{reasoning}, \texttt{code}, \texttt{multiple\_choice}\}.
+    \item \texttt{prompt} (string): the user-facing query/input for this turn.
+    \item \texttt{answer} (string): reference answer (for multiple-choice, this is the option letter; for other tasks, this is the answer text).
+    \item \texttt{difficulty} (float): realized difficulty score $\delta_t\in[0,1]$ for this turn.
+    \item \texttt{domain\_weights} (object): per-domain weight vector $w_t$ for $k\ge2$ scenarios, where keys are domain names and values are nonnegative floats summing to $1$.
+    \item \texttt{theme\_consistency\_score} (float): topic coherence score for this turn relative to previous turns.
+\end{itemize}
+
+\paragraph{Turn JSON examples (abridged).}
+
+\begin{itemize}
+    \item[(i)]Reasoning turn with domain weights.
+    \begin{XDBVerbatim}
+        {
+          "turn": 2,
+          "task_type": "reasoning",
+          "prompt": "Compute ... and explain the key step.",
+          "answer": "The solution is 42...",
+          "difficulty": 0.41,
+          "domain_weights": {
+            "mathematics": 0.55,
+            "physics": 0.45
+          },
+          "theme_consistency_score": 0.72
+        }
+    \end{XDBVerbatim}
+    \item[(ii)]Multiple-choice turn.
+    \begin{XDBVerbatim}
+    {
+      "turn": 3,
+      "task_type": "multiple_choice",
+      "prompt": "Which statement is correct? A: ..., B: ..., C: ..., D: ...",
+      "answer": "B",
+      "difficulty": 0.46,
+      "domain_weights": {
+        "mathematics": 0.50,
+        "physics": 0.50
+      },
+      "theme_consistency_score": 0.68
+    }
+    \end{XDBVerbatim}
+\end{itemize}
+
+
+
+\subsection{Evaluation outputs}
+\label{app:result_format_min}
+We keep the result schema minimal here, and put full scoring rules, and judge prompts to Part~C (Appendices~\ref{app:controller}--\ref{app:scoring}). A single model-run record typically includes:
+\begin{XDBVerbatim}
+{
+  "model_id": "...",
+  "scenario_id": "...",
+  "turn_idx": 3,
+  "raw_output": "...",
+  "parsed_answer": "...",
+  "score": {"em": 1, "judge": 0.0}
+}
+\end{XDBVerbatim}
+
+% =========================================================
+% Part C: Protocol, Prompts, Scoring, Hyperparameters
+% =========================================================
+\clearpage
+\AppBlock{Part C: Standardized Interactive Evaluation Protocol, Scoring, Hyperparameters, and Evaluation Suite.}
+\section{Reference Controller and Interactive Evaluation Protocol}
+\label{app:controller}
+
+This section specifies the \emph{reference controller} used to execute \textsc{XDomainBench} sessions under a standardized, model-agnostic evaluation harness.
+It complements the prompt templates and scoring rules (Sections~\ref{app:prompts} and \ref{app:scoring}), focusing on the \emph{interaction loop}, \emph{context construction}, and \emph{truncation}.
+Our design follows widely adopted benchmarking practice: a fixed runner with stable interfaces and transparent traces for cross-model comparability and auditability~\citep{liang2022helm,eval-harness,chang-etal-2023-survey}.
+
+\subsection{Default evaluation protocol}
+\label{app:controller_default}
+
+\paragraph{Default protocol used in the main evaluation.}
+We report results under the \textbf{History} controller: at turn $t$, the evaluated model receives the prior conversation transcript (up to $t-1$) subject to deterministic truncation (Section~\ref{app:controller_truncation}), plus the current user query and the task-type output contract. This corresponds to the canonical multi-turn chat evaluation setup used by many interactive benchmarks, and serves as the most direct operationalization of multi-turn dependence in our setting~\citep{liu2023agentbench,zhou2024webarena,chiang-etal-2024-chatbotarena}.
+
+\paragraph{What the controller standardizes.}
+Given a released session with $T$ turns, the controller deterministically defines:
+(i) message packaging (system/user/assistant),
+(ii) history injection (prior conversation transcript up to $t-1$),
+(iii) truncation to satisfy context constraints,
+(iv) per-turn model call settings (delegated to Section~\ref{app:models}).
+We do \emph{not} use per-model prompt tuning, adaptive retrieval, learned summarization/compression, or other controller intelligence that could confound model comparisons~\citep{liang2022helm,eval-harness}.
+
+\paragraph{What the model can see.}
+Construction-time diagnostic signals (e.g., target mixture $w_{1:T}$ or difficulty $\delta_{1:T}$) are treated as \emph{metadata} and are \emph{not exposed} to evaluated models. This aligns with controlled-factor evaluation: signals are used for slicing/diagnosis rather than as hints to the tested system~\citep{kiela-etal-2021-dynabench,ribeiro-etal-2020-beyond,liang2022helm}.
+
+\paragraph{Closed-book diagnostic scope.}
+The default protocol is intentionally closed-book: evaluated models receive only the current query and the standardized interaction history, without retrieval, tools, multimodal inputs, or external memory.
+This design isolates the backbone model's intrinsic ability to sustain dynamic interdisciplinary reasoning across turns.
+Retrieval-augmented, tool-assisted, and multimodal scientific agents are important system-level extensions, but they introduce additional variables from retriever quality, tool design, memory management, and workflow orchestration, which would confound the diagnostic target of this benchmark.
+
+\subsection{Context construction and truncation}
+\label{app:controller_context}
+
+\paragraph{Message packaging.}
+We use a minimal chat-style structure compatible with common serving APIs and evaluation harnesses:
+one global system message, plus a user message that includes (i) the injected history block, (ii) the current query, and (iii) the task-type output contract.
+
+\paragraph{Deterministic truncation.}
+\label{app:controller_truncation}
+Let $B_{\max}(m)$ denote the maximum prompt budget supported by model $m$.
+For each turn, we first assemble the candidate context, then apply deterministic truncation if the budget is exceeded.
+We always preserve (i) the system message, (ii) the current turn instruction, and (iii) the most recent history, dropping the oldest history blocks first.
+No summarization or learned compression is applied in the reference controller.
+This choice is simple, auditable, and avoids injecting controller-side heuristics into model comparisons~\citep{liang2022helm,eval-harness}.
+
+\subsection{Execution, failure handling}
+\label{app:controller_execution}
+
+\paragraph{Per-turn model call.}
+For each turn $t$, the controller issues a single model call using fixed decoding/runtime settings (see Section~\ref{app:models}) and records the raw text output.
+
+\paragraph{Parsing and scoring are centralized elsewhere.}
+Outputs are parsed using the task-type contracts; scoring is defined in Section~\ref{app:scoring}.
+This separation keeps the controller as a deterministic execution wrapper.
+
+\section{Prompt Templates}
+\label{app:prompts}
+
+This section documents the prompt templates used in \textsc{XDomainBench} for
+(i) \emph{standardized interactive evaluation} (consumed by the reference controller),
+and (ii) \emph{scenario construction} (session generation and canonical reference production).
+We follow a \emph{modular} design: a short, invariant base instruction is combined with controller-injected context (history/memory budget) and a task-type-specific \emph{output contract}.
+This separation keeps the protocol model-agnostic and reproducible, while ensuring strict parsability under the scoring rules.
+Our design aligns with common evaluation practice that standardizes prompts/controllers for fair comparison across interactive settings~\citep{liang2022helm,kiela-etal-2021-dynabench,liu2023agentbench,zhou2024webarena}.
+
+\begingroup
+\lstdefinestyle{xdbenchprompt}{
+  basicstyle=\ttfamily\scriptsize,
+  columns=fullflexible,
+  breaklines=true,
+  breakatwhitespace=false,
+  keepspaces=true,
+  frame=single,
+  framerule=0.3pt,
+  framesep=3pt,
+  showstringspaces=false
+}
+\lstset{style=xdbenchprompt}
+
+\subsection{Placeholders and modular assembly}
+\label{app:prompts_placeholders}
+
+All templates use lightweight placeholders rendered by the controller/construction pipeline:
+\texttt{<TASK\_TYPE>}, \texttt{<DOMAIN\_SET>}, \texttt{<TURN\_IDX>}, \texttt{<TOTAL\_TURNS>}, \texttt{<QUESTION>}, \texttt{<CHOICES>}, \texttt{<HISTORY\_BLOCK>}, \texttt{<FORMAT\_CONTRACT>}, \texttt{<DIFFICULTY\_TARGET>}, \texttt{<MIXTURE\_TARGET>}, and \texttt{<SEED\_BLOCK>} (construction only).
+The controller is responsible for (i) assembling modules and (ii) truncating history under context budgets.
+\subsection{Evaluation prompts}
+\label{app:prompts_evaluation}
+
+Evaluation prompts are the \emph{only} inputs seen by evaluated models during benchmarking.
+We keep them short and stable across all models to reduce prompt-induced variance, and enforce task-type output contracts to ensure deterministic parsing and scoring.
+
+\subsubsection{Global system instruction}
+\label{app:prompts_system}
+
+The system instruction is intentionally minimal to remain model-agnostic and broadly compatible with standard interactive evaluation pipelines~\citep{liang2022helm,liu2023agentbench,zhou2024webarena}.
+All task-specific constraints are stated in the user prompt modules.
+\\
+\begin{lstlisting}[frame=single]
+You are a helpful assistant. Follow the task instruction and output format exactly.
+Do not include any extra text beyond the required answer format.
+\end{lstlisting}
+
+\subsubsection{User prompt base template}
+\label{app:prompts_user_base}
+
+The controller injects \texttt{<HISTORY\_BLOCK>} containing the prior conversation transcript.
+\\
+\begin{lstlisting}[frame=single]
+[TASK]
+Task type: <TASK_TYPE>
+Domain set: <DOMAIN_SET>
+Turn: <TURN_IDX> / <TOTAL_TURNS>
+
+[CONTEXT]
+<HISTORY_BLOCK>
+
+[QUESTION]
+<QUESTION>
+
+[OUTPUT FORMAT]
+<FORMAT_CONTRACT>
+
+Answer:
+\end{lstlisting}
+
+\subsubsection{Task-type output contracts}
+\label{app:prompts_contracts}
+
+Task-type-specific format constraints are standard in benchmark protocol design to ensure automatic parsing and consistent scoring across models~\citep{liang2022helm,kiela-etal-2021-dynabench,zhou2024webarena}.
+We attach exactly one task-type contract as \texttt{<FORMAT\_CONTRACT>}.
+\textbf{Multiple Choice (MC).}
+\\
+\begin{lstlisting}[frame=single]
+Output ONLY a single option letter (e.g., A, B, C, D).
+No explanation. No extra words. No punctuation.
+Examples: A   C   D
+\end{lstlisting}
+
+\textbf{Factual.}
+\\
+\begin{lstlisting}[frame=single]
+Output ONLY the key entity / noun phrase / short span.
+No full sentence. No prefix like "Answer:" or "The answer is".
+Examples: "Paris"   "activation energy"   "John Wayne"
+\end{lstlisting}
+
+\textbf{Reasoning.}
+\\
+\begin{lstlisting}[frame=single]
+Output ONLY the final answer.
+Do NOT include intermediate reasoning steps.
+Keep it concise and directly responsive to the question.
+\end{lstlisting}
+
+\textbf{Code.}
+\\
+\begin{lstlisting}[frame=single]
+Output ONLY code (no Markdown fences).
+Do NOT add comments or explanations unless explicitly required by the task.
+Return a complete, executable solution consistent with the given I/O contract.
+\end{lstlisting}
+\subsection{Construction prompts}
+\label{app:prompts_construction}
+
+Construction prompts are used \emph{offline} during dataset creation to expand seed pools into multi-turn sessions under diagnostic controls (Appendices~\ref{app:dataset_construction}--\ref{app:signals}).
+We document them for transparency and reproducibility; they are not used in evaluation.
+\subsubsection{Turn instance generation}
+\label{app:prompts_turn_generation}
+
+\paragraph{Unified turn-generation template.}
+This template is instantiated for both $k=1$ and $k\ge 2$.
+For cross-domain turns, \texttt{<MIXTURE\_TARGET>} is a $k$-dimensional vector $w_t$; for single-domain turns, it is omitted.
+The JSON output is an \emph{internal construction interface} and is never shown to evaluated models. The construction pipeline validates the realized difficulty/mixture against targets via hybrid gates (Appendix~\ref{app:signals}); this section only records the prompt interface used to request a target-controlled candidate.
+\\
+\begin{lstlisting}[frame=single]
+You are constructing a benchmark turn for XDomainBench.
+
+[GOAL]
+Create ONE turn (question + required fields) that is answerable, unambiguous,
+and coherent with the scenario context.
+
+[SCENARIO CONTROL]
+Domain set: <DOMAIN_SET>
+Task type: <TASK_TYPE>
+Target difficulty (delta_t in [0,1]): <DIFFICULTY_TARGET>
+Target domain mixture (w_t on simplex): <MIXTURE_TARGET>
+
+[SEED / ANCHOR]
+<SEED_BLOCK>
+
+[CONTEXT FOR COHERENCE]
+Previous turns (for topical continuity):
+<HISTORY_BLOCK>
+
+[REQUIREMENTS]
+- The question must be self-contained (no external links or hidden files).
+- It must match the task type and output contract.
+- Do not explicitly label domains; integrate them naturally when k>=2.
+- Avoid ambiguous wording that yields multiple valid answers.
+
+[OUTPUT JSON]
+Return a single JSON object with the required keys:
+{
+  "question": "...",
+  "choices": ["A. ...", "B. ...", "C. ...", "D. ..."],   // only if <TASK_TYPE> is MC
+  "metadata": {
+    "domain_set": "<DOMAIN_SET>",
+    "task_type": "<TASK_TYPE>",
+    "difficulty_target": "<DIFFICULTY_TARGET>",
+    "mixture_target": "<MIXTURE_TARGET>"
+  }
+}
+\end{lstlisting}
+
+\paragraph{Seed block rendering.}
+\texttt{<SEED\_BLOCK>} is rendered as a minimal anchor to stabilize topical continuity:
+\\
+\begin{lstlisting}[frame=single]
+Seed item (for anchoring topic and style):
+- seed_question: <SEED_QUESTION>
+- seed_reference: <SEED_ANSWER>
+\end{lstlisting}
+
+\subsubsection{Canonical reference production}
+\label{app:prompts_reference_answers}
+
+To reduce single-reference noise, \textsc{XDomainBench} stores multiple canonical references for non-MC tasks and uses voting for MC labels.
+This policy affects only released supervision fields and does not depend on evaluated models. Voting/multi-reference storage is a construction-time redundancy mechanism and does not introduce any special modeling assumptions for evaluated systems. The released artifact records (i) the three raw votes, (ii) the final voted label, and (iii) the task-type-specific references for non-MC tasks. Details of the JSON fields and validators are specified in Appendix~\ref{app:data_format}.
+\paragraph{Non-MC reference answer prompt} used per answer candidate.
+We query three independent reference generations (from different prompt variants/models) and store all three as \texttt{ref\_answers}.
+\\
+\begin{lstlisting}[frame=single]
+You are providing a canonical reference answer for a benchmark item.
+
+[ITEM]
+Task type: <TASK_TYPE>    // Factual or Reasoning or Code
+Question: <QUESTION>
+
+[OUTPUT CONTRACT]
+Follow the task-type output format strictly:
+- Factual: short span only
+- Reasoning: final answer only (no reasoning)
+- Code: code only (no Markdown fences)
+
+Answer:
+\end{lstlisting}
+
+\paragraph{MC label prompt} used per vote.
+For MC items, we collect three votes and compute the final gold option by majority vote (tie-break handled deterministically by the pipeline; see Appendix~\ref{app:data_format} for released fields).
+\\
+\begin{lstlisting}[frame=single]
+You are selecting the correct option for a multiple-choice benchmark item.
+
+Question: <QUESTION>
+Choices:
+<CHOICES>
+
+Output ONLY the option letter (A/B/C/D).
+\end{lstlisting}
+
+\subsection{Prompt hygiene and normalization}
+\label{app:prompts_hygiene}
+
+Before any validator is applied, we canonicalize prompts by:
+(i) trimming trailing spaces, (ii) normalizing repeated whitespace, and (iii) removing construction artifacts such as accidental Markdown fences.
+This prevents spurious parsing failures and stabilizes deterministic hashing for bookkeeping (Appendices~\ref{app:data_quality} and \ref{app:data_format}).
+\endgroup
+\section{Scoring and Judge Calibration}
+\label{app:scoring}
+
+This section (i) fixes the \emph{default} scoring pipeline used throughout the paper, (ii) documents an \emph{auxiliary} LLM-judge scoring that we additionally report for robustness, and (iii) specifies how we calibrate and audit judge behavior. Our goal is to make scoring \emph{auditable}, \emph{reproducible}, and \emph{statistically stable} at the slice level, following widely adopted benchmarking practice~\citep{liang2022helm,kiela-etal-2021-dynabench,zhou2023instruction,chiang-etal-2024-chatbotarena}.
+
+\subsection{Scope method}
+\label{app:scoring_scope}
+
+\paragraph{Turn- and session-level signals.}
+For a session with $T$ turns, let the model output be $\hat{y}_t$, and the canonical supervision be $\mathcal{R}_t$. We compute token-level metrics (Recall and F1) for each turn and aggregate into session metrics.
+We report: (i) turn-level Recall (R) and F1-score (F1), and (ii) \textbf{SessionSuccess@$\tau$} defined as $\mathbb{I}[\frac{1}{T}\sum_{t=1}^T R_t \ge \tau]$ for user-specified $\tau$ (see Section~\ref{app:hyperparameters}), where $R_t$ is the token-level recall for turn $t$.
+
+\paragraph{Token-level metrics.}
+We compute token-level Recall and F1-score following standard information retrieval metrics.
+Recall measures the proportion of tokens in the expected answer that appear in the predicted answer, while F1-score is the harmonic mean of precision and recall.
+This approach aligns with the design principle stated in the main paper: we avoid open-ended supervision that cannot be checked reliably and instead favor machine-checkable targets~\citep{liang2022helm,kiela-etal-2021-dynabench}.
+For non-MC tasks, we store three canonical references and compute metrics against each reference, taking the maximum.
+
+\paragraph{Auxiliary LLM-judge scores.}
+Even under a machine-checkable design, token-level metrics can be brittle for some reasoning expressions (e.g., equivalent numeric forms, synonymous short spans). Therefore, we additionally introduce an \emph{auxiliary} LLM-judge score as a robustness view, while keeping token-level metrics as the primary measure.
+This mirrors common practice in modern LLM evaluation, where human-like adjudication is approximated by constrained judge prompts and auditing~\citep{zheng-etal-2023-judging,chiang-etal-2024-chatbotarena,laskar-etal-2024-systematic,deng-etal-2024-investigating}.
+
+\subsection{Shared parsing and normalization}
+\label{app:scoring_normalize}
+
+\paragraph{Minimal canonicalization.}
+Before scoring, we apply a small set of deterministic edits:
+(i) trim leading/trailing whitespace,
+(ii) collapse repeated whitespace,
+(iii) strip a short list of benign wrappers (e.g., leading ``Answer:'', surrounding quotes),
+(iv) for MC, upper-case a single option letter and remove trailing punctuation.
+We keep this normalization $\mathrm{Norm}(\cdot)$ intentionally lightweight to avoid ``hidden intelligence'' in the scorer~\citep{liang2022helm}.
+
+\paragraph{Multi-reference set.}
+For non-MC tasks we denote $\mathcal{R}_t=\{r_t^{(1)},r_t^{(2)},r_t^{(3)}\}$.
+Token-level metrics are computed against each reference, and we report the maximum Recall and F1 across all references.
+
+\subsection{Token-level scoring by task type}
+\label{app:scoring_token}
+
+\paragraph{Multiple-choice.}
+We parse the model output into a single letter in $\{A,B,C,D\}$.
+The gold label is the released majority-vote option.
+We compute Recall and F1: if the parsed letter equals the gold letter, both Recall and F1 are $1.0$; otherwise $0.0$.
+
+\paragraph{Factual.}
+We compute token-level Recall and F1 by comparing tokens in the predicted answer against tokens in each reference answer.
+We extract tokens (excluding stopwords and punctuation), compute the intersection over expected tokens (Recall) and intersection over predicted tokens (Precision), then compute F1 as the harmonic mean.
+We report the maximum Recall and F1 across all references in $\mathcal{R}_t$.
+
+\paragraph{Reasoning.}
+We compute token-level Recall and F1 similar to factual tasks.
+Additionally, if both the prediction and a reference can be parsed as scalars, we allow a small numeric tolerance for exact match:
+$|\hat{v}-v| \le \epsilon_{\mathrm{abs}}$ or $\frac{|\hat{v}-v|}{|v|+\epsilon_0} \le \epsilon_{\mathrm{rel}}$, with $\left(\epsilon_{\mathrm{abs}},\epsilon_{\mathrm{rel}},\epsilon_0\right)$.
+If numeric match succeeds, Recall and F1 are set to $1.0$; otherwise, we compute token-level metrics.
+
+\paragraph{Code.}
+For code turns, we prioritize \emph{checkable} evaluation. When a turn provides an executable contract (e.g., explicit I/O specification or deterministic tests shipped with the evaluation harness), we run the submitted program under time/memory limits.
+If execution passes, Recall and F1 are $1.0$; otherwise $0.0$.
+If execution-based grading is unavailable for a small subset of items, we fall back to token-level metrics computed against $\mathcal{R}_t$ under a strict normalization of whitespace (no semantic rewriting).
+
+\subsection{Auxiliary LLM-judge scoring}
+\label{app:scoring_judge}
+
+We compute a judge-based correctness label $s_t^{\text{J}} \in \{0,1\}$ for \emph{non-MC} turns (and for MC as a sanity check), and report it \emph{in parallel} with token-level metrics.
+The judge does not alter the default token-level metrics; it provides a robustness view when token-level metrics are brittle.
+
+\begingroup
+\lstdefinestyle{xdbenchjudge}{
+  basicstyle=\ttfamily\scriptsize,
+  columns=fullflexible,
+  breaklines=true,
+  breakatwhitespace=false,
+  keepspaces=true,
+  frame=single,
+  framerule=0.3pt,
+  framesep=3pt,
+  showstringspaces=false
+}
+\lstset{style=xdbenchjudge}
+
+\paragraph{Judge prompt.}
+The judge receives the turn content, task type, references $\mathcal{R}_t$, and the model output.
+It must emit a single-line JSON for deterministic parsing:
+\\
+\begin{lstlisting}[frame=single]
+You are a professional answer evaluation expert. Please evaluate whether the following answer is correct and reasonable.
+
+Question:
+<QUESTION>
+
+Expected answer:
+<EXPECTED_ANSWER>
+
+Model predicted answer:
+<MODEL_ANSWER>
+
+Please evaluate from the following dimensions:
+1. **Correctness**: Is the answer correct? Is it consistent with or semantically equivalent to the expected answer?
+2. **Completeness**: Is the answer complete? Does it answer all parts of the question?
+3. **Reasonableness**: Is the answer reasonable? Does it conform to common sense and domain knowledge?
+
+Please provide a score between 0.0 and 1.0, where:
+- 1.0: Answer is completely correct, complete, and reasonable
+- 0.7-0.9: Answer is mostly correct but may have minor incompleteness or inaccuracy
+- 0.4-0.6: Answer is partially correct but has obvious errors or omissions
+- 0.0-0.3: Answer is incorrect, incomplete, or unreasonable
+
+**CRITICAL REQUIREMENTS - MUST STRICTLY FOLLOW**:
+1. You must return ONLY JSON format, no other text, explanations, or comments
+2. Do NOT use markdown code block markers (do NOT use ```json or ```)
+3. Return the JSON object directly, starting with { and ending with }
+4. Scores must be floating-point numbers between 0.0 and 1.0
+
+**Output format (MUST STRICTLY FOLLOW)**:
+{
+    "score": 0.0,
+    "correctness": 0.0,
+    "completeness": 0.0,
+    "reasonableness": 0.0
+}
+
+Remember: Return ONLY JSON, no other content!
+\end{lstlisting}
+
+\paragraph{Ensemble aggregation.}
+We run three independent judge calls (potentially different models/prompts) and aggregate by mean score.
+Concretely, let outputs be $\{s_j\}_{j=1}^3$ where $s_j \in [0,1]$ is the score from judge $j$.
+We set $s_t^{\text{J}}=1$ if the mean score $\bar{s} = \frac{1}{3}\sum_{j=1}^3 s_j \ge \tau_{\mathrm{J}}$ (see Section~\ref{app:hyperparameters}); otherwise $0$.
+This ``three-judge ensemble + explicit threshold'' design is a pragmatic stabilization method used in LLM-as-a-judge settings~\citep{zheng-etal-2023-judging,laskar-etal-2024-systematic}.
+
+\endgroup
+
+\subsection{From turn scores to reported metrics}
+\label{app:scoring_metrics}
+
+For each slice, we report:
+\begin{equation}
+\label{eq:turn_acc}
+\mathrm{Recall} = \frac{1}{T}\sum_{t=1}^{T} R_t,\qquad
+\mathrm{F1} = \frac{1}{T}\sum_{t=1}^{T} F1_t,\qquad
+\mathrm{TurnAcc}^{\text{J}} = \frac{1}{T}\sum_{t=1}^{T} s_t^{\text{J}},
+\end{equation}
+where $R_t$ and $F1_t$ are token-level Recall and F1-score for turn $t$, and session success:
+$\mathrm{SessionSuccess@}\tau = \mathbb{I}[\frac{1}{T}\sum_{t=1}^T R_t \ge \tau]$
+(and analogously for judge scores when reported).
+
+
+\section{Models}
+\label{app:models}
+
+This section records the model-side information required to reproduce the reported
+results in \textsc{XDomainBench}.
+
+\subsection{Model roster and version pinning}
+\label{app:models_roster}
+
+The set of evaluated models is reported in the main paper results tables. Here, we pin the
+\emph{identity} of each model instance used in the runs.
+
+\paragraph{Model references.}
+We cite the primary technical reports, model cards, and official provider documentation for the evaluated model families:
+OpenAI GPT-5.2 and GPT-5-mini~\citep{openai2025gpt52,openai2026gpt52api};
+Anthropic Claude 4.5 Sonnet and Claude 4.5 Haiku~\citep{anthropic2026claudeModels};
+Google Gemini 2.5 Flash and Gemini 2.0 Flash~\citep{google2026geminiModels};
+Qwen family models (Qwen2.5-72B, Qwen2.5-14B, Qwen2.5-7B, Qwen3-Next-80B)~\citep{bai2023qwen,qwen2024qwen25,qwen2025qwen3next};
+Meta Llama 3 series (Llama-3.1-8B, Llama-3.2-3B)~\citep{aiAtMeta2024llama3,metaLlama31Blog,metaLlama32Models};
+Gemma 2-2B-IT~\citep{gemmaTeam2024gemma2};
+and Mixtral-8x7B~\citep{mistral2023mixtral,mistral2026mixtral8x7bcard}.
+The context-window metadata recorded below follows these sources.
+
+\section{Evaluation Suite Sampling and Quotas}
+\label{app:sample_composition}
+
+The released evaluation suite is sampled from the validated candidate pool under quota constraints to ensure balanced coverage across composition orders, domain sets, difficulty patterns, and mixture regimes. We use a deterministic sampling procedure with controlled relaxation when target quotas cannot be met. The suite includes \textbf{8,598} scenarios covering all 20 domains, with 24 two-domain combinations, 10 three-domain combinations, and 8 four-domain combinations. The distribution across task types and drift factors is reported in Table~\ref{tab:scenario_statistics}.
+
+\section{Hyperparameter Configuration}
+\label{app:hyperparameters}
+
+This section consolidates all benchmark hyperparameters used across \textsc{XDomainBench}, including construction controls (Part~A), validation/QC gates (Part~A), protocol knobs (Part~C), and scoring/judge settings (Part~C). Unless stated otherwise, hyperparameters are fixed for a given benchmark release and shared across all evaluated models. Symbols follow Part~A/B/C/D.
+
+We organize hyperparameters into five categories: (i) release-level constants (Table~\ref{tab:hyper_constants}), (ii) diagnostic-signal instantiation parameters (Table~\ref{tab:hyper_signals}), (iii) validation/QC gates and retry policies (Table~\ref{tab:hyper_validation}), (iv) calibration bins and taxonomy thresholds (Table~\ref{tab:hyper_bins_taxonomy}), and (v) controller/evaluation-runtime and scoring parameters (Tables~\ref{tab:hyper_controller} and \ref{tab:hyper_scoring}).
+
+\begin{table*}[!ht]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\caption{Release-level constants for \textsc{XDomainBench}.}
+\begin{tabularx}{\textwidth}{@{}
+p{5.2cm}
+>{\centering\arraybackslash}p{1.2cm}
+>{\centering\arraybackslash}p{1.4cm}
+p{10.4cm}
+@{}}
+\toprule
+\textbf{Item} & \textbf{Symbol} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+\#Domains & $|\mathcal{D}_{\mathrm{lib}}|$ & 20 & Domain list and source pools in Appendix~\ref{app:dataset_stats}. \\
+Composition orders & $k$ & $\{1,2,3,4\}$ & Used throughout Part~A/C. \\
+Turns per scenario (min) & $T_{\min}$ & 5 & Minimum turns per scenario. \\
+Turns per scenario (max) & $T_{\max}$ & 10 & Maximum turns per scenario. \\
+Difficulty patterns & $P^\delta$ & 5 & \{\textsc{Stable}, \textsc{Gradual Inc.}, \textsc{Gradual Dec.}, \textsc{Spike}, \textsc{Fluctuate}\}. \\
+Mixture regimes & $P^w$ & 3 & \{\textsc{Stable}, \textsc{Gradual Shift}, \textsc{Fluctuate}\}. \\
+Construction judges & $|\mathcal{J}|$ & 3 & Three state-of-the-art models used in construction/validation only. \\
+Non-MC reference answers per turn & $n_{\mathrm{ref}}$ & 3 & Stored as three canonical references. \\
+MC votes per turn & $n_{\mathrm{vote}}$ & 3 & Majority vote produces a single gold label. \\
+\bottomrule
+\end{tabularx}
+\label{tab:hyper_constants}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Hyperparameters for diagnostic-signal instantiation and auxiliary construction utilities.}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{tabularx}{\textwidth}{@{}
+p{5.5cm}
+>{\centering\arraybackslash}p{2.2cm}
+>{\centering\arraybackslash}p{2.2cm}
+p{6.8cm}
+@{}}
+\toprule
+\textbf{Module} & \textbf{Symbol / Key} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Difficulty signal} (Appendix~\ref{app:difficulty_trajectory})} \\
+LLM vs.\ semantic weighting & $\lambda_{\mathrm{LLM}}$ & 0.70 & \eqref{eq:delta_decomp}; semantic weight $1-\lambda_{\mathrm{LLM}}=0.30$. \\
+Rubric criterion weights & $\beta_{\mathrm{acc}},\beta_{\mathrm{qual}},\beta_{\mathrm{ppl}}$ & (0.5, 0.3, 0.2) & \eqref{eq:diff_llm_3crit}; must sum to 1. \\
+Judge ensemble weights (difficulty) & $\gamma^{\mathrm{diff}}_{j}$ & (0.4, 0.35, 0.25) & \eqref{eq:diff_llm_ensemble}; three judge weights sum to 1. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Mixture signal} (Appendix~\ref{app:mixture_trajectory})} \\
+Hybrid observed-mixture weights & $\lambda^w_{\mathrm{LLM}},\lambda^w_{\mathrm{key}},\lambda^w_{\mathrm{emb}}$ & 0.50 / 0.35 / 0.15 & \eqref{eq:wt_hat_mix}. \\
+Judge ensemble weights (mixture) & $\gamma^{w}_{j}$ & (0.4, 0.35, 0.25) & \eqref{eq:wt_llm_ensemble}; three judge weights sum to 1. \\
+Mixture sampler minimum mass & $\epsilon_{\min}$ & 0.05 & Algorithm~\ref{alg:mixture_sampler}; truncation+renormalization. \\
+Mixture sampler max step change & $\Delta_{\max}$ & 0.15 & Algorithm~\ref{alg:mixture_sampler}; $\ell_1$ step cap. \\
+Fluctuation amplitude / noise scale & $\eta$ & 0.12 & Used for \texttt{fluctuate} regime (\eqref{eq:w_fluctuate_final}) and Algorithm~\ref{alg:mixture_sampler}. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Domain distance (stratification)} (Appendix~\ref{app:domain_distance})} \\
+Nearest-neighbor candidate size & $M$ & 5 & Top-$M$ neighbors per anchor for $k{=}2$ (then greedy expansion for $k{=}3,4$). \\
+Minimum similarity for candidate pairing & $\tau_{\mathrm{sim}}$ & 0.5 & Filter to avoid semantically incoherent pairs. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Topic coherence} (Appendix~\ref{app:topic_coherence_gate})} \\
+Hybrid coherence weights (embedding) & $\lambda_{\mathrm{emb}}$ & 0.7 & \eqref{eq:topic coherence}: $s_{\mathrm{topic}}=\lambda_{\mathrm{emb}}\,s_{\mathrm{emb}}+(1-\lambda_{\mathrm{emb}})\,s_{\mathrm{kw}}$. \\
+Hybrid coherence weights (keyword) & $\lambda_{\mathrm{kw}}$ & 0.3 & Keyword weight $1-\lambda_{\mathrm{emb}}=0.3$. \\
+\bottomrule
+\end{tabularx}
+
+\label{tab:hyper_signals}
+\end{table*}
+
+\begin{table*}[ht]
+\caption{Hyperparameters for validation/QC gates and bounded retry policies.}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\textwidth}{@{}p{4.1cm} c c p{9.8cm}@{}}
+\toprule
+\textbf{Gate / Policy} & \textbf{Symbol / Key} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Difficulty validation} (Appendix~\ref{app:signals})} \\
+Turn-level tolerance & $\epsilon_{\delta}$ & 0.18 & \eqref{eq:val_diff_gate}: $|\hat{\delta}_t-\delta_t|\le \epsilon_{\delta}$. \\
+Judge-disagreement threshold & $\tau^{\mathrm{diff}}_{\mathrm{agree}}$ & 0.20 & Dispersion gate over three judge rubric scores; triggers re-judge or regeneration. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Mixture validation} (Appendix~\ref{app:signals})} \\
+Turn-level mixture tolerance & $\epsilon_{w}$ & 0.30 & \eqref{eq:val_mix_gate}: $d(\hat{w}_t,w_t)\le \epsilon_w$ with $d=\mathrm{JSD}$. \\
+Component agreement tolerance & $\epsilon_{\mathrm{agree}}$ & 0.20 & E.g., $d(\hat{w}^{\mathrm{LLM}}_t,\hat{w}^{\mathrm{key}}_t)\le \epsilon_{\mathrm{agree}}$ (and similarly for embedding). \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Topic coherence gate} (Appendix~\ref{app:topic_coherence_gate})} \\
+Primary coherence threshold & $\tau_{\mathrm{topic}}$ & 0.25 & Applied during construction to prevent abrupt theme breaks. \\
+Secondary keyword floor & $\tau_{\mathrm{kw}}$ & 0.12 & Lightweight lexical floor to catch semantic-only drift; used as a soft/secondary gate if enabled. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Retry budgets} (Algorithm~\ref{alg:end2end_pipeline})} \\
+Per-turn retry budget & $R_{\mathrm{turn}}$ & 3 & Max regenerations / re-judgings for a single turn. \\
+Per-session repair budget & $R_{\mathrm{ep}}$ & 2 & Max repairs for pattern/regime violations at session level. \\
+\bottomrule
+\end{tabularx}
+\label{tab:hyper_validation}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Hyperparameters for binning policies and rule-based trajectory taxonomy.}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\textwidth}{@{}p{4.0cm} p{2.3cm} c p{6.0cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Symbol} & \textbf{Value} & \textbf{Definition / Usage} \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Entropy (structure) bins}} \\
+Low/mid/high cut points (by $k$) & $\{\tau^{(k)}_{H,1}, \tau^{(k)}_{H,2}\}$ & \makecell[l]{$k{=}2$: (0.65, 0.85); $k{=}3$: (0.75,\\0.95);  $k{=}4$: (0.80, 0.98)} & Bins defined over $\mu_H=\frac{1}{T}\sum_t \bar{H}(w_t)$; cut points may be $k$-specific. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Drift (dynamics) bins}} \\
+Stable regime thresholds & $\tau_{\mu}^{w},\tau_{\sigma}^{w}$ & $0.011, 0.008$ & \eqref{eq:mix_stable}: $\mu_d \le 0.011$ and $\sigma_d \le 0.008$. \\
+Gradual-shift thresholds & $\tau_{\mu,\mathrm{grad}}^{w},\tau_{\sigma,\mathrm{grad}}^{w},\tau_{\max,\mathrm{grad}}^{w}$ & $0.008, 0.012, 0.03$ & \eqref{eq:mix_gradual}: $\mu_d \ge 0.008$, $\sigma_d \le 0.012$, $d_{\max} \le 0.03$. \\
+Fluctuate thresholds & $\tau_{\sigma,\mathrm{fluc}}^{w},\tau_{\max,\mathrm{fluc}}^{w}$ & $0.015, 0.05$ & \eqref{eq:mix_fluct}: $\sigma_d > 0.015$ or $d_{\max} > 0.05$. \\
+
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Difficulty-pattern thresholds} (Appendix~\ref{app:pattern_difficulty})} \\
+Stable gates & $\tau_{\sigma}^{\delta},\tau_{\rho}^{\delta},\tau_{\Delta}^{\delta}$ & $0.10, 0.35, 0.15$ & \eqref{eq:pat_stable}: $\sigma_\delta \le 0.10$, $|\rho_\delta| \le 0.35$, $\Delta^{\max}_\delta \le 0.15$. \\
+Gradual gates & $\tau_{\rho,+}^{\delta},\tau_{\Delta,\mathrm{grad}}^{\delta},\tau_{\sigma,\mathrm{grad}}^{\delta}$ & $0.35, 0.18, 0.13$ & \eqref{eq:pat_gradual}: $|\rho_\delta| \ge 0.35$, $\Delta^{\max}_\delta \le 0.18$, $\sigma_\delta \le 0.13$. \\
+Spike gates & $\tau_{S}^{\delta},\tau_{\sigma,\mathrm{base}}^{\delta}$ & $0.18, 0.12$ & \eqref{eq:pat_spike}: $S_\delta \ge 0.18$, $\sigma_{\delta,\neg t^\star} \le 0.12$. \\
+Fluctuate gates & $\tau_{\sigma,\mathrm{fluc}}^{\delta},\tau_{\mathrm{flip}}^{\delta}$ & $0.15, 3$ & \eqref{eq:pat_fluct}: $\sigma_\delta > 0.15$ or $N_{\mathrm{flip}} \ge 3$. \\
+\bottomrule
+\end{tabularx}
+\label{tab:hyper_bins_taxonomy}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Hyperparameters for the reference controller and evaluation runtime.}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{tabularx}{\textwidth}{@{}
+p{3.5cm}
+>{\centering\arraybackslash}p{1.8cm}
+>{\centering\arraybackslash}p{1.1cm}
+p{11.6cm}
+@{}}
+\toprule
+\textbf{Component} & \textbf{Symbol / Key} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+Infrastructure retry budget & $R_{\mathrm{eval}}$ & 3 & Retries only for transient infrastructure errors (not answer quality). \\
+Per-call timeout & $t_{\mathrm{timeout}}$ & 60s & Wall-clock timeout per turn call. \\
+Decoding temperature & $\tau_{\mathrm{temp}}$ & 1.0 & Default temperature for all evaluated models unless fixed settings. \\
+Decoding top-p & $\tau_{\mathrm{top\_p}}$ & 1.0 & Default top-p for all evaluated models unless a provider enforces fixed settings. \\
+\bottomrule
+\end{tabularx}
+
+\label{tab:hyper_controller}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Hyperparameters for scoring and judge calibration.}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\textwidth}{@{}p{4.3cm} c c p{7.5cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Symbol / Key} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+SessionSuccess threshold & $\tau$ (SessionSuccess@$\tau$) & 0.5 & Used for session-level success metrics based on average turn accuracy. \\
+Judge ensemble weights (scoring) & $\gamma^{\mathrm{score}}_{j}$ & (0.4, 0.35, 0.25) & Three state-of-the-art judges used for adjudication in scoring. \\
+Adjudication retry cap & $R_{\mathrm{judge}}$ & 2 & Max judge re-runs on parse failure / disagreement. \\
+Judge confidence threshold & $\tau_{\mathrm{J}}$ & 0.6 & Mean confidence threshold for judge ensemble aggregation. \\
+\bottomrule
+\end{tabularx}
+\label{tab:hyper_scoring}
+\end{table*}
+
+
+% =========================================================
+% Part D: Extended Results and Mechanism Analyses
+% =========================================================
+\clearpage
+\AppBlock{Part D: Extended Results and Mechanism Analyses.}
+\section{Global Summary}
+\label{app:full_results}
+
+\subsection{k-Level Diagnostic Summary}
+Table~\ref{tab:d1_klevel_summary} provides a $k$-conditioned diagnostic snapshot summarizing the performance indicators, turn-1 difficulty statistics, and the empirical proportions of the five difficulty-pattern classes and three mixture-regime classes. All quantities are reported as \emph{across-model aggregates} to provide a single, auditable reference point. Results show consistent performance degradation as $k$ increases: Recall drops from 31.3\% ($k{=}1$) to 21.9\% ($k{=}4$), F1-score drops from 16.1\% to 9.3\%, and SessionSuccess@$\tau$ declines from 40.2\% to 29.3\%. Entry difficulty ($\delta_1$) increases systematically from 0.391 ($k{=}1$) to 0.552 ($k{=}4$), confirming that composition complexity directly impacts task difficulty.
+
+\subsection{Task-Type Breakdown}
+To rule out the possibility that $k$-scaling trends are driven by shifts in task-type composition rather than cross-domain composition itself, Table~\ref{tab:d1_tasktype_k} reports turn-level performance for each task type (Factual/Reasoning/Code/MC) across $k{=}1/2/3/4$. We additionally report an aggregate row (Avg) that averages across task types. The intended sanity check is two-fold: (i) degradation should be observable \emph{within} each task type as $k$ increases, and (ii) the aggregate Avg should exhibit the same qualitative trend, mitigating concerns that changes in task mix explain the $k$-scaling behavior.
+
+Results confirm consistent degradation within each task type: Factual (R: 31.3\% $\rightarrow$ 22.0\%, F1: 16.1\% $\rightarrow$ 9.3\%), Reasoning (R: 37.5\% $\rightarrow$ 32.9\%, F1: 7.6\% $\rightarrow$ 8.7\%), and MC (R: 31.8\% $\rightarrow$ 15.2\%, F1: 29.6\% $\rightarrow$ 11.4\%). The aggregate Avg shows the same trend, ruling out task-mix confounds.
+
+\section{Turn-level Direct Composition Effect}
+\label{app:combo_breakdown}
+
+\subsection{Controlled Entry-Point Comparison Setup}
+This section isolates the \emph{direct} effect of cross-domain composition at the session entry.
+Since for each exact domain set $S$ with $|S|{=}k$, we compare performance on the composed turn-1 query against a strictly paired single-domain reference constructed from the \emph{same} constituent instances.
+We define:
+\begin{itemize}
+  \item \textbf{Before (paired single-domain controls).} The $k$ constituent single-domain items that were sampled (one from each domain in $S$) and then composed to form the turn-1 query.
+  \item \textbf{After (composed entry query).} The resulting composed turn-1 query for the exact domain (combination) set $S$.
+\end{itemize}
+We focus \emph{only} on turn~1 because it is source-aligned across single-domain and composed settings, while later turns are generated conditional on earlier model outputs and therefore do not admit a clean, controlled before/after comparison. To some extent, this turn-1 analysis complements the session-level scaling results in the main text by quantifying how much performance degrades \emph{at entry}.
+We also report the turn-1 difficulty proxy $\delta_1$ (defined in \S\ref{sec:diagnostic_signals}) to connect entry degradation to turn-level difficulty changes.
+
+\begin{table*}[!ht]
+\caption{\textbf{$k$-level diagnostic summary (across-model aggregates).}
+Each block reports: (a) minimal performance indicators; (b) turn-1 difficulty statistics; (c) proportions of difficulty-pattern classes (P1: Stable, P2: Gradual Increase, P3: Gradual Decrease, P4: Spike, P5: Fluctuate) and mixture-regime classes (R1: Stable, R2: Gradual Shift, R3: Fluctuate; each set sums to $1$). ``Sess@$\tau$'' denotes session-level success at threshold $\tau$. $\delta_1$ is the turn-1 difficulty proxy. For $k{=}1$, mixture regimes are not applicable.}
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+
+\begin{subtable}{\textwidth}
+\centering
+\caption{Performance and entry difficulty (turn 1).}
+\begin{tabular}{lccccc}
+\toprule
+$k$ &
+R &
+F1 &
+Sess@$\tau$ &
+$\delta_1$ (mean) &
+$\delta_1$ (median) \\
+\midrule
+1 & 0.313 & 0.161 & 0.402 & 0.391 & 0.400 \\
+2 & 0.280 & 0.134 & 0.294 & 0.492 & 0.490 \\
+3 & 0.241 & 0.112 & 0.281 & 0.538 & 0.550 \\
+4 & 0.219 & 0.093 & 0.293 & 0.552 & 0.560 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+\begin{subtable}{\textwidth}
+\centering
+\caption{Pattern/regime proportions.}
+\label{tab:pattern}
+\begin{tabular}{lccccccccc}
+\toprule
+\multirow{2}{*}{$k$} &
+\multicolumn{5}{c}{Difficulty patterns (5-class)} &
+\multicolumn{3}{c}{Mixture regimes (3-class)} \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-9}
+& P1 & P2 & P3 & P4 & P5
+& R1 & R2 & R3 \\
+\midrule
+1 & 0.236 & 0.248 & 0.248 & 0.019 & 0.248
+  & - & - & - \\
+2 & 0.227 & 0.238 & 0.219 & 0.087 & 0.229
+  & 0.417 & 0.291 & 0.293 \\
+3 & 0.229 & 0.233 & 0.229 & 0.078 & 0.233
+  & 0.345 & 0.337 & 0.318 \\
+4 & 0.229 & 0.239 & 0.234 & 0.060 & 0.239
+  & 0.343 & 0.338 & 0.318 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\label{tab:d1_klevel_summary}
+
+\end{table*}
+
+\begin{table*}[!ht]
+\caption{\textbf{Task-type breakdown across $k$ with task-mix controls.}
+Each cell reports \{Recall (R), F1-score (F1)\}. Avg is the average across task types. All values are across-model aggregates. The task taxonomy follows the main paper (Factual/Reasoning/Code/MC). Session-level metrics are intentionally omitted here since they are not task-type decomposable by construction.}
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.12}
+
+\begin{tabular}{l cc cc cc cc}
+\toprule
+\multirow{2}{*}{Task type} &
+\multicolumn{2}{c}{$k{=}1$} &
+\multicolumn{2}{c}{$k{=}2$} &
+\multicolumn{2}{c}{$k{=}3$} &
+\multicolumn{2}{c}{$k{=}4$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+& R & F1 & R & F1 & R & F1 & R & F1 \\
+\midrule
+Factual   & 0.245 & 0.112 & 0.244 & 0.081 & 0.156 & 0.072 & 0.177 & 0.078 \\
+Reasoning & 0.375 & 0.076 & 0.336 & 0.088 & 0.359 & 0.077 & 0.329 & 0.087 \\
+Code      & 0.188 & 0.107 & - & - & - & - & - & - \\
+MC        & 0.318 & 0.296 & 0.259 & 0.234 & 0.207 & 0.186 & 0.152 & 0.114 \\
+\midrule
+Avg  & 0.281 & 0.148 & 0.280 & 0.134 & 0.241 & 0.112 & 0.219 & 0.093 \\
+\bottomrule
+\end{tabular}
+\label{tab:d1_tasktype_k}
+\end{table*}
+
+
+
+
+\subsection{Paired Controls and Aggregation Policy}
+\label{app:paired_protocol}
+
+\paragraph{Paired matching.}
+For every composed turn-1 instance associated with an exact domain set $S$, we retain the identifiers of the $k$ constituent single-domain items that were sampled during construction.
+These constituent items form the paired controls for the \emph{same} composed instance, ensuring that the comparison does not conflate composition with differences in source pools, templates, or sampling policies.
+
+\paragraph{Baseline aggregation.}
+Let $m$ index models, and let a composed turn-1 instance for domain set $S$ be formed from constituent items $\{x^{(d)}\}_{d\in S}$. We compute the \textbf{Before} baseline as the mean performance over the $k$ constituent single-domain controls:
+\begin{equation}
+  \mathrm{Before}(m,S) \;=\; \frac{1}{k}\sum_{d\in S} \mathrm{Perf}\!\left(m, x^{(d)}\right).
+  \label{eq:d2_before_mean}
+\end{equation}
+We compute the \textbf{After} performance as the score on the composed turn-1 query $x^{(S)}$:
+\begin{equation}
+  \mathrm{After}(m,S) \;=\; \mathrm{Perf}\!\left(m, x^{(S)}\right),
+  \label{eq:d2_after}
+\end{equation}
+and report the composition-induced entry drop as a percentage change: $\Delta\%(m,S)=100 \times \frac{\mathrm{After}(m,S)-\mathrm{Before}(m,S)}{\mathrm{Before}(m,S)}$ for both Recall (R) and F1-score (F1).
+
+\subsection{Full Turn-1 Before/After Combination}
+Table~\ref{tab:d2_turn1_before_after} reports the full turn-1 before/after comparison for every exact domain set at $k\in\{1,2,3,4\}$. For $k{=}1$, ``Before'' and ``After'' coincide by construction and serve as a single-domain reference block. For $k\ge 2$, a negative $\Delta\%$ indicates an immediate entry degradation under composition (e.g., $\Delta\%=-10\%$ means a 10\% performance drop).
+
+Across $k{=}2$ domain sets, average performance drops by 16.9\% (Recall) and 26.1\% (F1-score), with most combinations showing degradation. Notable exceptions include Biology+Medicine (+42.4\% R, +43.8\% F1) and Economics+Sociology (+60.1\% R, +32.4\% F1), suggesting synergistic effects in certain domain pairs. At $k{=}3$ and $k{=}4$, degradation intensifies: average drops reach 30.7\% (R) and 44.1\% (F1) at $k{=}3$, and 26.1\% (R) and 48.9\% (F1) at $k{=}4$. Entry difficulty ($\delta_1$) increases systematically with $k$, confirming that composition complexity directly impacts initial task difficulty.
+
+\section{Session-Level Results}
+\label{app:full_tables}
+
+Tables~\ref{tab:d4_all} report \emph{across-model aggregates} for each exact domain set. Each table row corresponds to an exact domain (or domain set) and reports session-level metrics:
+\begin{itemize}
+  \item \textbf{Recall (R)} and \textbf{F1-score (F1)} \hfill (turn-level correctness aggregated to session level)
+  \item \textbf{SessionSuccess@$\tau$} \hfill (success under the paper's default threshold; see main text)
+\end{itemize}
+
+Session-level results mirror turn-level trends: performance degrades systematically as $k$ increases. At $k{=}1$, average Recall is 20.5\% and F1-score is 18.6\%, with SessionSuccess@$\tau$ at 14.3\%. At $k{=}2$, these drop to 15.1\% (R), 12.1\% (F1), and 7.9\% (SessionSuccess). Further degradation occurs at $k{=}3$ (13.1\% R, 10.2\% F1, 8.2\% SessionSuccess) and $k{=}4$ (11.4\% R, 8.8\% F1, 7.2\% SessionSuccess). Domain-specific patterns emerge: Medicine and Philosophy domains show relatively strong performance at $k{=}1$, while certain domain combinations (e.g., Biology+Medicine, Psychology+Sociology) exhibit synergistic effects at higher $k$.
+
+\begin{table*}[!ht]
+\caption{\textbf{Turn-1 direct composition effect with paired before/after controls.}
+For each exact domain set $S$ at $k{=}4$, we report across-model aggregates of Before (mean-of-constituents single-domain controls), After (composed turn~1), and $\Delta{=}\mathrm{After}-\mathrm{Before}$ for Recall (R) and F1-score (F1), along with entry difficulty $\delta_1$.
+Each $k$ block includes an Avg row.}
+\label{tab:d2_turn1_before_after}
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+
+% ---------- k=1 (20 domains): single subtable with 8 columns ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}1$ (single domains; 20 domains).}
+\centering
+\begin{tabular}{lccc@{\hspace{1.5em}}lccc}
+\toprule
+Domain/set &
+B-R & B-F1 &
+$\delta_1$ &
+Domain/set &
+B-R & B-F1 &
+$\delta_1$ \\
+\midrule
+Art                 & 0.226 & 0.240 & 0.320 &
+Literature          & 0.165 & 0.151 & 0.432 \\
+Biology             & 0.334 & 0.293 & 0.353 &
+Mathematics         & 0.085 & 0.068 & 0.497 \\
+Chemistry           & 0.246 & 0.218 & 0.301 &
+Medicine            & 0.348 & 0.305 & 0.498 \\
+Computer\ Science   & 0.125 & 0.130 & 0.409 &
+Music               & 0.142 & 0.114 & 0.371 \\
+Economics           & 0.096 & 0.109 & 0.385 &
+Philosophy          & 0.238 & 0.209 & 0.397 \\
+Engineering         & 0.159 & 0.120 & 0.356 &
+Physics             & 0.286 & 0.241 & 0.325 \\
+Finance             & 0.105 & 0.107 & 0.477 &
+Psychology          & 0.279 & 0.246 & 0.360 \\
+Geography           & 0.146 & 0.158 & 0.307 &
+Sociology           & 0.136 & 0.123 & 0.404 \\
+History             & 0.201 & 0.200 & 0.371 &
+Sports              & 0.151 & 0.148 & 0.410 \\
+Law                 & 0.199 & 0.187 & 0.541 &
+Technology          & 0.315 & 0.263 & 0.398 \\
+\midrule
+Avg ($k{=}1$) & 0.194 & 0.178 & 0.392 & & & & \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+% \vspace{6pt}
+
+% ---------- k=2 (24 sets): single-column subtable (same layout as k=3/4) ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}2$ (domain sets).}
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+Domain set $S$ &
+B-R & B-F1 &
+A-R & A-F1 &
+$\Delta$R & $\Delta$F1 &
+$\delta_1$ \\
+\midrule
+Art + History                                      & 0.213 & 0.220 & 0.160 & 0.154 & -5.3\% & -6.5\% & 0.479 \\
+Art + Literature                                   & 0.195 & 0.195 & 0.143 & 0.138 & -5.2\% & -5.7\% & 0.487 \\
+Art + Music                                        & 0.184 & 0.177 & 0.085 & 0.095 & -9.9\% & -8.1\% & 0.458 \\
+Biology + Chemistry                                & 0.290 & 0.255 & 0.202 & 0.162 & -8.7\% & -9.3\% & 0.491 \\
+Biology + Medicine                                 & 0.341 & 0.299 & 0.486 & 0.430 & 14.5\% & 13.1\% & 0.439 \\
+Biology + Physics                                  & 0.310 & 0.267 & 0.187 & 0.154 & -12.3\% & -11.2\% & 0.484 \\
+Chemistry + Engineering                            & 0.202 & 0.169 & 0.122 & 0.078 & -8.0\% & -9.1\% & 0.579 \\
+Economics + Finance                                & 0.124 & 0.134 & 0.169 & 0.162 & 4.5\% & 2.8\% & 0.477 \\
+Economics + Geography                              & 0.121 & 0.133 & 0.082 & 0.081 & -3.9\% & -5.2\% & 0.470 \\
+Economics + History                                & 0.148 & 0.154 & 0.108 & 0.107 & -4.1\% & -4.7\% & 0.535 \\
+Economics + Sociology                              & 0.116 & 0.116 & 0.185 & 0.153 & 7.0\% & 3.8\% & 0.522 \\
+Engineering + Finance                              & 0.156 & 0.140 & 0.122 & 0.046 & -3.3\% & -9.4\% & 0.505 \\
+Engineering + Geography                            & 0.153 & 0.139 & 0.064 & 0.018 & -8.9\% & -12.1\% & 0.529 \\
+Engineering + Physics                              & 0.222 & 0.180 & 0.159 & 0.084 & -6.3\% & -9.7\% & 0.493 \\
+Finance + Geography                                & 0.149 & 0.158 & 0.074 & 0.079 & -7.5\% & -8.0\% & 0.464 \\
+Geography + History                                & 0.174 & 0.179 & 0.088 & 0.082 & -8.5\% & -9.6\% & 0.425 \\
+Geography + Sociology                              & 0.141 & 0.140 & 0.129 & 0.103 & -1.2\% & -3.8\% & 0.523 \\
+History + Music                                    & 0.171 & 0.157 & 0.209 & 0.180 & 3.7\% & 2.3\% & 0.440 \\
+Literature + Philosophy                            & 0.201 & 0.180 & 0.141 & 0.105 & -6.1\% & -7.5\% & 0.555 \\
+Literature + Psychology                            & 0.222 & 0.198 & 0.142 & 0.114 & -8.0\% & -8.5\% & 0.517 \\
+Philosophy + Psychology                            & 0.259 & 0.228 & 0.283 & 0.232 & 2.4\% & 0.4\% & 0.446 \\
+Philosophy + Sociology                             & 0.187 & 0.166 & 0.160 & 0.122 & -2.7\% & -4.4\% & 0.560 \\
+Psychology + Engineering                           & 0.219 & 0.198 & 0.131 & 0.108 & -8.8\% & -9.0\% & 0.478 \\
+Psychology + Sociology                             & 0.207 & 0.185 & 0.278 & 0.239 & 7.1\% & 5.4\% & 0.453 \\
+\midrule
+Avg ($k{=}2$) & 0.196 & 0.182 & 0.163 & 0.134 & -3.3\% & -4.8\% & 0.492 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+\end{table*}
+
+\begin{table*}[!ht]
+\small
+\ContinuedFloat
+
+% ---------- k=3 (10 sets): single-column subtable (no left/right split) ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}3$ (domain sets).}
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+Domain set $S$ &
+B-R & B-F1 &
+A-R & A-F1 &
+$\Delta$R & $\Delta$F1 &
+$\delta_1$ \\
+\midrule
+Biology + Chemistry + Physics                          & 0.288 & 0.250 & 0.182 & 0.125 & -10.7\% & -12.6\% & 0.548 \\
+Chemistry + Engineering + Physics                      & 0.230 & 0.193 & 0.150 & 0.107 & -8.0\% & -8.6\% & 0.573 \\
+Chemistry + Finance + Physics                          & 0.228 & 0.206 & 0.152 & 0.109 & -7.6\% & -9.7\% & 0.557 \\
+Economics + Engineering + Geography                    & 0.134 & 0.129 & 0.074 & 0.041 & -6.0\% & -8.8\% & 0.530 \\
+Economics + Finance + Geography                        & 0.132 & 0.142 & 0.107 & 0.091 & -2.5\% & -5.1\% & 0.491 \\
+Economics + Geography + History                        & 0.148 & 0.155 & 0.099 & 0.092 & -4.9\% & -6.3\% & 0.522 \\
+Economics + Geography + Sociology                      & 0.126 & 0.130 & 0.107 & 0.091 & -1.9\% & -3.8\% & 0.546 \\
+Literature + Philosophy + Psychology                   & 0.227 & 0.202 & 0.113 & 0.078 & -11.4\% & -12.4\% & 0.542 \\
+Philosophy + Psychology + Sociology                    & 0.218 & 0.193 & 0.167 & 0.119 & -5.0\% & -7.4\% & 0.527 \\
+Psychology + Sociology + Engineering                   & 0.191 & 0.173 & 0.183 & 0.139 & -0.8\% & -3.4\% & 0.548 \\
+\midrule
+Avg ($k{=}3$) & 0.192 & 0.177 & 0.133 & 0.099 & -5.9\% & -7.8\% & 0.538 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+% ---------- k=4 (8 sets): single-column subtable (no left/right split) ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}4$ (domain sets).}
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+Domain set $S$ &
+B-R & B-F1 &
+A-R & A-F1 &
+$\Delta$R & $\Delta$F1 &
+$\delta_1$ \\
+\midrule
+Biology + Chemistry + Engineering + Physics            & 0.256 & 0.218 & 0.135 & 0.082 & -12.1\% & -13.6\% & 0.579 \\
+Biology + Chemistry + Medicine + Physics               & 0.303 & 0.264 & 0.156 & 0.086 & -14.7\% & -17.8\% & 0.556 \\
+Economics + Finance + Geography + Sociology            & 0.133 & 0.137 & 0.072 & 0.072 & -6.1\% & -6.5\% & 0.535 \\
+Economics + Finance + History + Sociology             & 0.146 & 0.148 & 0.129 & 0.094 & -1.7\% & -5.4\% & 0.528 \\
+Finance + Geography + History + Sociology             & 0.159 & 0.160 & 0.113 & 0.060 & -4.6\% & -10.0\% & 0.571 \\
+Literature + Philosophy + Psychology + Sociology       & 0.204 & 0.182 & 0.189 & 0.105 & -1.5\% & -7.7\% & 0.544 \\
+Literature + Psychology + Sociology + Engineering      & 0.185 & 0.168 & 0.172 & 0.106 & -1.3\% & -6.2\% & 0.548 \\
+Philosophy + Psychology + Sociology + Engineering      & 0.203 & 0.182 & 0.211 & 0.144 & 0.8\% & -3.8\% & 0.553 \\
+\midrule
+Avg ($k{=}4$) & 0.199 & 0.182 & 0.147 & 0.093 & -5.1\% & -8.9\% & 0.552 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\end{table*}
+
+
+\begin{table*}[!ht]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{1.08}
+\caption{\textbf{Session-level results by exact domain sets ($k{=}1/2/3/4$).}
+Across-model aggregates for each domain set at $k{=}1/2/3/4$, reporting Recall (R), F1-score (F1), and SessionSuccess@$\tau$, plus an Avg row for each $k$ block.}
+\label{tab:d4_all}
+% ---------- k=1 (20 domains): single subtable with 8 columns ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}1$ (single domains; 20 domains).}
+\centering
+\begin{tabular}{lccc@{\hspace{1.5em}}lccc}
+\toprule
+Domain &
+R & F1 &
+Sess@$\tau$ &
+Domain &
+R & F1 &
+Sess@$\tau$ \\
+\midrule
+Art               & 0.297 & 0.273 & 0.179 &
+Literature        & 0.151 & 0.132 & 0.098 \\
+Biology           & 0.317 & 0.287 & 0.214 &
+Mathematics       & 0.069 & 0.057 & 0.082 \\
+Chemistry         & 0.277 & 0.242 & 0.152 &
+Medicine          & 0.373 & 0.330 & 0.241 \\
+Computer\ Science & 0.145 & 0.139 & 0.107 &
+Music             & 0.163 & 0.147 & 0.125 \\
+Economics         & 0.102 & 0.099 & 0.134 &
+Philosophy        & 0.344 & 0.312 & 0.179 \\
+Engineering       & 0.105 & 0.080 & 0.079 &
+Physics           & 0.277 & 0.244 & 0.179 \\
+Finance           & 0.105 & 0.107 & 0.111 &
+Psychology        & 0.278 & 0.248 & 0.179 \\
+Geography         & 0.133 & 0.146 & 0.143 &
+Sociology         & 0.234 & 0.213 & 0.143 \\
+History           & 0.151 & 0.150 & 0.134 &
+Sports            & 0.092 & 0.099 & 0.087 \\
+Law               & 0.163 & 0.160 & 0.089 &
+Technology        & 0.315 & 0.263 & 0.214 \\
+\midrule
+Avg ($k{=}1$) & 0.205 & 0.186 & 0.143 & & & & \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+% ---------- k=2 (24 sets): single subtable with 8 columns ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}2$ (domain sets; 24 sets).}
+\centering
+\begin{tabular}{lccc@{\hspace{1.5em}}lccc}
+\toprule
+Domain set $S$ &
+R & F1 &
+Sess@$\tau$ &
+Domain set $S$ &
+R & F1 &
+Sess@$\tau$ \\
+\midrule
+Art + History                                      & 0.105 & 0.108 & 0.092 &
+Engineering + Geography                            & 0.067 & 0.026 & 0.012 \\
+Art + Literature                                   & 0.151 & 0.137 & 0.057 &
+Engineering + Physics                              & 0.154 & 0.084 & 0.046 \\
+Art + Music                                        & 0.142 & 0.125 & 0.116 &
+Finance + Geography                                & 0.140 & 0.128 & 0.130 \\
+Biology + Chemistry                                & 0.172 & 0.130 & 0.085 &
+Geography + History                                & 0.130 & 0.109 & 0.137 \\
+Biology + Medicine                                 & 0.320 & 0.289 & 0.219 &
+Geography + Sociology                              & 0.130 & 0.104 & 0.031 \\
+Biology + Physics                                  & 0.163 & 0.121 & 0.046 &
+History + Music                                    & 0.203 & 0.173 & 0.171 \\
+Chemistry + Engineering                            & 0.150 & 0.101 & 0.079 &
+Literature + Philosophy                            & 0.131 & 0.103 & 0.029 \\
+Economics + Finance                                & 0.148 & 0.144 & 0.027 &
+Literature + Psychology                            & 0.153 & 0.119 & 0.071 \\
+Economics + Geography                              & 0.101 & 0.085 & 0.041 &
+Philosophy + Psychology                            & 0.212 & 0.173 & 0.152 \\
+Economics + History                                & 0.101 & 0.095 & 0.069 &
+Philosophy + Sociology                             & 0.146 & 0.107 & 0.015 \\
+Economics + Sociology                              & 0.157 & 0.133 & 0.040 &
+Psychology + Engineering                           & 0.130 & 0.103 & 0.093 \\
+Engineering + Finance                              & 0.128 & 0.063 & 0.047 &
+Psychology + Sociology                             & 0.188 & 0.154 & 0.095 \\
+\midrule
+Avg ($k{=}2$) & 0.151 & 0.121 & 0.079 & & & & \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\label{tab:d4_k12}
+\end{table*}
+
+\begin{table*}[!ht]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\renewcommand{\arraystretch}{1.08}
+\ContinuedFloat
+
+% ---------- k=3 (10 sets): single-column subtable ----------
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}3$ (10 domain sets).}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Domain set $S$ &
+R &
+F1 &
+Sess@$\tau$ \\
+\midrule
+Biology + Chemistry + Physics                      & 0.166 & 0.127 & 0.120 \\
+Chemistry + Engineering + Physics                  & 0.145 & 0.104 & 0.079 \\
+Chemistry + Finance + Physics                      & 0.158 & 0.125 & 0.119 \\
+Economics + Engineering + Geography                & 0.072 & 0.035 & 0.023 \\
+Economics + Finance + Geography                    & 0.122 & 0.111 & 0.056 \\
+Economics + Geography + History                    & 0.097 & 0.085 & 0.091 \\
+Economics + Geography + Sociology                  & 0.101 & 0.088 & 0.033 \\
+Literature + Philosophy + Psychology               & 0.105 & 0.078 & 0.047 \\
+Philosophy + Psychology + Sociology                & 0.162 & 0.124 & 0.106 \\
+Psychology + Sociology + Engineering               & 0.184 & 0.142 & 0.151 \\
+\midrule
+Avg ($k{=}3$)                                      & 0.131 & 0.102 & 0.082 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+
+\begin{subtable}[t]{\textwidth}
+\caption{$k{=}4$ (8 domain sets).}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Domain set $S$ &
+R &
+F1 &
+Sess@$\tau$ \\
+\midrule
+Biology + Chemistry + Engineering + Physics            & 0.095 & 0.059 & 0.054 \\
+Biology + Chemistry + Medicine + Physics               & 0.107 & 0.061 & 0.097 \\
+Economics + Finance + Geography + Sociology            & 0.095 & 0.102 & 0.037 \\
+Economics + Finance + History + Sociology              & 0.096 & 0.094 & 0.071 \\
+Finance + Geography + History + Sociology             & 0.105 & 0.091 & 0.083 \\
+Literature + Philosophy + Psychology + Sociology       & 0.140 & 0.099 & 0.046 \\
+Literature + Psychology + Sociology + Engineering      & 0.129 & 0.094 & 0.089 \\
+Philosophy + Psychology + Sociology + Engineering      & 0.141 & 0.105 & 0.100 \\
+\midrule
+Avg ($k{=}4$)                                          & 0.114 & 0.088 & 0.072 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\end{table*}
+
+

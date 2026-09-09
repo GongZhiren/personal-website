@@ -1,0 +1,26 @@
+\begin{table}[tbp]
+\centering\singlespacing\scriptsize
+\caption{Performance across structured-removal ratios on five text models. Each cell reports C4 perplexity $\downarrow$ / commonsense mean accuracy $\uparrow$. ``Best baseline'' is the strongest of the seven training-free baselines at that ratio, so it is an envelope rather than one fixed competitor.}
+\label{tab:cc-ratio-sweep}
+\setlength{\tabcolsep}{4.0pt}\renewcommand{\arraystretch}{1.04}
+\begin{tabular}{llrrrrr}
+\toprule
+\textbf{Model} & \textbf{Selector} & \textbf{10\%} & \textbf{20\%} & \textbf{30\%} & \textbf{40\%} & \textbf{50\%}\\
+\midrule
+Llama-3.2-3B & Best baseline & 9.6/56 & 16.9/50 & 42.7/44 & \textbf{136/41} & \textbf{1199/37}\\
+\rowcolor{SoftBlue}& \textbf{\CoCurve{}} & \textbf{9.3/56} & \textbf{16.7/51} & \textbf{34.8/44} & 194/38 & 4617/35\\
+\addlinespace[1pt]
+Falcon3-7B & Best baseline & 6.4/60 & 7.4/\textbf{56} & 10.1/51 & 18.4/45 & 42.6/39\\
+\rowcolor{SoftBlue}& \textbf{\CoCurve{}} & \textbf{6.3/61} & \textbf{7.1/56} & \textbf{8.9/51} & \textbf{13.8/46} & \textbf{41.7/40}\\
+\addlinespace[1pt]
+Llama-3.1-8B-It & Best baseline & \textbf{8.8}/63 & 13.2/56 & 26.6/50 & 103/\textbf{44} & \textbf{773}/37\\
+\rowcolor{SoftBlue}& \textbf{\CoCurve{}} & 8.9/\textbf{64} & \textbf{12.9/58} & \textbf{21.6/52} & \textbf{59.1}/43 & 956/\textbf{38}\\
+\addlinespace[1pt]
+Mistral-Nemo-12B & Best baseline & 6.5/62 & 11.4/55 & 17.8/\textbf{52} & 73.1/\textbf{45} & \textbf{513/40}\\
+\rowcolor{SoftBlue}& \textbf{\CoCurve{}} & \textbf{6.2/64} & \textbf{8.6/59} & \textbf{15.8}/50 & \textbf{52.2}/43 & 839/38\\
+\addlinespace[1pt]
+Mistral-Small-24B & Best baseline & 10.8/68 & \textbf{8.7}/63 & 78.8/55 & 3299/\textbf{43} & 4666/35\\
+\rowcolor{SoftBlue}& \textbf{\CoCurve{}} & \textbf{5.7/69} & 9.0/\textbf{64} & \textbf{20.5/56} & \textbf{277}/41 & \textbf{2560/36}\\
+\bottomrule
+\end{tabular}
+\end{table}

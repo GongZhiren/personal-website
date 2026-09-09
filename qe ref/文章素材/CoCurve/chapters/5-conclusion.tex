@@ -1,0 +1,39 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Structured LLM pruning has been operating at the wrong granularity: it ranks units as independent
+nodes, while Transformer computation couples them through a shared residual stream. \methodfull
+replaces that ranking with global co-pruning-risk minimisation, from a single Fisher matrix that is
+node saliency and cross-module co-pruning curvature at once, recovered from single-unit ablations and
+solved in one shot under a shared budget. How much to trust the off-diagonal is read off a finite path of solutions by a held-out, label-free
+criterion, using the same rule at every compression ratio.
+Across five models from $3$B to $24$B and three compression ratios, \method leads on
+$38$ of $45$ perplexity cells and $32$ of $60$ capability-group cells against the
+per-column best of every baseline, and on $666$ of $721$ cells against those baselines one at
+a time.
+The margin is largest where the field breaks: on Mistral-Small-24B at $\rho{=}40\%$ its perplexity is
+$277.1$ against the best baseline's $3299$.
+Our ablations attribute the gain to the off-diagonal rather than to node saliency, and it survives a
+control that fixes the attention--FFN split at the diagonal selector's own allocation. The term acts
+through a population we can name and delete on demand, and it carries positional structure the
+diagonal does not: coupling falls with depth on all ten models, while saliency does not
+even keep its sign. Under one shared budget the objective then recovers, without being told to, an
+allocation that spends the first half of the depth on FFN width alone: of the twenty-five solutions
+across five models and five ratios, seventeen remove attention at all, and thirteen of those
+take none of it from the first half.
+
+None of this is tied to one modality. The same three objects --- a KL risk, a Gram matrix of
+single-unit ablations, a budgeted greedy --- transfer to vision--language models unchanged, where they
+also measure something a single stack cannot: the curvature coupling a language unit to a vision unit,
+which runs $\vlmCrossLo$--$\vlmCrossHi$ of the coupling inside a tower and is why one budget shared
+across both towers is a measurement rather than a preference.
+
+\textbf{Limitations and outlook.} Estimating the edge matrix costs hours rather than minutes, but only
+once per model. It is independent of the ratio and of $\lambda$, so one estimate serves the whole
+path. Turning a mask into a smaller model needs a slicing path per operator family. What a removable unit
+\emph{is} is the open question: under mixture-of-experts routing the units are already sparsely
+activated, and in stacks that interleave attention with linear-recurrent layers some layers have no
+heads to remove. The risk of \cref{eq:risk} is defined in both cases; the inventory it is minimised
+over is not, and extending it there is the natural next step. The inventory changes; the object does not. Wherever units share a
+residual stream, the damage from removing a set is not the sum of the damages, and the term that says so
+is measurable without a single gradient: \emph{prune the edges, not just the nodes}.

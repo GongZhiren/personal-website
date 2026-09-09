@@ -1,0 +1,400 @@
+\begin{thebibliography}{78}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ainslie et~al.(2023)Ainslie, Lee-Thorp, de~Jong, Zemlyanskiy, Lebr{\'o}n, and Sanghai]{ainslie2023gqa}
+Joshua Ainslie, James Lee-Thorp, Michiel de~Jong, Yury Zemlyanskiy, Federico Lebr{\'o}n, and Sumit Sanghai.
+\newblock {GQA}: Training generalized multi-query transformer models from multi-head checkpoints.
+\newblock In \emph{Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, 2023.
+
+\bibitem[An et~al.(2024)An, Zhao, Yu, Tang, and Wang]{an2024flap}
+Yongqi An, Xu~Zhao, Tao Yu, Ming Tang, and Jinqiao Wang.
+\newblock Fluctuation-based adaptive structured pruning for large language models.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)}, 2024.
+
+\bibitem[Ashkboos et~al.(2024)Ashkboos, Croci, Nascimento, Hoefler, and Hensman]{ashkboos2024slicegpt}
+Saleh Ashkboos, Maximilian~L. Croci, Marcelo Gennari~do Nascimento, Torsten Hoefler, and James Hensman.
+\newblock {SliceGPT}: Compress large language models by deleting rows and columns.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+\bibitem[Bai et~al.(2025)Bai, Chen, Liu, Wang, Ge, Song, Dang, Wang, Wang, Tang, et~al.]{bai2025qwen25vl}
+Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, et~al.
+\newblock {Qwen2.5-VL} technical report.
+\newblock \emph{arXiv preprint arXiv:2502.13923}, 2025.
+
+\bibitem[Bisk et~al.(2020)Bisk, Zellers, Gao, Choi, et~al.]{bisk2020piqa}
+Yonatan Bisk, Rowan Zellers, Jianfeng Gao, Yejin Choi, et~al.
+\newblock {PIQA}: Reasoning about physical commonsense in natural language.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)}, 2020.
+
+\bibitem[Cao et~al.(2024)Cao, Ye, Li, Yu, Tang, Lu, and Chen]{cao2024madtp}
+Jianjian Cao, Peng Ye, Shengze Li, Chong Yu, Yansong Tang, Jiwen Lu, and Tao Chen.
+\newblock {MADTP}: Multimodal alignment-guided dynamic token pruning for accelerating vision-language transformer.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2024.
+
+\bibitem[Chen et~al.(2024{\natexlab{a}})Chen, Zhao, Liu, Bai, Lin, Zhou, and Chang]{chen2024fastv}
+Liang Chen, Haozhe Zhao, Tianyu Liu, Shuai Bai, Junyang Lin, Chang Zhou, and Baobao Chang.
+\newblock An image is worth 1/2 tokens after layer 2: Plug-and-play inference acceleration for large vision-language models.
+\newblock In \emph{Computer Vision -- ECCV 2024}, 2024{\natexlab{a}}.
+
+\bibitem[Chen et~al.(2024{\natexlab{b}})Chen, Li, Dong, Zhang, Zang, Chen, Duan, Wang, Qiao, Lin, and Zhao]{chen2024mmstar}
+Lin Chen, Jinsong Li, Xiaoyi Dong, Pan Zhang, Yuhang Zang, Zehui Chen, Haodong Duan, Jiaqi Wang, Yu~Qiao, Dahua Lin, and Feng Zhao.
+\newblock Are we on the right way for evaluating large vision-language models?
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2024{\natexlab{b}}.
+
+\bibitem[Chen et~al.(2025)Chen, Ma, Huang, Wang, Wang, Sun, Huang, and John]{obc2025}
+Shaowu Chen, Wei Ma, Binhua Huang, Qingyuan Wang, Guoxin Wang, Weize Sun, Lei Huang, and Deepu John.
+\newblock Optimal brain connection: Towards efficient structural pruning.
+\newblock \emph{arXiv preprint arXiv:2508.05521}, 2025.
+
+\bibitem[Clark et~al.(2019)Clark, Lee, Chang, Kwiatkowski, Collins, and Toutanova]{clark2019boolq}
+Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael Collins, and Kristina Toutanova.
+\newblock {BoolQ}: Exploring the surprising difficulty of natural yes/no questions.
+\newblock In \emph{Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (NAACL)}, 2019.
+
+\bibitem[Clark et~al.(2018)Clark, Cowhey, Etzioni, Khot, Sabharwal, Schoenick, and Tafjord]{clark2018arc}
+Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and Oyvind Tafjord.
+\newblock Think you have solved question answering? try {ARC}, the {AI2} reasoning challenge.
+\newblock \emph{arXiv preprint arXiv:1803.05457}, 2018.
+
+\bibitem[Dubey et~al.(2024)Dubey, Jauhri, Pandey, et~al.]{dubey2024llama3}
+Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, et~al.
+\newblock The {Llama} 3 herd of models.
+\newblock \emph{arXiv preprint arXiv:2407.21783}, 2024.
+
+\bibitem[Efron et~al.(2004)Efron, Hastie, Johnstone, and Tibshirani]{efron2004lars}
+Bradley Efron, Trevor Hastie, Iain Johnstone, and Robert Tibshirani.
+\newblock Least angle regression.
+\newblock \emph{The Annals of Statistics}, 32\penalty0 (2):\penalty0 407--499, 2004.
+
+\bibitem[{Falcon-LLM Team}(2024)]{falcon3}
+{Falcon-LLM Team}.
+\newblock The falcon 3 family of open models.
+\newblock \url{https://huggingface.co/blog/falcon3}, 2024.
+
+\bibitem[Frantar \& Alistarh(2022)Frantar and Alistarh]{frantar2022obc}
+Elias Frantar and Dan Alistarh.
+\newblock Optimal brain compression: A framework for accurate post-training quantization and pruning.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2022.
+
+\bibitem[Frantar \& Alistarh(2023)Frantar and Alistarh]{frantar2023sparsegpt}
+Elias Frantar and Dan Alistarh.
+\newblock {SparseGPT}: Massive language models can be accurately pruned in one-shot.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2023.
+
+\bibitem[Frantar et~al.(2021)Frantar, Kurtic, and Alistarh]{frantar2021mfac}
+Elias Frantar, Eldar Kurtic, and Dan Alistarh.
+\newblock {M-FAC}: Efficient matrix-free approximations of second-order information.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2021.
+
+\bibitem[Fu et~al.(2023)Fu, Chen, Shen, Qin, Zhang, Lin, Yang, Zheng, Li, Sun, Wu, and Ji]{fu2023mme}
+Chaoyou Fu, Peixian Chen, Yunhang Shen, Yulei Qin, Mengdan Zhang, Xu~Lin, Jinrui Yang, Xiawu Zheng, Ke~Li, Xing Sun, Yunsheng Wu, and Rongrong Ji.
+\newblock {MME}: A comprehensive evaluation benchmark for multimodal large language models.
+\newblock \emph{arXiv preprint arXiv:2306.13394}, 2023.
+
+\bibitem[Guo et~al.(2025)Guo, Chen, Tang, and Wang]{tang2025slimllm}
+Jialong Guo, Xinghao Chen, Yehui Tang, and Yunhe Wang.
+\newblock {SlimLLM}: Accurate structured pruning for large language models.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2025.
+
+\bibitem[Han et~al.(2015)Han, Pool, Tran, and Dally]{han2015learning}
+Song Han, Jeff Pool, John Tran, and William Dally.
+\newblock Learning both weights and connections for efficient neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2015.
+
+\bibitem[Hassibi \& Stork(1993)Hassibi and Stork]{hassibi1993obs}
+Babak Hassibi and David Stork.
+\newblock Second order derivatives for network pruning: Optimal brain surgeon.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 1993.
+
+\bibitem[Hendrycks et~al.(2021)Hendrycks, Burns, Basart, Zou, Mazeika, Song, and Steinhardt]{hendrycks2021mmlu}
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt.
+\newblock Measuring massive multitask language understanding.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2021.
+
+\bibitem[Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and Chen]{hu2022lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu~Wang, and Weizhu Chen.
+\newblock {LoRA}: Low-rank adaptation of large language models.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2022.
+
+\bibitem[Jaiswal et~al.(2024)Jaiswal, Gan, Du, Zhang, Wang, and Yang]{jaiswal2024kick}
+Ajay Jaiswal, Zhe Gan, Xianzhi Du, Bowen Zhang, Zhangyang Wang, and Yinfei Yang.
+\newblock Compressing {LLMs}: The truth is rarely pure and never simple.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+\bibitem[Jansen et~al.(2026)Jansen, Rausch, Hashemi, Montero, and Or{\'u}s]{jansen2026blockcbo}
+David Jansen, Roman Rausch, Ali Hashemi, David Montero, and Rom{\'a}n Or{\'u}s.
+\newblock {LLM} compression by block removal with constrained binary optimization.
+\newblock \emph{arXiv preprint arXiv:2602.00161}, 2026.
+
+\bibitem[Kembhavi et~al.(2016)Kembhavi, Salvato, Kolve, Seo, Hajishirzi, and Farhadi]{kembhavi2016ai2d}
+Aniruddha Kembhavi, Mike Salvato, Eric Kolve, Minjoon Seo, Hannaneh Hajishirzi, and Ali Farhadi.
+\newblock A diagram is worth a dozen images.
+\newblock In \emph{European Conference on Computer Vision (ECCV)}, 2016.
+
+\bibitem[Kim et~al.(2024)Kim, Kim, Kim, Castells, Choi, Shin, and Song]{kim2024shortened}
+Bo-Kyeong Kim, Geonmin Kim, Tae-Ho Kim, Thibault Castells, Shinkook Choi, Junho Shin, and Hyoung-Kyu Song.
+\newblock Shortened {LLaMA}: Depth pruning for large language models with comparison of retraining methods.
+\newblock \emph{arXiv preprint arXiv:2402.02834}, 2024.
+
+\bibitem[Kolawole et~al.(2024)Kolawole, Dery, Kagy, Smith, Neubig, and Talwalkar]{dery2024bonsai}
+Steven Kolawole, Lucio Dery, Jean-Fran{\c c}ois Kagy, Virginia Smith, Graham Neubig, and Ameet Talwalkar.
+\newblock Everybody prune now: Structured pruning of {LLMs} with only forward passes.
+\newblock \emph{arXiv preprint arXiv:2402.05406}, 2024.
+
+\bibitem[Kurtic et~al.(2023)Kurtic, Frantar, and Alistarh]{kurtic2023ziplm}
+Eldar Kurtic, Elias Frantar, and Dan Alistarh.
+\newblock {ZipLM}: Inference-aware structured pruning of language models.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2023.
+
+\bibitem[Kwon et~al.(2022)Kwon, Kim, Mahoney, Hassoun, Keutzer, and Gholami]{kwon2022fastpruning}
+Woosuk Kwon, Sehoon Kim, Michael~W. Mahoney, Joseph Hassoun, Kurt Keutzer, and Amir Gholami.
+\newblock A fast post-training pruning framework for transformers.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2022.
+
+\bibitem[Lai et~al.(2017)Lai, Xie, Liu, Yang, and Hovy]{lai2017race}
+Guokun Lai, Qizhe Xie, Hanxiao Liu, Yiming Yang, and Eduard Hovy.
+\newblock {RACE}: Large-scale {R}e{A}ding comprehension dataset from examinations.
+\newblock In \emph{Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing}, pp.\  785--794, 2017.
+
+\bibitem[LeCun et~al.(1989)LeCun, Denker, and Solla]{lecun1989obd}
+Yann LeCun, John Denker, and Sara Solla.
+\newblock Optimal brain damage.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 1989.
+
+\bibitem[Li et~al.(2024)Li, Ge, Ge, Wang, Wang, Zhang, and Shan]{li2024seedbench}
+Bohao Li, Yuying Ge, Yixiao Ge, Guangzhi Wang, Rui Wang, Ruimao Zhang, and Ying Shan.
+\newblock {SEED-Bench}: Benchmarking multimodal large language models.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2024.
+
+\bibitem[Li et~al.(2025)Li, Xu, Li, Liu, Yin, Li, and Barsoum]{li2025tyr}
+Guanchen Li, Yixing Xu, Zeping Li, Ji~Liu, Xuanwu Yin, Dong Li, and Emad Barsoum.
+\newblock {T{\'y}r-the-Pruner}: Structural pruning {LLMs} via global sparsity distribution optimization.
+\newblock \emph{arXiv preprint arXiv:2503.09657}, 2025.
+
+\bibitem[Li et~al.(2023)Li, Du, Zhou, Wang, Zhao, and Wen]{li2023pope}
+Yifan Li, Yifan Du, Kun Zhou, Jinpeng Wang, Wayne~Xin Zhao, and Ji-Rong Wen.
+\newblock Evaluating object hallucination in large vision-language models.
+\newblock In \emph{Conference on Empirical Methods in Natural Language Processing (EMNLP)}, 2023.
+
+\bibitem[Liang et~al.(2025)Liang, Wang, Xu, Zhou, and Lu]{liang2025efficientllava}
+Yinan Liang, Ziwei Wang, Xiuwei Xu, Jie Zhou, and Jiwen Lu.
+\newblock {EfficientLLaVA}: Generalizable auto-pruning for large vision-language models.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2025.
+
+\bibitem[Ling et~al.(2024)Ling, Wang, Yan, and Liu]{ling2024slimgpt}
+Gui Ling, Ziyang Wang, Yuliang Yan, and Qingwen Liu.
+\newblock {SlimGPT}: Layer-wise structured pruning for large language models.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2024.
+
+\bibitem[Liu et~al.(2023)Liu, Li, Wu, and Lee]{liu2023llava}
+Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong~Jae Lee.
+\newblock Visual instruction tuning.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2023.
+
+\bibitem[Liu et~al.(2024{\natexlab{a}})Liu, Li, Li, and Lee]{liu2024llava15}
+Haotian Liu, Chunyuan Li, Yuheng Li, and Yong~Jae Lee.
+\newblock Improved baselines with visual instruction tuning.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2024{\natexlab{a}}.
+
+\bibitem[Liu et~al.(2024{\natexlab{b}})Liu, Li, Li, Li, Zhang, Shen, and Lee]{liu2024llavanext}
+Haotian Liu, Chunyuan Li, Yuheng Li, Bo~Li, Yuanhan Zhang, Sheng Shen, and Yong~Jae Lee.
+\newblock {LLaVA-NeXT}: Improved reasoning, {OCR}, and world knowledge.
+\newblock \url{https://llava-vl.github.io/blog/2024-01-30-llava-next/}, 2024{\natexlab{b}}.
+
+\bibitem[Liu et~al.(2024{\natexlab{c}})Liu, Duan, Zhang, Li, Zhang, Zhao, Yuan, Wang, He, Liu, Chen, and Lin]{liu2024mmbench}
+Yuan Liu, Haodong Duan, Yuanhan Zhang, Bo~Li, Songyang Zhang, Wangbo Zhao, Yike Yuan, Jiaqi Wang, Conghui He, Ziwei Liu, Kai Chen, and Dahua Lin.
+\newblock {MMBench}: Is your multi-modal model an all-around player?
+\newblock In \emph{European Conference on Computer Vision (ECCV)}, 2024{\natexlab{c}}.
+
+\bibitem[Lu et~al.(2022)Lu, Mishra, Xia, Qiu, Chang, Zhu, Tafjord, Clark, and Kalyan]{lu2022scienceqa}
+Pan Lu, Swaroop Mishra, Tanglin Xia, Liang Qiu, Kai-Wei Chang, Song-Chun Zhu, Oyvind Tafjord, Peter Clark, and Ashwin Kalyan.
+\newblock Learn to explain: Multimodal reasoning via thought chains for science question answering.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2022.
+
+\bibitem[Ma et~al.(2023)Ma, Fang, and Wang]{ma2023llmpruner}
+Xinyin Ma, Gongfan Fang, and Xinchao Wang.
+\newblock {LLM-Pruner}: On the structural pruning of large language models.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2023.
+
+\bibitem[Marcus et~al.(1993)Marcus, Marcinkiewicz, and Santorini]{marcus1993ptb}
+Mitchell~P. Marcus, Mary~Ann Marcinkiewicz, and Beatrice Santorini.
+\newblock Building a large annotated corpus of english: The penn treebank.
+\newblock \emph{Computational Linguistics}, 19\penalty0 (2):\penalty0 313--330, 1993.
+
+\bibitem[Men et~al.(2024)Men, Xu, Zhang, Wang, Lin, Lu, Han, and Chen]{men2024shortgpt}
+Xin Men, Mingyu Xu, Qingyu Zhang, Bingning Wang, Hongyu Lin, Yaojie Lu, Xianpei Han, and Weipeng Chen.
+\newblock {ShortGPT}: Layers in large language models are more redundant than you expect.
+\newblock \emph{arXiv preprint arXiv:2403.03853}, 2024.
+
+\bibitem[Merity et~al.(2017)Merity, Xiong, Bradbury, and Socher]{merity2017wikitext}
+Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher.
+\newblock Pointer sentinel mixture models.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2017.
+
+\bibitem[Mihaylov et~al.(2018)Mihaylov, Clark, Khot, and Sabharwal]{mihaylov2018openbookqa}
+Todor Mihaylov, Peter Clark, Tushar Khot, and Ashish Sabharwal.
+\newblock Can a suit of armor conduct electricity? a new dataset for open book question answering.
+\newblock In \emph{Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, 2018.
+
+\bibitem[{Mistral AI Team}(2024)]{mistralnemo2407}
+{Mistral AI Team}.
+\newblock Mistral-{N}e{M}o-base-2407 model card.
+\newblock \url{https://huggingface.co/mistralai/Mistral-Nemo-Base-2407}, 2024.
+\newblock Accessed 2026-08-31.
+
+\bibitem[{Mistral AI Team}(2025)]{mistralsmall2501}
+{Mistral AI Team}.
+\newblock Mistral-small-24b-base-2501 model card.
+\newblock \url{https://huggingface.co/mistralai/Mistral-Small-24B-Base-2501}, 2025.
+\newblock Accessed 2026-08-31.
+
+\bibitem[Molchanov et~al.(2019)Molchanov, Mallya, Tyree, Frosio, and Kautz]{molchanov2019importance}
+Pavlo Molchanov, Arun Mallya, Stephen Tyree, Iuri Frosio, and Jan Kautz.
+\newblock Importance estimation for neural network pruning.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2019.
+
+\bibitem[Mugnaini et~al.(2025)Mugnaini, Yamamoto, de~Alcantara, Zacarias, Bollis, Pellicer, Costa, and Jordao]{sultan2025amp}
+Leandro~Giusti Mugnaini, Bruno~Lopes Yamamoto, Lucas~Lauton de~Alcantara, Victor Zacarias, Edson Bollis, Lucas Pellicer, Anna Helena~Reali Costa, and Artur Jordao.
+\newblock Efficient {LLMs} with {AMP}: Attention heads and {MLP} pruning.
+\newblock \emph{arXiv preprint arXiv:2504.21174}, 2025.
+
+\bibitem[Muralidharan et~al.(2024)Muralidharan, Sreenivas, Joshi, Chochowski, Patwary, Shoeybi, Catanzaro, Kautz, and Molchanov]{muralidharan2024minitron}
+Saurav Muralidharan, Sharath~Turuvekere Sreenivas, Raviraj Joshi, Marcin Chochowski, Mostofa Patwary, Mohammad Shoeybi, Bryan Catanzaro, Jan Kautz, and Pavlo Molchanov.
+\newblock Compact language models via pruning and knowledge distillation.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2024.
+
+\bibitem[Nonnenmacher et~al.(2022)Nonnenmacher, Pfeil, Steinwart, and Reeb]{nonnenmacher2022sosp}
+Manuel Nonnenmacher, Thomas Pfeil, Ingo Steinwart, and David Reeb.
+\newblock {SOSP}: Efficiently capturing global correlations by second-order structured pruning.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2022.
+
+\bibitem[{Qwen Team}(2025)]{qwen3vl2025}
+{Qwen Team}.
+\newblock {Qwen3-VL}.
+\newblock Model release, \url{https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct}, 2025.
+
+\bibitem[Raffel et~al.(2020)Raffel, Shazeer, Roberts, Lee, Narang, Matena, Zhou, Li, and Liu]{raffel2020c4}
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter~J. Liu.
+\newblock Exploring the limits of transfer learning with a unified text-to-text transformer.
+\newblock \emph{Journal of Machine Learning Research (JMLR)}, 21:\penalty0 1--67, 2020.
+
+\bibitem[Rogers et~al.(2020)Rogers, Kovaleva, Downey, and Rumshisky]{rogers2020quail}
+Anna Rogers, Olga Kovaleva, Matthew Downey, and Anna Rumshisky.
+\newblock Getting closer to {AI} complete question answering: A set of prerequisites and approaches.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, volume~34, pp.\  8722--8731, 2020.
+
+\bibitem[Sakaguchi et~al.(2021)Sakaguchi, Bras, Bhagavatula, and Choi]{sakaguchi2021winogrande}
+Keisuke Sakaguchi, Ronan~Le Bras, Chandra Bhagavatula, and Yejin Choi.
+\newblock {WinoGrande}: An adversarial winograd schema challenge at scale.
+\newblock \emph{Communications of the ACM}, 64\penalty0 (9):\penalty0 99--106, 2021.
+
+\bibitem[Sandri et~al.(2025)Sandri, Cunegatti, and Iacca]{sandri2025twossp}
+Fabrizio Sandri, Elia Cunegatti, and Giovanni Iacca.
+\newblock {2SSP}: A two-stage framework for structured pruning of {LLMs}.
+\newblock \emph{Transactions on Machine Learning Research}, 2025.
+
+\bibitem[Shi et~al.(2023)Shi, Tao, Jin, Yang, Yuan, and Wang]{shi2023upop}
+Dachuan Shi, Chaofan Tao, Ying Jin, Zhendong Yang, Chun Yuan, and Jiaqi Wang.
+\newblock {UPop}: Unified and progressive pruning for compressing vision-language transformers.
+\newblock In \emph{Proceedings of the 40th International Conference on Machine Learning}, volume 202 of \emph{Proceedings of Machine Learning Research}, 2023.
+
+\bibitem[Singh et~al.(2019)Singh, Natarajan, Shah, Jiang, Chen, Batra, Parikh, and Rohrbach]{singh2019textvqa}
+Amanpreet Singh, Vivek Natarajan, Meet Shah, Yu~Jiang, Xinlei Chen, Dhruv Batra, Devi Parikh, and Marcus Rohrbach.
+\newblock Towards {VQA} models that can read.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2019.
+
+\bibitem[Singh \& Alistarh(2020)Singh and Alistarh]{singh2020woodfisher}
+Sidak~Pal Singh and Dan Alistarh.
+\newblock {WoodFisher}: Efficient second-order approximation for neural network compression.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2020.
+
+\bibitem[Sun et~al.(2024)Sun, Liu, Bair, and Kolter]{sun2024wanda}
+Mingjie Sun, Zhuang Liu, Anna Bair, and J.~Zico Kolter.
+\newblock A simple and effective pruning approach for large language models.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+\bibitem[Talmor et~al.(2019)Talmor, Herzig, Lourie, and Berant]{talmor2019commonsenseqa}
+Alon Talmor, Jonathan Herzig, Nicholas Lourie, and Jonathan Berant.
+\newblock {C}ommonsense{QA}: A question answering challenge targeting commonsense knowledge.
+\newblock In \emph{Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics}, pp.\  4149--4158, 2019.
+
+\bibitem[Tang et~al.(2025)Tang, Sieberling, Kurtic, Shen, and Alistarh]{tang2025darwinlm}
+Shengkun Tang, Oliver Sieberling, Eldar Kurtic, Zhiqiang Shen, and Dan Alistarh.
+\newblock {DarwinLM}: Evolutionary structured pruning of large language models.
+\newblock \emph{arXiv preprint arXiv:2502.07780}, 2025.
+
+\bibitem[Theis et~al.(2018)Theis, Korshunova, Tejani, and Husz{\'a}r]{theis2018faster}
+Lucas Theis, Iryna Korshunova, Alykhan Tejani, and Ferenc Husz{\'a}r.
+\newblock Faster gaze prediction with dense networks and fisher pruning.
+\newblock \emph{arXiv preprint arXiv:1801.05787}, 2018.
+
+\bibitem[van~der Ouderaa et~al.(2024)van~der Ouderaa, Nagel, van Baalen, Asano, and Blankevoort]{vanderouderaa2024llmsurgeon}
+Tycho F.~A. van~der Ouderaa, Markus Nagel, Mart van Baalen, Yuki~M. Asano, and Tijmen Blankevoort.
+\newblock The {LLM} surgeon.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin]{vaswani2017attention}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan~N Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\newblock Attention is all you need.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2017.
+
+\bibitem[Wang et~al.(2024{\natexlab{a}})Wang, Bai, Tan, Wang, Fan, Bai, Chen, Liu, Wang, Ge, Fan, Dang, Du, Ren, Men, Liu, Zhou, Zhou, and Lin]{wang2024qwen2vl}
+Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Yang Fan, Kai Dang, Mengfei Du, Xuancheng Ren, Rui Men, Dayiheng Liu, Chang Zhou, Jingren Zhou, and Junyang Lin.
+\newblock {Qwen2-VL}: Enhancing vision-language model's perception of the world at any resolution.
+\newblock \emph{arXiv preprint arXiv:2409.12191}, 2024{\natexlab{a}}.
+
+\bibitem[Wang et~al.(2024{\natexlab{b}})]{gao2024cfsp}
+Yuxin Wang et~al.
+\newblock {CFSP}: An efficient structured pruning framework for llms with coarse-to-fine activation information.
+\newblock \emph{arXiv preprint arXiv:2409.13199}, 2024{\natexlab{b}}.
+
+\bibitem[Xiong et~al.(2026)Xiong, Liu, Ren, Bai, Fang, Zhang, Jiang, Tan, and Liu]{xiong2026d2prune}
+Lang Xiong, Ning Liu, Ao~Ren, Yuheng Bai, Haining Fang, Binyan Zhang, Zhe Jiang, Yujuan Tan, and Duo Liu.
+\newblock {D$^2$Prune}: Sparsifying large language models via dual taylor expansion and attention distribution awareness.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)}, 2026.
+
+\bibitem[Yang et~al.(2023)Yang, Yin, Shen, Molchanov, Li, and Kautz]{yang2023nvit}
+Huanrui Yang, Hongxu Yin, Maying Shen, Pavlo Molchanov, Hai Li, and Jan Kautz.
+\newblock Global vision transformer pruning with hessian-aware saliency.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, 2023.
+
+\bibitem[Yang et~al.(2024)Yang, Cao, and Zhao]{yang2024laco}
+Yifei Yang, Zouying Cao, and Hai Zhao.
+\newblock {LaCo}: Large language model pruning via layer collapse.
+\newblock \emph{arXiv preprint arXiv:2402.11187}, 2024.
+
+\bibitem[Young et~al.(2014)Young, Lai, Hodosh, and Hockenmaier]{young2014flickr30k}
+Peter Young, Alice Lai, Micah Hodosh, and Julia Hockenmaier.
+\newblock From image descriptions to visual denotations: New similarity metrics for semantic inference over event descriptions.
+\newblock \emph{Transactions of the Association for Computational Linguistics (TACL)}, 2:\penalty0 67--78, 2014.
+
+\bibitem[Yu et~al.(2022)Yu, Serra, Ramalingam, and Zhe]{yu2022cbs}
+Xin Yu, Thiago Serra, Srikumar Ramalingam, and Shandian Zhe.
+\newblock The combinatorial brain surgeon: Pruning weights that cancel one another in neural networks.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2022.
+
+\bibitem[Zellers et~al.(2019)Zellers, Holtzman, Bisk, Farhadi, and Choi]{zellers2019hellaswag}
+Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali Farhadi, and Yejin Choi.
+\newblock {HellaSwag}: Can a machine really finish your sentence?
+\newblock In \emph{Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics (ACL)}, 2019.
+
+\bibitem[Zhang et~al.(2025)Zhang, Fan, Ma, Zheng, Huang, Cheng, Gudovskiy, Okuno, Nakata, Keutzer, et~al.]{zhang2025sparsevlm}
+Yuan Zhang, Chun-Kai Fan, Junpeng Ma, Wenzhao Zheng, Tao Huang, Kuan Cheng, Denis Gudovskiy, Tomoyuki Okuno, Yohei Nakata, Kurt Keutzer, et~al.
+\newblock {SparseVLM}: Visual token sparsification for efficient vision-language model inference.
+\newblock In \emph{Proceedings of the 42nd International Conference on Machine Learning}, volume 267 of \emph{Proceedings of Machine Learning Research}, 2025.
+
+\bibitem[Zheng et~al.(2022)Zheng, Li, Zhang, Yang, Tan, Xiao, Ren, and Pu]{zheng2022savit}
+Chuanyang Zheng, Zheyang Li, Kai Zhang, Zhi Yang, Wenming Tan, Jun Xiao, Ye~Ren, and Shiliang Pu.
+\newblock {SAViT}: Structure-aware vision transformer pruning via collaborative optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2022.
+
+\bibitem[Zhu et~al.(2025)Zhu, Wang, Chen, Liu, Ye, Gu, Duan, Tian, Su, Shao, et~al.]{zhu2025internvl3}
+Jinguo Zhu, Weiyun Wang, Zhe Chen, Zhaoyang Liu, Shenglong Ye, Lixin Gu, Yuchen Duan, Hao Tian, Weijie Su, Jie Shao, et~al.
+\newblock {InternVL3}: Exploring advanced training and test-time recipes for open-source multimodal models.
+\newblock \emph{arXiv preprint arXiv:2504.10479}, 2025.
+
+\end{thebibliography}

@@ -1,0 +1,102 @@
+\documentclass{article}
+
+\usepackage{neurips_2026}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{diagbox}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage[table]{xcolor}
+\definecolor{lotrgain}{RGB}{178,72,72}
+\definecolor{lotrloss}{RGB}{52,128,88}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\sigmoid}{\sigma}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\Ind}{\mathbf{1}}
+
+\title{LoTR: Logic-of-Thought Routing\\ for Plug-and-Play Reasoning of LLMs}
+
+\author{%
+  Anonymous Author(s) \\
+  Affiliation \\
+  Address \\
+  \texttt{email}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Reasoning has become a primary means of improving the problem-solving capabilities of Large Language Models (LLMs), with paradigms prescribing \emph{external reasoning strategies} such as step-by-step, iterative revision, and search-and-sampling. 
+However, while these paradigms guide how the model reasons, they do not consider whether the model's \emph{internal computation pathway} is well-matched to the dynamic reasoning logic state under the prescribed strategy, limiting the potential under this strategy. 
+We propose \emph{Logic-of-Thought Routing} (LoTR), a plug-and-play reasoning module that strengthens existing reasoning paradigms through logic-conditioned internal pathway routing. 
+Concretely, LoTR identifies dynamic logic states from the model's internal information transfer, couples them with attention-head pathway patterns, and uses a lightweight probe to infer the current logic-state mixture and softly route the corresponding pathway. 
+This enables the model to better realize the prescribed reasoning strategy through an internal pathway matched to the current reasoning logic. % 这句话可以考虑不要
+Across 3 backbones, 8 benchmarks, and 8 reasoning paradigms, LoTR improves average performance by 7.93\% with only +3.18\% tokens overall, and reduces latency by 10.76\% and 12.15\% on two backbones.
+\end{abstract}
+
+
+\begin{center}
+\vspace{-1mm}
+\begin{minipage}{\linewidth}
+    \centering
+    \begin{minipage}[t]{0.375\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/intro_main_paradigm_radar_three_models.pdf}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.615\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/intro_efficiency_tokens_latency_bar_line.pdf}
+    \end{minipage}
+    \vspace{-1mm}
+    \captionof{figure}{%
+        (Left) Accuracy (\%) per paradigm.
+        (Right) Reasoning tokens and latency (s) per backbone.
+    }
+    \label{fig:intro_overview}
+\end{minipage}
+\vspace{-1mm}
+\end{center}
+
+
+\input{chapters/1-intro}
+\input{chapters/2-LoTR}
+\input{chapters/3-experiment}
+\input{chapters/4-related}
+\input{chapters/5-conclusion}
+
+\clearpage
+\bibliographystyle{plain}
+\bibliography{reference}
+
+\clearpage
+\appendix
+\input{chapters/Appendix}
+
+\newpage
+\input{checklist.tex}
+
+\end{document}

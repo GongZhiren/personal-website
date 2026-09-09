@@ -1,0 +1,77 @@
+\subsection{Vision--Language Models: Per-Benchmark Results}
+\label{app:vlm}
+
+\textbf{Units and masking.} Units are attention heads --- grouped by shared key/value head where the
+tower uses grouped-query attention --- and FFN channel groups, sixteen groups per layer, in
+\emph{both} towers. A unit is removed by zeroing its slice of the input to the projection that writes
+into the residual stream, exactly as in the text-only pipeline. The layer index is composite, so the
+per-layer cap $\kappa{=}1.5\rho$ and the first/last-two-layer protection apply within each tower
+rather than to a pooled index. Nothing else is added: no per-tower budget, no tower-level weighting,
+and no new hyperparameter.
+
+\textbf{Calibration.} $128$ image--caption pairs from Flickr30k \citep{young2014flickr30k} --- $192$ for Qwen2-VL-2B and $96$
+for LLaVA-NeXT-7B, whose matrices were estimated under earlier budgets and left as they were. The
+difference is a build-time budget on our own estimator and nothing else: every baseline draws its own
+fixed calibration on every model alike ($64$ pairs for Wanda-sp and FLAP, $32$ for LLM-Pruner's
+gradient pass), and the $48$ held-out pairs used to choose $\lambda$ are taken from the same
+deterministic stream immediately \emph{after} that model's own calibration draw --- pairs
+$128$--$175$ where the matrix saw $128$ or fewer, pairs $192$--$239$ on Qwen2-VL-2B --- so on every
+model they are images the estimator never saw. Neither departure moves a comparison: a draw below
+$128$ makes the off-diagonal noisier and the held-out criterion correspondingly more reluctant to
+trust it, which costs our arm and no other; and the one model built on more carries the median of
+our five headline margins, not the largest. The held-out pairs are used only for the $\lambda$ argmin and
+enter nothing else. Flickr rather than COCO
+is deliberate: SEED-Bench and several neighbouring suites are built on COCO images, so a COCO
+calibration draw could place an evaluation image in the estimator. Scored positions are the caption
+tokens only --- the prompt and the image placeholders are context, and scoring them would let a unit
+look important for reproducing text the model was handed. The teacher support is
+$\mathrm{top}\text{-}r{=}64$ rather than the $256$ used in the text-only experiments, because an
+image-grounded sequence is expensive; splitting the scored positions into disjoint halves gives two
+independent estimates of $\Hmat$ that correlate at $r{=}0.99$ on the off-diagonal, so the reduction
+costs nothing that matters here.
+
+\textbf{Evaluation.} Answers are scored by comparing the logits of the admissible answer tokens ---
+option letters where the benchmark is multiple choice, the words \emph{yes} and \emph{no} where it is
+binary --- at $1000$ items per benchmark. The dense model is measured under this same harness rather
+than quoted, so every row is commensurable with every other. Retention is floor-corrected,
+$(\text{arm}-c)/(\text{dense}-c)$, against the chance level $c$ of a selector that has learned
+nothing: $25$ on the four-way multiple-choice suites (MMBench, SEED-Bench, ScienceQA, AI2D, MMStar)
+and $50$ on the two binary ones (POPE, MME), giving $c{=}32.1$ for the seven-benchmark mean. Without
+the correction a model at chance would read as a third of dense retained rather than zero.
+
+\textbf{Baselines.} All are training-free and structured, and all receive the identical budget, guard,
+calibration draw and scoring code. Magnitude scores a unit by the norm of \emph{all} the weights it
+owns. Wanda-sp and FLAP are computed on the input channels of the output projection, where both are
+defined; FLAP additionally standardises each layer's metric distribution to the global mean and
+standard deviation before the global search, which is the half of that method that decides depth
+allocation. LLM-Pruner is the first-order Taylor score $\sum |w \odot \partial \mathcal{L}/\partial
+w|$ accumulated one image--caption pair per backward pass. The layer-drop arm is ShortGPT's
+block-influence signal measured on the same calibration pass.
+
+\textbf{The block-diagonal control.} One row of \cref{tab:vlm-full} is an arm rather than a
+baseline. It re-runs our own selector on $\Hmat$ with the vision--language blocks set to zero,
+holding the diagonal, the within-tower off-diagonal, the budget, the guard and the $\lambda$
+protocol fixed --- the assumption a per-tower pruner makes without stating it, made explicit. On $8$
+of the $21$ cells the two selectors return the same mask, so within-tower coupling alone already
+fills the budget there; on the rest the masks differ and the seven-benchmark mean moves by $-1.2$ to
+$+3.6$ points, its two largest values on LLaVA-1.5-7B. The cross-tower block is reported because it
+is measurable, not because the shared budget depends on it: what \cref{sec:exp-vlm} asks of the
+off-diagonal as a whole is the $\lambda{=}0$ comparison.
+
+\textbf{Higher budgets.} At $\rho{=}40\%$ no selector in this comparison, ours included, retains a
+third of its dense score above chance on any model, so that budget appears in \cref{tab:vlm-full}
+and nowhere else: the numbers are measured, they are simply not a comparison. \Cref{app:vlm-recovery} reports what one
+identical LoRA stage does to every arm at that budget.
+
+{\scriptsize
+\begin{center}
+\captionof{table}{Vision--language models, per benchmark: the complete grid, the configurations the
+body does not table included. Seven models at three ratios, ten arms each, every arm at $1000$ items
+per benchmark; the block header repeats the ratio and the item count.
+\textbf{Bold} is the best selector in the column, with the \method ablation excluded from that
+comparison. \emph{cap.\ PPL} is perplexity on the held-out captions, the quantity the selection was
+made against.}
+\label{tab:vlm-full}
+\end{center}
+\input{tables/tab_vlm_full}
+}

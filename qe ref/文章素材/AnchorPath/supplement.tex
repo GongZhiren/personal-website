@@ -1,0 +1,91 @@
+%File: supplement.tex  ---  AnchorPath (AAAI-2027, TECHNICAL SUPPLEMENT)
+%
+% Self-contained Technical Supplement. This document is independent of the main
+% paper: it defines its own notation, restates the results it relies on, and
+% contains NO cross-document references. It compiles on its own.
+%
+\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
+\usepackage[submission]{aaai2027}  % DO NOT CHANGE THIS
+% Fonts (newtxtext, helvet, courier) are loaded automatically by aaai2027.sty.
+\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
+\usepackage{graphicx} % DO NOT CHANGE THIS
+\urlstyle{rm} % DO NOT CHANGE THIS
+\def\UrlFont{\rm}  % DO NOT CHANGE THIS
+\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\frenchspacing  % DO NOT CHANGE THIS
+\setlength{\pdfpagewidth}{8.5in} % DO NOT CHANGE THIS
+\setlength{\pdfpageheight}{11in} % DO NOT CHANGE THIS
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{subcaption}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{enumitem}
+\setlist[itemize]{nosep, topsep=2pt, leftmargin=1.3em}
+\setlist[enumerate]{nosep, topsep=2pt, leftmargin=1.6em}
+
+% ---- theorem environments ----
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+% ---- math macros ----
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\Risk}{\mathcal{R}}
+\newcommand{\Fisher}{F}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\Hmat}{H}
+\newcommand{\dz}{\delta z}
+\usepackage{xspace}
+\newcommand{\method}{\textsc{AnchorPath}\xspace}
+
+% ---- accent palette (matches the main paper; grayscale-safe) ----
+\definecolor{cfbase}{HTML}{4338CA}
+\definecolor{cfflow}{HTML}{0D9488}
+\definecolor{cfhi}{HTML}{F1F5F9}
+\newcommand{\best}[1]{\textbf{#1}}
+\newcommand{\dgrey}[1]{{\color[gray]{0.45}#1}}
+\newcommand{\good}[1]{{\color{cfflow}\textbf{#1}}}
+
+% ---- small italic supplementary note ----
+\newcommand{\AppNote}[1]{{\par\noindent\small\textit{#1}\par\smallskip}}
+
+% ---- part-divider used to open each appendix block ----
+\newcommand{\AppBlock}[1]{\clearpage\par{\noindent\color{cfflow}\rule{\columnwidth}{1.2pt}}\par
+  \addvspace{0.3em}{\noindent\Large\bfseries #1\par}\addvspace{0.2em}
+  {\noindent\color{cfflow}\rule{\columnwidth}{0.5pt}}\par\addvspace{0.8em}}
+
+\setcounter{secnumdepth}{2}
+
+\pdfinfo{
+/TemplateVersion (2027.1)
+}
+
+\title{Supplementary Material for\\
+\textsc{AnchorPath}: Defeating High-Sparsity Collapse in Structured Pruning}
+\author{Anonymous Submission}
+\affiliations{}
+
+\begin{document}
+\maketitle
+
+%=====================================================================
+% APPENDIX BODY
+%=====================================================================
+\appendix
+\input{chapters/appendix}
+
+\bibliography{refs}
+
+\end{document}

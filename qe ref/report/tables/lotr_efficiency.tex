@@ -1,0 +1,96 @@
+\begin{table}[tbp]
+\centering
+\caption{Efficiency of \LoTR{} on Llama-3.1-8B across eight external reasoning paradigms. Tok. is the benchmark-averaged number of generated reasoning tokens and Lat. is end-to-end latency in seconds.}
+\label{tab:lotr-efficiency-full}
+\vspace{-2mm}
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{0.92}
+
+\resizebox{\textwidth}{!}{
+    % --- (Vanilla & CoT) ---
+    \begin{tabular}{lcc}
+    \toprule
+    \textbf{Method} & \textbf{Tok.} $\downarrow$ & \textbf{Lat.} $\downarrow$ \\
+    \midrule
+    Vanilla & 128.6 & 2.87 \\
+    + ITI & 112.0 & 2.24 \\
+    + ActAdd & 110.1 & 2.62 \\
+    + STIR & \underline{109.4} & 2.19 \\
+    + RISER & \underline{109.4} & 2.19 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{\underline{109.4}}} & \cellcolor{cyan!10}{\textbf{\underline{2.17}}} \\
+    \midrule
+    CoT & \underline{258.0} & \underline{5.79} \\
+    + ITI & 288.9 & 6.22 \\
+    + ActAdd & 286.3 & 6.15 \\
+    + STIR & 286.7 & 6.12 \\
+    + RISER & 286.7 & 7.23 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{286.7}} & \cellcolor{cyan!10}{\textbf{6.12}} \\
+    \bottomrule
+    \end{tabular}%
+    \hspace{3mm}
+    % --- (PS & SR) ---
+    \begin{tabular}{lcc}
+    \toprule
+    \textbf{Method} & \textbf{Tok.} $\downarrow$ & \textbf{Lat.} $\downarrow$ \\
+    \midrule
+    PS & \underline{196.0} & \underline{5.69} \\
+    + ITI & 274.8 & 7.57 \\
+    + ActAdd & 272.0 & 7.47 \\
+    + STIR & 270.7 & 7.37 \\
+    + RISER & 270.7 & 7.63 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{270.7}} & \cellcolor{cyan!10}{\textbf{7.36}} \\
+    \midrule
+    SR & 50.8 & 8.96 \\
+    + ITI & 48.8 & 7.88 \\
+    + ActAdd & \underline{45.8} & 7.77 \\
+    + STIR & 46.0 & 7.75 \\
+    + RISER & 46.0 & 7.78 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{46.0}} & \cellcolor{cyan!10}{\textbf{\underline{7.72}}} \\
+    \bottomrule
+    \end{tabular}%
+    \hspace{3mm}
+    % --- (SC & BoN) ---
+    \begin{tabular}{lcc}
+    \toprule
+    \textbf{Method} & \textbf{Tok.} $\downarrow$ & \textbf{Lat.} $\downarrow$ \\
+    \midrule
+    SC & \underline{242.1} & 18.95 \\
+    + ITI & 257.9 & 16.03 \\
+    + ActAdd & 255.1 & 15.87 \\
+    + STIR & 256.0 & \underline{15.86} \\
+    + RISER & 255.8 & 15.90 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{256.4}} & \cellcolor{cyan!10}{\textbf{\underline{15.86}}} \\
+    \midrule
+    BoN & \underline{242.2} & 16.73 \\
+    + ITI & 258.8 & 16.14 \\
+    + ActAdd & 256.9 & 15.91 \\
+    + STIR & 255.0 & 15.78 \\
+    + RISER & 255.1 & 15.93 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{255.6}} & \cellcolor{cyan!10}{\textbf{\underline{15.68}}} \\
+    \bottomrule
+    \end{tabular}%
+    \hspace{3mm}
+    % --- (CB & MCTS) ---
+    \begin{tabular}{lcc}
+    \toprule
+    \textbf{Method} & \textbf{Tok.} $\downarrow$ & \textbf{Lat.} $\downarrow$ \\
+    \midrule
+    CB & \underline{22.0} & 9.15 \\
+    + ITI & 44.4 & 7.47 \\
+    + ActAdd & 42.1 & 7.46 \\
+    + STIR & 40.3 & 7.66 \\
+    + RISER & 40.0 & 10.12 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{40.3}} & \cellcolor{cyan!10}{\textbf{\underline{7.32}}} \\
+    \midrule
+    MCTS & \underline{34.1} & 9.63 \\
+    + ITI & 49.9 & 7.43 \\
+    + ActAdd & 44.5 & 7.29 \\
+    + STIR & 42.7 & 7.24 \\
+    + RISER & 42.4 & 8.32 \\
+    + \textbf{\LoTR{}} & \cellcolor{cyan!10}{\textbf{41.1}} & \cellcolor{cyan!10}{\textbf{\underline{7.17}}} \\
+    \bottomrule
+    \end{tabular}
+}
+\vspace{-2mm}
+\end{table}

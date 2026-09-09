@@ -1,0 +1,665 @@
+\documentclass{article} % For LaTeX2e
+\PassOptionsToPackage{table}{xcolor}
+\usepackage{iclr2027_conference,times}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xspace}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\hypersetup{hidelinks}          % no coloured boxes around links in the submitted PDF
+\usepackage{url}
+\usepackage{placeins}           % \FloatBarrier: keep floats inside the section that owns them
+\usepackage{tikz}
+
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{makecell}
+
+\newcommand{\aucres}[2]{%
+  \ensuremath{#1\,{\scriptstyle\pm\,#2}}%
+}
+\newcommand{\bestauc}[2]{%
+  \ensuremath{\mathbf{#1}\,{\scriptstyle\pm\,#2}}%
+}
+\newcommand{\secondauc}[2]{%
+  \ensuremath{\underline{#1}\,{\scriptstyle\pm\,#2}}%
+}
+\newcolumntype{I}{>{\hsize=.875\hsize\linewidth=\hsize\centering\arraybackslash}X}
+\newcolumntype{R}{>{\hsize=1.0\hsize\linewidth=\hsize\centering\arraybackslash}X}
+\newcolumntype{C}{>{\hsize=1.5\hsize\linewidth=\hsize\centering\arraybackslash}X}
+
+% ---- macros ----
+\newcommand{\coax}{\textsc{CoAx}\xspace}
+\newcommand{\comp}{\mathrm{comp}}
+\newcommand{\energy}{\mathcal{E}}
+\newcommand{\dz}{\delta z}
+\newcommand{\Hkern}{\bm{H}}
+\newcommand{\Sset}{\mathcal{S}}
+\newcommand{\Uset}{\mathcal{U}}
+\newcommand{\best}[1]{\textbf{\boldmath #1}}
+\newcommand{\secnd}[1]{\underline{#1}}
+\definecolor{hdr}{RGB}{226,236,245}     % light blue header (matches figure palette)
+\definecolor{ourrow}{RGB}{238,244,250}  % very light blue -- highlighted "ours" row
+\definecolor{ourred}{RGB}{46,111,176}   % blue accent (CoAx)
+\definecolor{primarycolor}{HTML}{A85F1A}
+\definecolor{backupcolor}{HTML}{2F6FAE}
+\definecolor{irrelevantcolor}{HTML}{565656}
+\newcommand{\primary}[1]{\textcolor{primarycolor}{#1}}
+\newcommand{\backup}[1]{\textcolor{backupcolor}{#1}}
+\newcommand{\irrelevant}[1]{\textcolor{irrelevantcolor}{#1}}
+
+% float placement tuning: several full-width figures early; let them fill more of a page
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+% tighten the gap between a float and its caption (the default is airy)
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{1pt}
+
+\title{Conditional Co-Ablation: Recovering\\ \mbox{Self-Repair} Backups in Transformer Circuits}
+
+%\author{Anonymous authors\\
+%Paper under double-blind review}
+
+\author{Anonymous authors\\
+Paper under double-blind review}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Mechanistic interpretability seeks to explain a transformer's behavior through internal components---a \emph{circuit}---that causally contribute to it.
+A standard test is to ablate a component and measure the resulting output change.
+However, \emph{self-repair} creates a blind spot: ablating a \emph{primary} component can activate a dormant \emph{backup}, changing which circuit carries the behavior.
+Thus, a circuit that explains the intact model can become incomplete under the very ablation used to test it.
+We formalize this gap as \emph{conditional circuit completion}: given a primary set, identify components that become causally important after that set is removed.
+We introduce \emph{conditional co-ablation} (\coax), which ranks candidates by the growth in their ablation effect after primary-set removal.
+We show that a perfectly dormant backup can be indistinguishable from an irrelevant component to per-unit intact-state scores, whereas its conditional effect change exactly aggregates all interaction orders linking it to the removed set.
+On GPT-2-small's Indirect Object Identification (IOI) circuit, \coax recovers the documented backup heads at $0.941$ ROC-AUC, versus $0.815$ for the strongest intact-state attribution baseline and $0.758$ for the matched conditional-energy control.
+Recovery drops to $0.40{\pm}0.13$ AUC for alternative component sets matched in behavioral effect, output displacement, and depth, showing that recovery is specific to the removed circuit.
+Freezing the recovered heads after primary removal sharply reduces the IOI margin, establishing that they are causally load-bearing; using the same raw ranking, a \coax-selected completion reduces circuit incompleteness from $0.75$ to $0.21$.
+Thus, causal explanations of self-repairing transformers must account for the backup circuitry that sustains behavior when primary components fail.
+\end{abstract}
+
+% 备注：我们都先到arXiv那个目录下改那个版本哈，或者comment，最近我们先开源最新版本，然后后面再精细打磨iclr的版本，arXiv版本中的修复优化我会同步过来的（不用你们操作，暂时只在那个目录下改和批注就行了）
+
+% =====================================================================
+\section{Introduction}
+
+Mechanistic interpretability seeks causal explanations of transformer behavior in terms of the model's internal mechanisms~\citep{bereska2024mechanistic}.
+A central object in such explanations is a \emph{circuit}: a set of internal components that causally contribute to a model behavior~\citep{olah2020zoom,elhage2021framework}.
+To identify such circuits, prior work commonly intervenes on individual components---most directly through \emph{ablation}---and measures how the model's output changes.
+Gradients and related approximations scale this principle to rank components and assemble circuits~\citep{wang2022ioi,conmy2023acdc,syed2023attribution,hanna2024faith,kramar2024atp,marks2024sparse}.
+These methods have been effective at identifying the circuitry that supports behavior in the original, unablated model.
+
+However, \emph{self-repair} in transformers challenges this causal picture: ablating a circuit component can change the very circuit that carries the behavior.
+In the Hydra effect~\citep{mcgrath2023hydra,rushing2024selfrepair}, ablating a \primary{\emph{primary}} component can activate a dormant \backup{\emph{backup}} that takes over its role.
+Both components can then appear less important under these methods: the primary because its loss is compensated, and the backup because it has not yet acted in the original model.
+
+The Indirect Object Identification (IOI) circuit in GPT-2-small provides a concrete example.
+Given ``Mary and John went to the store; John gave a drink to \underline{\hspace{1.1em}},'' the model predicts ``Mary,'' with three name-mover attention heads serving as the \primary{\emph{primary}} components that carry the correct name to the output~\citep{wang2022ioi}.
+Ablating these three heads changes the correct-versus-competing-name logit margin by only $0.28$ from its original $2.57$, because eight documented \backup{\emph{backup}} name-movers compensate for their removal.
+Yet ablating the primaries together with those backups causes $1.9\times$ as much damage as the sum of their individual effects.
+Thus, the backup branch is a causally important part of how the model sustains the behavior under ablation.
+
+
+\begin{figure}[!t]\centering
+\includegraphics[width=0.95\textwidth]{figs/fig_teaser.pdf}
+\vspace{-1mm}
+\caption{\textbf{From self-repair to conditional circuit completion.}
+\textbf{(a)} Ablating the primary IOI circuit recruits a dormant backup branch while largely preserving behavior.
+\textbf{(b)} \coax compares each candidate's ablation effect with the primary set present and removed; this contrast distinguishes dormant backups and exposes the all-order effect-change aggregate linking each candidate to the removed set.
+\textbf{(c)} On GPT-2-small IOI, conditioning exposes the documented backups, improves their recovery over intact-state baselines, and substantially completes the missing backup branch.}
+\label{fig:teaser}
+\vspace{-4mm}
+\end{figure}
+
+Taken together, these observations reveal a gap in causal circuit explanation.
+A circuit can faithfully explain the original model yet remain incomplete under the very ablation used to test it.
+This raises a \emph{conditional question}: which components become causally important only after a known part of the circuit is removed?
+
+We formalize this problem as \emph{conditional circuit completion}.
+Given a \primary{primary} set $\Sset$ supplied by the analyst, the goal is to identify components whose causal importance emerges after $\Sset$ is removed.
+Our method, \emph{conditional co-ablation} (\coax), compares each component's ablation effect with $\Sset$ present and removed, and ranks how much that effect grows.
+In this setting, a dormant \backup{backup} has little effect while $\Sset$ is present but a large effect after it is removed, whereas an \irrelevant{irrelevant} component has little effect in either condition.
+
+This conditional comparison also has a precise theoretical interpretation.
+For a class of scores that evaluate each component on the original model, a perfectly dormant backup can be indistinguishable from an irrelevant component (Proposition~1).
+By contrast, the change in a component's ablation effect when $\Sset$ is removed exactly aggregates all interaction orders linking that component to $\Sset$ (Proposition~2).
+Thus, conditioning on the primary set exposes the interactions through which dormant backups become causally important.
+
+On the documented GPT-2-small IOI circuit, \coax recovers the eight backup heads at $0.941$ ROC-AUC, outperforming both the strongest intact-state attribution method ($0.815$) and the matched conditional-energy control ($0.758$).
+Replacing the primary set with matched alternative component sets drops backup recovery to about $0.40$ AUC, confirming that recovery is specific to the removed primary set.
+Beyond recovery, freezing the recovered heads at their intact-state outputs after primary removal sharply degrades the IOI margin, establishing that the selected set is causally load-bearing.
+At the circuit level, the same raw \coax ranking reduces circuit incompleteness from $0.75$ to $0.21$.
+Beyond IOI, signed growth remains positively aligned with intervention-derived repair in $11/12$ held-out instances across four mechanism clusters, and \coax-based circuit completion outperforms size-matched random completion on all eight non-GPT-2 models spanning six architecture families.
+Together, these results show that \coax recovers primary-set-specific backups, identifies components that causally carry repair, and extends conditional circuit completion beyond a single annotated circuit.
+
+\textbf{Contributions.}
+\textbf{(i)~Problem and method}: we formulate \emph{conditional circuit completion} and introduce \coax, which ranks components by growth in ablation effect after a primary set is removed (Section~\ref{sec:score}).
+\textbf{(ii)~Theory}: we show when scores on the original model cannot distinguish dormant backups from irrelevant components, and characterize the effect change after removal as aggregated interactions with the removed set (Section~\ref{sec:theory}).
+%\textbf{(ii)~Theory}: we show when scores on the original model cannot distinguish dormant backups from irrelevant components, and characterize the conditional effect change through their interactions with the removed set (Section~\ref{sec:theory}).
+\textbf{(iii)~Evidence}: on IOI, \coax recovers the documented backup branch, establishes recovery specificity to the removed primary set, verifies its causal role in self-repair, and substantially closes the circuit's incompleteness gap (Sections~\ref{sec:discovery}--\ref{sec:apps}).
+% \textbf{(iii)~Evidence}: on IOI, \coax recovers the documented backup branch, establishes recovery specificity to the removed primary set, causally verifies self-repair, and substantially closes the circuit's incompleteness gap (Sections~\ref{sec:discovery}--\ref{sec:apps}).
+\textbf{(iv)~Generalization}: beyond the annotated IOI backups, we validate conditional growth against intervention-derived repair across four mechanism clusters and show conditional circuit completion on eight non-GPT-2 models spanning six architecture families (Section~\ref{sec:panel}).
+
+
+
+% =====================================================================
+\section{Conditional Co-Ablation: Importance Under Intervention}
+\label{sec:method}
+
+We consider frozen decoder-only transformers, where a \emph{structured unit} is any component with an additive residual-stream contribution that can be zeroed by ablation~\citep{elhage2021framework}.
+Let $\Sset$ be the supplied primary set and $\Uset$ the candidate structured units for conditional completion, $\Uset\cap\Sset=\emptyset$; in our experiments, these units are attention heads, matching the granularity of the documented IOI primary and backup heads~\citep{wang2022ioi}.
+For an input--position pair $(x,t)$, ablating a set $M$ of units yields vocabulary logits $z_M(x,t)$; we suppress $(x,t)$ when unambiguous.
+We write $z_\emptyset\equiv z_0$ for the clean logits and $p_0=\mathrm{softmax}(z_0)$ for the corresponding clean output distribution.
+
+\subsection{The conditional co-ablation score}
+\label{sec:score}
+
+For a candidate $u\in\Uset$, ablating $u$ on the original model gives the effect
+$\dz_u=z_0-z_{\{u\}}$, the change from the clean logits $z_0$ to the logits after ablating $u$.
+With the primary set $\Sset$ removed, $z_\Sset$ becomes the reference logits, and ablating $u$ in addition gives
+\begin{equation}
+\dz_{u\mid\Sset}
+=
+z_\Sset-z_{\Sset\cup\{u\}} .
+\label{eq:condeff}
+\end{equation}
+Thus, $\dz_u$ measures $u$ with $\Sset$ present, whereas
+$\dz_{u\mid\Sset}$ measures it with $\Sset$ removed.
+A dormant \backup{backup} changes the output little while $\Sset$ is present but much more after $\Sset$ is removed, whereas an \irrelevant{irrelevant} unit has little effect in either condition.
+Let $\energy(\cdot)$ denote the label-free measure of ablation-effect magnitude defined in Eq.~\ref{eq:energy}.
+We define the \emph{conditional growth} of this magnitude as:
+
+\begin{definition}[Conditional co-ablation score]
+\label{def:coax}
+\begin{equation}
+\comp_u(\Sset)
+=
+\energy\!\big(\dz_{u\mid\Sset}\big)
+-
+\energy\!\big(\dz_u\big).
+\label{eq:comp}
+\end{equation}
+\end{definition}
+
+\noindent Thus, $\comp_u(\Sset)$ measures how much the magnitude of $u$'s ablation effect grows when the primary set is removed.
+The reference logits $z_0$ and $z_\Sset$ are shared across candidates; scoring all $|\Uset|$ candidates requires two shared reference evaluations and two candidate-specific evaluations per candidate, hence $O(|\Uset|)$ forward evaluations.
+No backward pass or task gradient is required.
+
+If removing $\Sset$ leaves $u$'s effect unchanged, then
+$\dz_{u\mid\Sset}=\dz_u$ and $\comp_u(\Sset)=0$, even if $u$ is important in both conditions.
+Taking the difference removes each candidate's pre-existing importance, isolating the increase in ablation-effect magnitude associated specifically with primary-set removal.
+
+Because the score is signed, $\comp_u(\Sset)>0$ indicates that removing $\Sset$ increases the magnitude of $u$'s ablation effect, while $\comp_u(\Sset)<0$ indicates a decrease.
+\coax ranks positive growth, the pattern expected for a backup that becomes important after primary-set removal.
+
+\paragraph{The output measure $\energy$.}
+We measure logit perturbations in the Fisher geometry induced by the clean output distribution~\citep{amari1998natural}.
+For any vocabulary-logit perturbation $v=v(x,t)$, define
+\begin{equation}
+\widetilde v
+=
+\sqrt{p_0}\odot
+\bigl(v-\langle p_0,v\rangle\mathbf{1}\bigr),
+\qquad
+\energy(v)
+=
+\mathbb{E}_{x,t}\!\left[\|\widetilde v\|_2^2\right].
+\label{eq:energy}
+\end{equation}
+Here $\odot$ denotes elementwise multiplication, $\mathbf{1}$ is the all-ones vector, and $\sqrt{p_0}$ is taken elementwise; the expectation is over the evaluated input--position pairs.
+Centering by $\langle p_0,v\rangle$ removes the shared logit shift to which softmax is invariant, while the $\sqrt{p_0}$ weighting yields
+$\langle\widetilde v,\widetilde w\rangle=v^\top Fw$ for perturbations $v$ and $w$, where
+$F=\mathrm{diag}(p_0)-p_0p_0^\top$ is the categorical Fisher matrix
+(Appendix~\ref{app:geometry}).
+Both terms in Eq.~\ref{eq:comp} use the same clean reference geometry, so their difference reflects a change in ablation-effect magnitude rather than a change in metric.
+
+\subsection{What Conditioning Reveals---and Intact-State Scores Miss}
+\label{sec:theory}
+
+Two facts motivate conditioning.
+First, per-unit information from the original model can be insufficient to distinguish a perfectly dormant backup from an irrelevant unit, motivating measurement after the primary set $\Sset$ is removed (Proposition~\ref{prop:blind}).
+Second, the resulting effect change $\dz_{u\mid\Sset}-\dz_u$ exactly decomposes into interactions linking the candidate $u$ to $\Sset$ (Proposition~\ref{prop:exact}).
+Proofs are in Appendix~\ref{app:proofs}.
+
+\begin{definition}[Intact-state score]
+\label{def:intactscore}
+We call a per-unit score \emph{intact-state} if it is determined only by a candidate's per-unit information measured on the original model, without removing
+$\Sset$.
+We denote this record by $\mathcal{I}_u=\{a_u,\ \partial z/\partial a_u,\ \dz_u\}$; it consists of $u$'s forward activations $a_u$, output derivatives $\partial z/\partial a_u$, and single-ablation effect $\dz_u$.
+Single-ablation saliency and standard local attribution scores are examples
+of this class. %这里感觉把符号都加上会比较清楚，不确定加的对不对
+\end{definition}
+
+% \begin{definition}[Intact-state score]
+% \label{def:intactscore}
+% We call a per-unit score \emph{intact-state} if it uses only information about a candidate $u$ available from the original model, without removing $\Sset$.
+% We denote this information by $\mathcal{I}_u$; it includes $u$'s forward activations, output derivatives, and single-ablation effect $\dz_u$.
+% The original-model baselines in Table~\ref{tab:backup} are examples of such scores.
+% \end{definition}
+
+\begin{proposition}[Non-identifiability from intact-state information]
+\label{prop:blind}
+There exist a model, an input distribution, a primary set $\Sset$, and two candidates
+$b,n\in\Uset$ with intact-state information
+$\mathcal{I}_b=\mathcal{I}_n$, yet
+$\energy(\dz_b)=\energy(\dz_n)=0$.
+After $\Sset$ is removed,
+$\energy(\dz_{b\mid\Sset})>0$ while
+$\energy(\dz_{n\mid\Sset})=0$.
+Every intact-state score assigns $b$ and $n$ the same value, while
+$\comp_b(\Sset)>0=\comp_n(\Sset)$ distinguishes them.
+\end{proposition}
+
+Proposition~\ref{prop:blind} formalizes this blind spot: a perfectly dormant backup can be indistinguishable from an irrelevant unit on the original model, yet become important after primary-set removal.
+
+To characterize this change exactly, for any ablated set $M$, define $\dz_M:=z_0-z_M$.
+Then $\dz_\emptyset=0$, $\dz_{\{u\}}=\dz_u$, and
+$\dz_{u\mid\Sset}
+=\dz_{\Sset\cup\{u\}}-\dz_\Sset
+=z_\Sset-z_{\Sset\cup\{u\}}$.
+Thus, $M\mapsto\dz_M$ is a vector-valued set function.
+Using the standard M\"obius transform~\citep{rota1964foundations}, associate each nonempty subset $T\subseteq M$ with the interaction
+$I_T:=\sum_{A\subseteq T}(-1)^{|T|-|A|}\dz_A$,
+where $A$ ranges over the subsets of $T$.
+M\"obius inversion then decomposes the joint ablation effect of $M$ as
+\begin{equation}
+\dz_M
+=
+\sum_{\emptyset\neq T\subseteq M} I_T .
+\label{eq:mobius}
+\end{equation}
+The interaction order is $|T|$: $I_{\{u\}}=\dz_u$ is the first-order effect visible from ablating $u$ alone.
+For two units,
+$I_{\{u_1,u_2\}}=\dz_{\{u_1,u_2\}}-\dz_{u_1}-\dz_{u_2}$
+is their second-order non-additivity---the joint effect beyond the single-unit effects; higher orders extend this to larger sets.
+We now specialize this decomposition to the interactions linking a candidate $u$ to the removed primary set $\Sset$.
+
+\begin{proposition}[Exact all-order interaction decomposition]
+\label{prop:exact}
+For any candidate $u\in\Uset$,
+\begin{equation}
+\dz_{u\mid\Sset}
+=
+\sum_{R\subseteq\Sset} I_{R\cup\{u\}}
+=
+\dz_u
++
+\sum_{\{s\}\subseteq\Sset} I_{\{u,s\}} % it's just for formatting consistency
++
+\sum_{\{s,s'\}\subseteq\Sset} I_{\{u,s,s'\}}
++\cdots .
+\label{eq:exact}
+\end{equation}
+Hence the \emph{effect change}
+$\Delta_u(\Sset):=\dz_{u\mid\Sset}-\dz_u
+=\sum_{\emptyset\neq R\subseteq\Sset}I_{R\cup\{u\}}$
+is exactly the aggregate of all interaction orders linking $u$ to the removed primary set $\Sset$ and supported on $\Sset \cup \{u\}$. %这里如果很严格地来说，需要在文字叙述中强调只涉及$\Sset \cup \{u\}$这个集合里，下面也一样
+\end{proposition}
+
+Proposition~\ref{prop:exact} shows that the change in $u$'s ablation effect under primary-set removal is exactly the aggregate of all interaction orders linking $u$ to $\Sset$ and supported on $\Sset \cup \{u\}$; conditioning yields this aggregate without enumerating its terms.
+This effect change also gives a direct decomposition of the \coax score.
+Since $\dz_{u\mid\Sset}=\dz_u+\Delta_u(\Sset)$, Eq.~\ref{eq:comp} becomes
+\begin{equation}
+\comp_u(\Sset)
+=
+\mathbb{E}_{x,t}
+\left[
+2\left\langle
+\widetilde{\dz}_u,
+\widetilde{\Delta}_u(\Sset)
+\right\rangle
++
+\left\|
+\widetilde{\Delta}_u(\Sset)
+\right\|_2^2
+\right].
+\label{eq:score_shift}
+\end{equation}
+Here $\widetilde{\Delta}_u(\Sset)$ applies the transformation in Eq.~\ref{eq:energy} to $\Delta_u(\Sset)$.
+For a perfectly dormant unit with $\energy(\dz_u)=0$, Eq.~\ref{eq:score_shift} reduces exactly to $\energy(\Delta_u(\Sset))$.
+
+Explicitly enumerating all interaction orders is combinatorial in $|\Sset|$.
+Even a pairwise truncation requires $O(|\Uset||\Sset|)$ evaluations and omits higher orders, whereas conditioning yields the full interaction aggregate with the $O(|\Uset|)$ cost of Section~\ref{sec:score}.
+
+\paragraph{Why signed growth targets backup recruitment.}
+The conditional effect change $\Delta_u(\Sset)$ reveals whether removing $\Sset$ changes $u$'s role, while backup discovery asks the more specific question of whether $u$ becomes more important after the primary set is removed.
+Equation~\ref{eq:score_shift} makes this recruitment criterion explicit: $\comp_u(\Sset)>0$ means that the magnitude of $u$'s ablation effect grows after primary-set failure, whereas $\comp_u(\Sset)<0$ means that it shrinks.
+For a perfectly dormant backup, the intact-state term vanishes and the score reduces exactly to $\energy(\Delta_u(\Sset))$, the newly exposed conditional effect.
+We therefore rank candidates directly by positive signed growth.
+
+Together, these results establish why conditional measurement is necessary and what it reveals: dormant backups can be invisible in the original model, while primary-set removal exposes the all-order interaction aggregate underlying their effect change.
+The experiments below first test the signed recruitment signal on a documented dormant backup circuit, then ask whether the same conditional measurement tracks repair beyond that annotated setting.
+
+% =====================================================================
+\section{Recovering the Dormant Backups of a Known Circuit}
+\label{sec:discovery}
+
+We test whether \coax recovers a known backup branch, whether that recovery is specific to the primary set removed, and whether the recovered heads causally carry the repair.
+
+\paragraph{Protocol.}
+We use the well-characterized GPT-2-small IOI circuit~\citep{radford2019gpt2,wang2022ioi}, where both the \primary{primary} path and its \backup{backup} branch have been independently documented:
+the three \primary{primary} name-mover heads form $\Sset$, the eight documented \backup{backup} name-movers are positives, and all remaining heads are candidates.
+The backup labels are used only for evaluation; Appendix~\ref{app:noncirc} independently reconstructs a primary-removal-free reference set from intact-state signals.
+Full protocol and controls are in Appendix~\ref{app:setup}.
+
+\begin{table}[!ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.16}
+\caption{\textbf{Backup-head discovery on GPT-2-small IOI.}
+Head-level ROC-AUC over eight documented backups (four prompt seeds).
+Conditional methods use the same supplied primary set; structural and historical readouts are analyzed separately in Appendix~\ref{app:coact}--\ref{app:historical-dla}.}
+\label{tab:backup}
+
+\begin{tabularx}{\linewidth}{@{}IIII RRC@{}}
+\toprule
+
+\rowcolor{hdr}
+\multicolumn{4}{c}{\textbf{Intact only}} &
+\multicolumn{2}{c}{\textbf{Removed only}} &
+\cellcolor{ourrow}\textbf{Intact $\rightarrow$ removed}
+\\
+
+\makecell[c]{Single\\ablation} &
+AtP &
+EAP-IG &
+\makecell[c]{AtP$^\star$\\GradDrop} &
+\makecell[c]{Conditional\\gradient} &
+\makecell[c]{Conditional\\energy} &
+\cellcolor{ourrow}\textbf{\coax}
+\\
+
+\midrule
+
+\aucres{0.603}{0.007} &
+\aucres{0.600}{0.032} &
+\aucres{0.700}{0.020} &
+\secondauc{0.815}{0.031} &
+\aucres{0.626}{0.045} &
+\aucres{0.758}{0.004} &
+\cellcolor{ourrow}\bestauc{0.941}{0.004}
+\\
+
+\bottomrule
+\end{tabularx}
+\vspace{-2mm}
+\end{table}
+
+\subsection{Backup discovery}
+\label{sec:bdisc}
+
+\paragraph{The two-state contrast recovers the backup branch.}
+The central result is that \coax recovers the documented backups at $0.941$ ROC-AUC, improving by $0.126$ over the strongest intact-state attribution baseline and by $0.183$ over the matched conditional-energy control.
+The same separation is stronger under average precision ($0.557$ versus $0.174$ for AtP$^\star$; Appendix~\ref{app:sig}), supporting the top of the ranking under the $8/141$ class imbalance.
+
+The reason is simple: the three settings answer different questions.
+An intact-state score asks which components already matter; a score read only after primary-set removal asks which components matter in the intervened model,
+but still mixes pre-existing importance with newly recruited importance.
+\coax instead asks which candidates become more important \emph{because} the primary set was removed.
+At the vector level, the corresponding effect change
+$\Delta_u(\Sset)=\dz_{u\mid\Sset}-\dz_u$ has the exact decomposition in Proposition~\ref{prop:exact}, aggregating every interaction order linking $u$ to the removed primary set.
+The $0.941$ recovery therefore reflects access to the conditional causal information needed to identify a backup branch, rather than simply a stronger importance score. A task-specific historical direct-logit change, closely aligned with how the IOI backup branch was originally characterized, reaches $0.971$ AUC; unlike \coax, it requires the known IO$-$S output direction (Appendix~\ref{app:historical-dla}).
+
+\paragraph{Conditioning carries the main signal; Fisher geometry sharpens it.}
+Holding the two-state contrast fixed, replacing the Fisher geometry with plain $\ell_2$ still yields $0.905$ AUC (Figure~\ref{fig:method_analysis}b); the full geometry raises this to $0.941$.
+Thus the conditional comparison exposes most of the backup signal, while the Fisher geometry provides a principled refinement of its measurement.
+
+% \paragraph{Conditioning isolates the backup role beyond co-activation.}
+% The value of \coax is not merely to recover heads that co-activate with the documented backups, but to identify those whose role changes when the primary
+% set is removed.
+% An input-side co-activation score already achieves $0.93$ AUC, showing that the backups form a coherent neighborhood in the intact computation.
+% \coax adds the counterfactual distinction: it asks which components are specifically recruited by the intervention.
+% The selector-specific freezing test in Section~\ref{sec:realbackups} validates this distinction causally, showing that conditional localization more closely isolates the branch that actually carries the repair.
+
+
+\subsection{Recovery tracks the identity of the removed circuit}
+\label{sec:specificity}
+
+To test whether recovery tracks the identity of the removed circuit, we first ask whether other primary sets with similar intervention severity recover the same backups, and then test whether LayerNorm rescaling could explain the signal.
+
+\paragraph{Recovery follows circuit identity, not intervention severity.}
+We search $5{,}000$ random three-head sets on calibration prompts and retain the $16$ that best match the true primary set in behavioral damage, primary-set Fisher displacement $\energy(\dz_\Sset)$, and depth.
+On held-out prompts, these matched wrong sets recover the backups at only $0.40{\pm}0.13$ AUC, while the true primary set remains at about $0.94$ (Table~\ref{tab:fishermatch}).
+This is a hard negative: the interventions are matched both in task-level damage and in the output-space displacement measured in the same Fisher geometry as \coax, yet they fail to expose the backup branch.
+Recovery therefore tracks \emph{which circuit} is removed, rather than merely how strongly the model is perturbed.
+
+\paragraph{Freezing normalization sharpens the backup signal.}
+Ablation can alter downstream LayerNorm statistics and rescale the remaining computation, a known component of transformer self-repair~\citep{rushing2024selfrepair}.
+We remove this channel by replaying ablated forwards with the clean normalization denominators fixed.
+Backup AUC rises from $0.941$ to $0.983$: the documented backups retain about $80\%$ of their conditional growth, while non-backup growth is suppressed enough for its mean to shift below zero (Appendix~\ref{app:lnfreeze}).
+Thus LayerNorm rescaling does not create the backup signal; removing it instead suppresses background growth and sharpens the separation.
+
+\subsection{Causal validation of the backup hand-off}
+\label{sec:realbackups}
+
+Backup-label recovery alone does not establish that the recovered branch actually carries self-repair.
+Figure~\ref{fig:mechanism} therefore asks two stronger questions: does the backup response grow as more of the primary circuit is removed, and does preventing that response remove the repair?
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=2.36in]{figs/fig_mech_a.pdf}\hfill
+\includegraphics[width=1.32in]{figs/fig_mech_b.pdf}\hfill
+\includegraphics[width=1.80in]{figs/fig_mech_c.pdf}
+\vspace{-10mm}
+\caption{\textbf{Backup hand-off and causal repair} (GPT-2-small IOI; four prompt seeds).
+\textbf{(a)} Removing the primary name-movers shifts direct-logit attribution toward the documented backup branch while the IO$-$S margin remains largely preserved.
+\textbf{(b)} The documented backups and the \coax-selected heads both increase on the wake-up readouts as more primaries are removed, while matched random heads remain flat.
+\textbf{(c)} Freezing each selector's top-$8$ at its intact-state outputs measures causal load-bearingness; \coax causes a $0.90$-point IOI-margin loss.}
+\label{fig:mechanism}
+\vspace{-2mm}
+\end{figure}
+
+\paragraph{The hand-off is graded and causally load-bearing.}
+Removing the \primary{primary} name-movers eliminates their direct-logit contribution, while the documented \backup{backup} branch roughly triples its contribution from $+0.57$ to $+1.68$ and the IO$-$S margin falls only from $2.57$ to $2.29$ (Figure~\ref{fig:mechanism}a).
+As progressively more primaries are removed, both the documented backups and the \coax-selected heads increase on the two wake-up readouts, while matched random heads remain flat (Figure~\ref{fig:mechanism}b).
+Freezing the documented backups at their intact-state outputs causes a $0.57{\pm}0.09$ IOI-margin loss (Figure~\ref{fig:mechanism}c).
+Together, these results show that backup recruitment grows with primary-circuit failure and is causally load-bearing.
+
+\paragraph{\coax's label-free selection is causally load-bearing.}
+Applying the same freezing intervention to each selector's top-$8$, the \coax set causes a $0.90{\pm}0.07$ IOI-margin loss, compared with $0.03{\pm}0.08$ for conditional energy alone and $0.27{\pm}0.37$ for a size-matched random set (Figure~\ref{fig:mechanism}c).
+The freezing readout establishes causal load-bearingness; circuit completion and knockout then test whether the selected set matches the missing branch's causal role. Co-activation nearly matches \coax on backup-label AUC ($0.93$ versus $0.941$; Appendix~\ref{app:coact}) but gives substantially worse backup-role knockout matching (Section~\ref{sec:apps}).
+Thus the freezing, completion, and knockout tests jointly show that \coax identifies an intervention-responsive, causally relevant completion without using backup labels.
+
+
+% =====================================================================
+\FloatBarrier
+\section{Completing the Circuit}
+\label{sec:apps}
+
+Section~\ref{sec:discovery} shows that \coax recovers a branch that wakes up and carries self-repair.
+Conditional circuit completion asks for more: the recovered components should repair the causal account that was incomplete under intervention.
+We use the same raw headline \coax ranking as in discovery---no backup labels, task gradient, or task-direction filter---and take its top eight heads as the completion.
+Across the two circuit-level tests, this set reduces incompleteness from $0.75$ to $0.21$ and gives the closest match among the general selectors to the documented backup knockout with little collateral change.
+
+\begin{table}[!ht]
+\centering
+\small
+\caption{\textbf{Circuit completion and backup-role validation}
+(GPT-2-small IOI; four prompt seeds).
+\textbf{Left:} the raw headline \coax top-$8$ is added to the incomplete primary circuit, with no backup labels, task gradient, or task-direction filter.
+\textbf{Right:} each selector's raw top-$8$ knockout is compared with the documented backup intervention.
+Lower is better.}
+\label{tab:apps}
+\vspace{0.5mm}
+
+\begin{minipage}[c]{0.35\linewidth}
+\centering
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{@{}l c@{}}
+\toprule
+\rowcolor{hdr}
+\textbf{circuit} & \textbf{$D(C)\downarrow$} \\
+\midrule
+primary circuit & $0.755{\pm}0.074$ \\
+\rowcolor{hdr!35}
+documented circuit & $0.276{\pm}0.027$ \\
+\midrule
+\rowcolor{ourrow}
++\coax & \best{$0.205{\pm}0.030$} \\
++random & $0.808{\pm}0.206$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.63\linewidth}
+\centering
+\setlength{\tabcolsep}{4.1pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+\rowcolor{hdr}
+\textbf{top-up} &
+\textbf{margin dist.}$\downarrow$ &
+\textbf{output KL}$\downarrow$ &
+\textbf{unrel. KL}$\downarrow$ \\
+\midrule
+\rowcolor{hdr!35}
+documented backups & 0.00 & 0.00 & 0.09 \\
+\midrule
+\rowcolor{ourrow}
++\coax & \best{0.99} & \best{0.17} & \best{0.14} \\
++co-activation & 1.79 & 0.47 & 0.15 \\
++\coax next-8 & 2.24 & 0.64 & 0.54 \\
++AtP$^\star$ GradDrop & 2.62 & 0.82 & 0.31 \\
++random & 1.27 & 0.43 & 0.15 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\vspace{-2mm}
+\end{table}
+
+\paragraph{The recovered set substantially completes the circuit.}
+Following~\citet{wang2022ioi}, completeness asks whether a circuit reproduces
+the full model's response to the same ablation.
+Let $\Omega$ denote the full head set, and let $\mathrm{LD}_C(x)$ be the IOI
+margin when only heads in circuit $C$ remain active (all others are mean-ablated).
+Writing
+$r(C)=\mathbb{E}_x[\mathrm{LD}_C(x)-\mathrm{LD}_{C\setminus S}(x)]$
+for the response of circuit $C$ to primary-set removal, we define its
+incompleteness as
+$D(C)=|r(\Omega)-r(C)|$; lower is better.
+The controlled primary circuit has $D=0.75$, while the documented circuit
+reaches $0.28$.
+Adding the raw \coax top-$8$ reduces incompleteness to $0.21$
+(Table~\ref{tab:apps}), using exactly the same label-free,
+task-direction-free ranking as discovery.
+Thus \coax does more than localize backup components: it restores the missing
+counterfactual response and turns backup localization into circuit completion.
+
+\paragraph{The recovered set reproduces the backup knockout.}
+We complement the completion test by reversing the intervention and asking whether the selected knockout reproduces the documented backup effect.
+A large performance drop after removal does not by itself identify the backup, because disrupting unrelated computation can also hurt IOI.
+We therefore compare each primary-plus-selected removal with the documented primary-plus-backup removal in both the IOI margin and the answer-position output distribution, while tracking collateral KL on unrelated text.
+The \coax-selected set closely matches the documented intervention on both readouts ($0.99$ margin distance and $0.17$ KL), while keeping unrelated-text KL low at $0.14$ (Table~\ref{tab:apps}).
+Together with the completion result above, this closes the circuit-level loop: completion restores the missing counterfactual response, while knockout reproduces the causal role of the missing backup branch. 
+Full completion protocol, knockout, and paired-uncertainty analyses are in Appendix~\ref{app:attribution}.
+
+% =====================================================================
+\section{Conditional Repair Beyond Documented Backups}
+\label{sec:panel}
+
+Sections~\ref{sec:discovery}--\ref{sec:apps} establish \coax on a documented dormant backup branch.
+We now test whether the same conditional signal extends beyond that annotated setting in two ways: against independently measured repair across mechanisms and through held-out circuit completion across model families.
+
+\paragraph{Conditional growth aligns with repair across mechanisms.}
+We construct an annotation-free causal target: after ablating a primary set $\Sset$, we freeze each candidate $u$ to its intact-state output, so any further behavioral loss measures repair carried by $u$.
+We quantify this by $\mathrm{repair}(u\mid\Sset)=m(\text{ablate }\Sset)-m(\text{ablate }\Sset,\text{ freeze }u)$.
+The primary sets follow documented IOI head roles~\citep{wang2022ioi}; we evaluate name-mover and S-inhibition sets on the IOI margin, and induction and duplicate-token sets on repeated-token induction behavior~\citep{olsson2022induction}.
+Scores and repair targets use disjoint prompts, making their agreement out of sample.
+Across twelve held-out instances from four mechanism clusters, \coax has positive rank agreement with mechanism-matched causal repair in $11/12$ instances and all four clusters, with a hierarchical mean of $+0.123$ and a nested $95\%$ CI of $[+0.047,+0.201]$ (Figure~\ref{fig:regime}a).
+Thus the signed-growth signal that recovers the documented IOI backups also shows positive out-of-sample agreement with independently measured repair across distinct mechanisms and prompt forms.
+Full protocols and hierarchical inference are in Appendix~\ref{app:panel}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{figs/fig_regime.pdf}
+\vspace{-3mm}
+\caption{\textbf{Conditional repair generalizes across mechanisms and architectures.}
+\textbf{(a)} Signed growth has positive rank agreement with mechanism-matched held-out causal repair in $11/12$ instances and all four mechanism clusters; the bottom row shows the hierarchical mean and nested $95\%$ CI.
+\textbf{(b)} \coax-selected completions outperform matched random completions on all eight non-GPT-2 models spanning six architecture families; hollow circles show each model's next induction heads as a stronger role-matched control.}
+\label{fig:regime}
+\end{figure}
+
+\paragraph{Conditional circuit completion transfers beyond GPT-2.}
+We finally test set-level transfer on eight non-GPT-2 models spanning six architecture families.
+Under disjoint detection, calibration, and evaluation splits with equal selector budgets, adding \coax-selected induction heads outperforms a size-matched random completion on all eight models (Figure~\ref{fig:regime}b).
+A stronger role-matched control, each model's own next induction heads, is also load-bearing; \coax gives the larger completion on six of eight models. Full held-out comparisons against single ablation, co-activation, AtP, and AtP$^\star$ are in Appendix~\ref{app:gen-group}.
+Thus conditional circuit completion transfers beyond GPT-2-small across diverse induction circuits.
+Taken together, cross-mechanism repair alignment and cross-model circuit completion show that primary-set removal is more than a diagnostic perturbation: it exposes how causal responsibility reorganizes after failure and provides the information needed to complete the circuit account that the intact model alone leaves hidden.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Circuit discovery and completeness.}
+Mechanistic interpretability identifies circuits by intervening on components or edges and measuring how model behavior changes.
+ACDC automates intervention-based pruning~\citep{conmy2023acdc}; edge attribution patching and its integrated-gradient variant estimate edge effects efficiently~\citep{syed2023attribution,hanna2024faith}; and AtP$^\star$ improves component localization with gradient-based corrections~\citep{kramar2024atp}.
+Subsequent work refines circuit representations, search procedures, or pruning objectives~\citep{marks2024sparse,ferrando2024information,hsu2025cdt,bhaskar2024edge}.
+These methods primarily seek the computation supporting a reference behavior.
+Complementary work on circuit completeness shows that redundant, OR-like paths can be omitted by standard discovery and combines noising and denoising interventions to recover them~\citep{chen2025completeness}.
+\coax focuses on completeness relative to a specified failure state: given a supplied primary set, it asks which remaining components become causally important after that set is removed.
+
+\paragraph{Self-repair and compensatory circuitry.}
+Self-repair makes this state dependence concrete.
+The Hydra effect~\citep{mcgrath2023hydra}, documented IOI backup name-movers~\citep{wang2022ioi}, copy-suppression~\citep{mcdougall2023copysuppression}, and LayerNorm and anti-erasure mechanisms~\citep{rushing2024selfrepair} show several ways transformer computation can reorganize after intervention.
+Methods such as AtP$^\star$ GradDrop and GIM address attribution distortions caused by this reorganization, while joint-ablation analyses expose redundancy hidden by isolated effects~\citep{kramar2024atp,edin2025gim,ye2026hiddenheroes}.
+\coax complements these analyses by localizing the compensating candidates relative to a supplied primary set, then testing whether they causally carry repair and complete the circuit.
+
+\paragraph{Conditional and interaction-aware effects.}
+State-dependent importance is inherently relational: a candidate's effect can depend on what else has been removed.
+Neuron Shapley averages marginal effects across many coalitions~\citep{ghorbani2020neuronshapley}, while interventional redundancy--synergy decompositions characterize dependence across removal contexts~\citep{aghilar2026scalarlimit}.
+Closest to our theory, causal-mediation analysis shows that component-wise patching estimands contain pairwise and higher-order interaction effects when one component's causal role depends on others~\citep{mediators2026curse}.
+The M\"obius decomposition itself is standard~\citep{rota1964foundations}; our contribution is to make the supplied failure set part of the query and use the resulting all-order aggregate as the estimand for conditional completion.
+Input-side co-activation can expose components that fire together but does not condition on a specified failure~\citep{closure2026}.
+Signed growth uses the intervention-induced increase in ablation-effect magnitude to target recruitment after the supplied failure.
+
+% =====================================================================
+\section{Conclusion}
+Self-repair makes causal importance conditional on what remains available, so an intact-state circuit can cease to explain the model once that circuit is perturbed.
+\coax turns this difficulty into a probe: removing a primary circuit reveals which previously weak components become causally important and allows the missing response to be incorporated back into the circuit account.
+Across documented backups, independent repair targets, and multiple architectures, this conditional view exposes intervention-dependent circuitry that intact-state localization alone cannot characterize.
+A causal explanation of a self-repairing model is therefore not a single intact-state circuit, but an account of how causal responsibility reorganizes when that circuit is disrupted.
+
+\clearpage
+\paragraph*{Reproducibility statement.}
+The paper is designed for direct reproduction: Section~\ref{sec:method} and Appendix~\ref{app:method} specify the estimand, algorithm, implementation, and complexity; Appendix~\ref{app:proofs} contains complete proofs; Table~\ref{tab:hparams} consolidates protocol constants and random seeds; and Appendix~\ref{app:setup} specifies the models, data, metrics, and baselines.
+Appendix~\ref{app:repro} reports compute and reproduction details.
+An anonymized supplementary archive provides the implementation, environment specification, and scripts for reproducing the main experiments and figures.
+All model weights are frozen and no training is performed; the core GPT-2-small IOI experiments can also be reproduced on CPU.
+
+\paragraph*{Ethics statement.}
+This work performs inference-only analysis of publicly released pretrained language models and uses no human subjects, private data, or personally identifying information.
+Model licenses, data sources, and broader-impact considerations are documented in Appendix~\ref{app:limitations}.
+
+\paragraph*{AI use statement.}
+Generative AI tools were used to assist with language editing, presentation and organization, literature search, and feedback on the communication of experimental results.
+The research questions, methodology, theoretical analysis, implementation, experiments, and scientific conclusions were developed and verified by the authors.
+All AI-assisted material was reviewed and revised by the authors, who take full responsibility for the paper.
+
+\bibliography{coablation}
+\bibliographystyle{iclr2027_conference}
+
+\clearpage
+\appendix
+\input{appendix_iclr}
+
+\end{document}

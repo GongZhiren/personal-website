@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Selection quality survives recovery} (Llama-3.1-8B-Instruct, $\rho=40\%$). One LoRA recipe --- same rank, token budget, schedule and corpus, disjoint from the calibration set --- applied unchanged to each selection. These rows are no longer training-free and are reported apart from every other number in the paper. Random selection is included as the floor: it shows how much of a recovered model's quality comes from the recovery rather than from the choice of units.}
+\label{tab:recovery}
+\footnotesize
+\setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{ll c ccc c c}
+\toprule
+\textbf{Selection} & \textbf{Stage} & Wiki\dn & Commonsense & Science QA & Reading & MMLU\up & \%\,Dense\up\\
+\midrule
+\multirow{2}{*}{\method} & training-free & \cellcolor{oursblue}59.13 & \cellcolor{oursblue}52.1 & \cellcolor{oursblue}33.3 & \cellcolor{oursblue}62.3 & \cellcolor{oursblue}29.3 & \cellcolor{oursblue}64.8\\
+ & $+$ LoRA & \cellcolor{oursblue}15.39 & \cellcolor{oursblue}59.6 & \cellcolor{oursblue}40.9 & \cellcolor{oursblue}62.4 & \cellcolor{oursblue}32.3 & \cellcolor{oursblue}74.1\\
+\midrule
+\multirow{2}{*}{Strongest baseline} & training-free & 103.3 & 53.3 & 31.6 & 65.1 & 29.7 & 65.1\\
+ & $+$ LoRA & 14.99 & 59.2 & 38.6 & 63.3 & 32.3 & 72.6\\
+\midrule
+\multirow{2}{*}{Random selection} & training-free & 4168.4 & 44.4 & 26.2 & 42.5 & 26.7 & 51.8\\
+ & $+$ LoRA & 16.26 & 56.8 & 38.5 & 63.1 & 30.4 & 71.1\\
+\bottomrule
+\end{tabular}
+\end{table}

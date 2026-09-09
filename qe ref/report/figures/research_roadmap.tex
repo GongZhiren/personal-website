@@ -1,0 +1,29 @@
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily,>=Latex]
+  \tikzset{
+    work/.style={rounded corners=3pt,minimum width=3.05cm,minimum height=.90cm,
+      align=center,line width=.65pt,font=\bfseries\scriptsize,fill=white},
+    goal/.style={rounded corners=4pt,minimum width=3.45cm,minimum height=1.00cm,
+      align=center,line width=.8pt,font=\bfseries\scriptsize,fill=NTUred!4,text=NTUred,draw=NTUred!65}
+  }
+  \node[font=\bfseries\small,text=NTUblue,anchor=west] at (0,1.62) {PART I --- ADAPTIVE MODEL EXECUTION};
+  \node[work,draw=NTUblue!60,text=NTUblue] (sp) at (2.05,.88)
+    {SubspacePath Pruner [E1]\\\normalfont scenario-conditioned specialization};
+  \node[work,draw=NTUblue!60,text=NTUblue] (cc) at (6.10,.88)
+    {CoCurve [E2]\\\normalfont interaction-aware compression};
+  \node[work,draw=NTUblue!60,text=NTUblue] (ap) at (10.15,.88)
+    {AnchorPath [E3]\\\normalfont high-sparsity preservation};
+  \draw[->,NTUblue!52,line width=.9pt] (sp.east) -- (cc.west);
+  \draw[->,NTUblue!52,line width=.9pt] (cc.east) -- (ap.west);
+
+  \node[font=\bfseries\small,text=Teal,anchor=west] at (0,-.38) {PART II --- ADAPTIVE REASONING};
+  \node[work,draw=Teal!64,text=Teal] (sot) at (4.05,-1.10)
+    {SoT [R1]\\\normalfont state-conditioned trajectory control};
+  \node[work,draw=Teal!64,text=Teal] (lotr) at (8.95,-1.10)
+    {LoTR [R2]\\\normalfont logic-conditioned pathway routing};
+  \draw[->,Teal!54,line width=.9pt] (sot.east) -- (lotr.west);
+
+  \node[goal] (goal) at (14.05,-.06)
+    {EFFICIENT $\cdot$ SCALABLE\\RELIABLE DEPLOYMENT};
+  \draw[->,NTUred!50,line width=.9pt] (ap.east) .. controls (12.18,.88) and (12.42,.28) .. (goal.west);
+  \draw[->,NTUred!50,line width=.9pt] (lotr.east) .. controls (11.46,-1.10) and (12.42,-.55) .. (goal.west);
+\end{tikzpicture}

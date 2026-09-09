@@ -1,0 +1,480 @@
+\documentclass{article}
+
+\usepackage{neurips_2025}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{diagbox}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{amsmath,amssymb,mathtools}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\sigmoid}{\sigma}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\Ind}{\mathbf{1}}
+
+\title{State-of-Thought: Endogenous State-Driven Reasoning for Large Language Models}
+
+\author{%
+  Anonymous Author(s) \\
+  Affiliation \\
+  Address \\
+  \texttt{email}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Large Language Models (LLMs) benefit from intermediate reasoning, yet most existing methods still determine the reasoning procedure from the outside: they pre-specify a fixed chain, repeated sampling pattern, or explicit search program before inference begins. This makes the reasoning process rigid and only weakly coupled to the model's evolving internal logic.
+
+We introduce \textbf{State-of-Thought (SoT)}, an endogenous state-driven reasoning paradigm in which the model's current latent reasoning state controls how it consults its own prior reasoning and when it is ready to commit an answer. Rather than defining a library of discrete external actions, SoT maintains a compact sentence-level state $m_t=[\delta_t,v_t,c_t,H_t,\bar e_t]$ that captures local organization, progress magnitude, directional consistency, uncertainty, and a slow-time reasoning debt. Each generated sentence becomes a \emph{reasoning unit}. At every sentence boundary, a lightweight strategy head reads the current state and unit descriptors, predicts a \emph{sparse binary historical-activation mask} over prior units, and produces a stop-readiness score. Only the selected units are reactivated in the next decoding context, yielding a closed loop
+\[
+\begin{aligned}
+\text{hidden-state trajectory}
+&\rightarrow m_t \\
+&\rightarrow \text{historical activation}
+\rightarrow \text{next context}
+\rightarrow m_{t+1}.
+\end{aligned}
+\]
+The backbone LLM remains frozen. The strategy head is trained without human action labels or benchmark-specific scripts; instead, it learns from self-supervised preference signals derived from future trajectory health, final outcome quality, and context cost. This gives a simple but executable reasoning paradigm that is sparse, state-coupled, and naturally suited to long-horizon and revision-sensitive tasks.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Reasoning support is now central for LLM performance, but most mainstream methods still determine the procedure externally in advance: a fixed linear chain, a repeated-sampling wrapper, or an explicit tree search. These methods can be effective, yet the reasoning schedule itself lives outside the model's evolving internal state.
+
+We ask a different question: \emph{can the model's current reasoning state decide how reasoning should continue, without relying on a hand-written external action program?}
+
+Our answer is \textbf{State-of-Thought (SoT)}, an endogenous state-driven reasoning paradigm. The key idea is to treat reasoning as a sequence of sentence-level latent states, and to let the current state control which parts of prior reasoning should be reactivated before the next sentence is generated. In SoT, the main control object is not a discrete action such as \texttt{revisit} or \texttt{summarize}; it is a sparse \emph{historical-activation strategy} over prior reasoning units. This makes the control loop more intrinsic: current state drives historical recall and stopping readiness, and these in turn reshape the next reasoning step.
+
+Two design choices are central. First, we use a compact sentence-level state $m_t=[\delta_t,v_t,c_t,H_t,\bar e_t]$ built from hidden-state geometry and uncertainty. It does not attempt to recover symbolic logic content; rather, it summarizes local reasoning dynamics: whether reasoning is advancing, wavering, drifting, or becoming ready to terminate. Second, we replace hand-written action libraries with a lightweight strategy head that predicts a binary mask over historical reasoning units. This mask determines which prior sentences are exposed to the next decoding step. In this way, revision, long-range recall, and selective consolidation arise from a single mechanism instead of from a collection of externally defined reasoning modes.
+
+The resulting loop is
+\[
+\begin{aligned}
+\text{current sentence}
+&\rightarrow m_t \\
+&\rightarrow \text{historical-activation mask}
+\rightarrow \text{reactivated context}
+\rightarrow \text{next sentence},
+\end{aligned}
+\]
+with a separate stop-readiness score controlling answer commitment. We keep the backbone LLM frozen and train only the lightweight strategy head. Importantly, we do not require human-labeled action tags. The strategy learns from self-supervised preference signals: a historical unit is preferred if reactivating it leads to healthier future reasoning dynamics, better final outcome, or lower context cost.
+
+This formulation is deliberately positioned as a \emph{reasoning paradigm} rather than a generic memory-management trick. Historical selection is only the carrier; the core claim is that reasoning should be governed by an internal state that continuously regulates historical recall and termination pace. In contrast to retrieval or context pruning methods that optimize generic relevance or compression, SoT uses current reasoning dynamics to decide what prior reasoning remains active.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{An endogenous state-driven reasoning paradigm.} We formulate reasoning as a sentence-level closed loop in which latent state controls sparse historical recall and answer commitment, rather than relying on fixed external scripts or discrete hand-written reasoning actions.
+    \item \textbf{A compact fast-slow reasoning state.} We use a 5D state $m_t=[\delta_t,v_t,c_t,H_t,\bar e_t]$ that combines local geometry, uncertainty, and a slow-time debt variable, giving a minimal but expressive representation of reasoning dynamics.
+    \item \textbf{Sparse binary historical activation.} We introduce a binary activation mask over prior reasoning units, enabling selective historical recall and direct context reduction rather than soft weighting over all history.
+    \item \textbf{Self-supervised strategy learning.} We train a lightweight strategy head from future trajectory health, final outcome quality, and context cost, without human action labels, benchmark-specific scripts, or backbone finetuning.
+\end{itemize}
+
+\section{Preliminaries}
+\label{sec:prelim}
+
+\subsection{Sentence-Level Reasoning Process}
+Consider an autoregressive transformer LLM with $L$ layers and hidden size $D$. For token $i$ at layer $\ell$, denote the hidden state by
+\[
+h_i^{(\ell)} \in \R^D.
+\]
+
+We decompose reasoning into sentence-level units
+\[
+y_1,y_2,\dots,y_T,
+\]
+where each $y_t$ is generated between two sentence boundaries under a fixed delimiter policy shared by training and inference. In the minimal implementation, a step ends at newline or sentence-ending punctuation (\texttt{.?!}); if no delimiter appears, we force a boundary at $N_{\max}^{\mathrm{step}}$ tokens.
+
+At each step, the system reads the hidden-state dynamics induced by the just-generated sentence, updates a compact reasoning state, selects a sparse subset of historical reasoning units, and uses only those units to assemble the next decoding context. This sentence-level granularity is small enough to react within a reasoning trajectory while remaining stable enough for explicit sparse control.
+
+\subsection{Core Assumption}
+We do not assume that the internal state can reliably classify final correctness at every step. We only assume that local reasoning dynamics contain enough signal to answer two weaker questions:
+\begin{enumerate}[leftmargin=1.3em, itemsep=0.2em]
+    \item which prior reasoning units are currently useful to reactivate, and
+    \item whether the reasoning process is mature enough to stop.
+\end{enumerate}
+SoT therefore performs \emph{state-driven historical recall and pacing}, not per-step correctness certification.
+
+\section{State-of-Thought (SoT)}
+\label{sec:method}
+
+\subsection{Overview}
+SoT is a sentence-level recurrent reasoning loop with four components:
+\begin{enumerate}[leftmargin=1.3em, itemsep=0.2em]
+    \item a \textbf{state extractor} that summarizes the just-generated sentence as a compact reasoning state,
+    \item a \textbf{reasoning bank} whose units are prior reasoning sentences together with compact descriptors,
+    \item a \textbf{historical selector} that predicts a sparse binary mask over older units, and
+    \item a \textbf{commit scorer} that predicts whether the current reasoning trajectory is ready to commit.
+\end{enumerate}
+
+The control loop is therefore
+\[
+\begin{aligned}
+\text{current sentence}
+&\rightarrow m_t \\
+&\rightarrow \text{binary historical mask}
+\rightarrow \text{next context}
+\rightarrow \text{next sentence}.
+\end{aligned}
+\]
+This design intentionally removes the intermediate layer of hand-written discrete reasoning actions. Revision, long-range recall, and local consolidation are all expressed through the same sparse historical-activation mechanism.
+
+\subsection{Sentence-Level State Extraction}
+\label{sec:state}
+At the end of sentence $y_t$, let $n_t$ be the number of tokens in that sentence. For token $i$ in $y_t$, we use the top-layer hidden state
+\begin{equation}
+ h_{t,i}=h_{t,i}^{(L)}, \qquad h_{t,i}\in\R^D.
+\label{eq:hti}
+\end{equation}
+We define the sentence center
+\begin{equation}
+ z_t=\frac{1}{n_t}\sum_{i=1}^{n_t} h_{t,i} \in \R^D.
+\label{eq:zt2}
+\end{equation}
+From the sentence states, we build four fast variables.
+
+\paragraph{Local organization.}
+The within-sentence dispersion is
+\begin{equation}
+\delta_t = \tr\!\left(\frac{1}{n_t}\sum_{i=1}^{n_t}(h_{t,i}-z_t)(h_{t,i}-z_t)^\top\right)
+= \frac{1}{n_t}\sum_{i=1}^{n_t}\norm{h_{t,i}}_2^2-\norm{z_t}_2^2.
+\label{eq:delta2}
+\end{equation}
+It measures how concentrated or internally spread the sentence-level representation is.
+
+\paragraph{Progress magnitude.}
+We define
+\begin{equation}
+ v_t = \norm{z_t-z_{t-1}}_2.
+\label{eq:vt2}
+\end{equation}
+This captures how far the reasoning state moves from the previous sentence.
+
+\paragraph{Directional consistency.}
+For $t\ge 2$, we define
+\begin{equation}
+ c_t = \frac{\inner{z_t-z_{t-1}}{z_{t-1}-z_{t-2}}}{\norm{z_t-z_{t-1}}_2\norm{z_{t-1}-z_{t-2}}_2+\eps},
+\label{eq:ct2}
+\end{equation}
+and set $c_1=1$. Large positive $c_t$ indicates smooth continuation; negative $c_t$ indicates a reversal or sharp turn.
+
+\paragraph{Local uncertainty.}
+Let $p_{t,i}$ be the next-token distribution at token $i$. We define sentence uncertainty as
+\begin{equation}
+ H_t = \frac{1}{n_t}\sum_{i=1}^{n_t}\mathcal{H}(p_{t,i}).
+\label{eq:Ht2}
+\end{equation}
+
+For scale robustness, we normalize the fast variables using source statistics $(\mu,\sigma)\in\R^4$:
+\begin{equation}
+ \hat s_t = \frac{[\delta_t,v_t,c_t,H_t]^\top-\mu}{\sigma+\eps}.
+\label{eq:fastnorm}
+\end{equation}
+
+\subsection{Slow-Time Debt and Final Reasoning State}
+\label{sec:debt}
+Single-step variables cannot describe persistent stagnation or drift. We therefore maintain a slow variable
+\begin{equation}
+ e_t = \alpha e_{t-1} + (1-\alpha)u_t,
+\label{eq:et2}
+\end{equation}
+where local debt is
+\begin{equation}
+ u_t = \lambda_v\,\mathrm{lowprog}(v_t) + \lambda_c\,\mathrm{turn}(c_t) + \lambda_H\,H_t.
+\label{eq:ut2}
+\end{equation}
+We use the clipped forms
+\begin{equation}
+\mathrm{lowprog}(v_t)=\max\!\left(0,\frac{\tau_v-v_t}{\tau_v+\eps}\right), \qquad
+\mathrm{turn}(c_t)=\max(0,-c_t).
+\label{eq:debtparts2}
+\end{equation}
+Thus debt rises when the trajectory under-progresses, turns back on itself, or remains uncertain for multiple steps.
+
+We normalize debt to
+\begin{equation}
+\bar e_t = \mathrm{clip}(e_t,0,e_{\max})/e_{\max},
+\label{eq:ebar2}
+\end{equation}
+and define the final reasoning state as
+\begin{equation}
+ m_t = [\hat s_t^\top,\bar e_t]^\top \in \R^5.
+\label{eq:mt2}
+\end{equation}
+Conceptually, $m_t$ is not a symbolic logic parser; it is a compact fast-slow state summarizing local reasoning dynamics and cumulative revision pressure.
+
+\subsection{Reasoning Units and Historical Bank}
+\label{sec:memory}
+Each generated sentence becomes a reasoning unit
+\begin{equation}
+ U_j = (y_j, z_j, m_j), \qquad j\le t,
+\label{eq:cell}
+\end{equation}
+where $y_j$ is the sentence text, $z_j$ is the sentence center, and $m_j$ is the sentence state. The bank after step $t$ is
+\[
+\mathcal{U}_t = \{U_1,\dots,U_t\}.
+\]
+The reference implementation may additionally maintain a small set of derived memory units, such as frequently reused promoted units and lightweight summary units formed from short recent spans. These derived units enlarge the non-local candidate pool while preserving the same sentence-level SoT control loop.
+
+To preserve local coherence, we maintain a small recent working trace
+\[
+\mathcal{W}_t = \{U_{\max(1,t-r+1)},\dots,U_t\},
+\]
+of size $r$. Units in $\mathcal{W}_t$ are always visible. Historical selection operates only on older units $\mathcal{U}_{t-r}$, which keeps the strategy focused on non-local recall rather than on trivial adjacency.
+
+\subsection{State-Driven Sparse Historical Activation}
+\label{sec:backlook}
+At step $t$, SoT decides which older reasoning units should be reactivated before generating the next sentence. The current implementation uses a two-stage lightweight retrieval policy: a parameter-light recall stage first keeps the most promising candidates, and a reranker then scores them with a richer descriptor. For a candidate unit $U_j$, we define
+\begin{equation}
+ d_{t,j} = [m_t; m_j; (m_t-m_j); (m_t\odot m_j); \mathrm{sim}(z_t,z_j); \phi(\mathrm{age}_{t,j}); \Ind[\mathrm{age}_{t,j}\le r]],
+\label{eq:descriptor}
+\end{equation}
+where
+\[
+\mathrm{sim}(z_t,z_j)=\frac{\inner{z_t}{z_j}}{\norm{z_t}_2\norm{z_j}_2+\eps}, \qquad
+\mathrm{age}_{t,j}=t-j,
+\]
+and $\phi(\cdot)$ is a bounded age feature map. A lightweight selector head produces a keep logit
+\begin{equation}
+ q_{t,j}=f_{\theta}^{\mathrm{read}}(d_{t,j}).
+\label{eq:qread}
+\end{equation}
+During inference, the decision is deterministic:
+\begin{equation}
+ b_{t,j} = \Ind[q_{t,j}>\tau_{\mathrm{read}}].
+\label{eq:binarymask}
+\end{equation}
+To satisfy a context budget, we retain only the top-$K_{\mathrm{hist}}$ feasible kept units ranked by $q_{t,j}$ when necessary.
+
+The selected historical set is
+\begin{equation}
+ \mathcal{B}_t = \{U_j\in\mathcal{C}_t: b_{t,j}=1\},
+\label{eq:Bt}
+\end{equation}
+and the active context used to generate the next sentence is
+\begin{equation}
+ \mathcal{A}_t = \{U_0\}\cup\mathcal{W}_t\cup\mathcal{B}_t,
+\label{eq:At}
+\end{equation}
+where $U_0$ denotes the prompt root. Units in $\mathcal{A}_t$ are sorted chronologically before being concatenated into the next decoding prompt. The binary nature of $b_{t,j}$ is deliberate: SoT performs sparse historical activation rather than soft memory weighting, which directly supports context reduction and inference speedup.
+
+\subsection{Commit Readiness}
+\label{sec:stop}
+In addition to historical activation, SoT predicts whether the current reasoning trajectory is ready to commit an answer. A commit scorer outputs
+\begin{equation}
+ p_t^{\mathrm{stop}} = \sigmoid\!\left(f_{\theta}^{\mathrm{stop}}(m_t)\right).
+\label{eq:stopprob}
+\end{equation}
+We enter answer-commit mode when $p_t^{\mathrm{stop}}>\tau_{\mathrm{stop}}$ for $r_{\mathrm{stop}}$ consecutive steps and $t\ge t_{\min}$. The hysteresis requirement prevents unstable early stopping. Importantly, commit readiness is not interpreted as per-step correctness; it only indicates that further reasoning is unlikely to provide enough benefit relative to its cost.
+
+\subsection{Training the Strategy Head}
+\label{sec:training}
+The backbone LLM is frozen throughout. We train only the lightweight strategy parameters $\theta=\{f_{\theta}^{\mathrm{read}},f_{\theta}^{\mathrm{stop}}\}$. The training signal is fully self-supervised: it is derived from offline trajectory statistics, future-state proxies, and final outcome quality rather than from human-labeled actions.
+
+\paragraph{Model specificity and data mixture.}
+The strategy head is trained \emph{per backbone family}. We do not assume that hidden-state geometry is directly comparable across different LLMs. Accordingly, SoT uses mixed-source trajectory training across datasets, domains, and prompting styles, but the learned state statistics and strategy head remain model-specific. The intended transfer regime is therefore \emph{cross-dataset and cross-domain transfer within the same frozen backbone}, rather than universal cross-backbone sharing.
+
+\paragraph{Teacher construction from offline trajectories.}
+The current implementation constructs self-supervised \emph{teacher} signals from mixed-source offline reasoning trajectories. For each sampled step $t$ and older unit $U_j$, it computes a soft relevance target from four bounded components:
+\begin{equation}
+ y_{t,j}^{\mathrm{read,soft}} =
+ \mathrm{avg}\!\left(
+ \mathrm{semantic\_affinity}_{t,j},
+ \mathrm{future\_utility}_{t,j},
+ \mathrm{evidence\_strength}_{j},
+ \mathrm{recency\_prior}_{t,j}
+ \right),
+\label{eq:readteacher}
+\end{equation}
+where semantic affinity is derived from $(z_t,z_j)$ and $(m_t,m_j)$ similarity, future utility summarizes short-horizon future-state improvement and a counterfactual proxy, evidence strength prefers historically stable and useful states, and recency prior encodes bounded age preference. A hard label $y_{t,j}^{\mathrm{read}}$ is obtained by thresholding the teacher score after ranking candidates within the step and respecting the history budget.
+
+\paragraph{Read-head distillation.}
+Let $q_{t,j}=f_\theta^{\mathrm{read}}(d_{t,j})$ and $\hat y_{t,j}=\sigmoid(q_{t,j})$. The historical selector is trained as a lightweight student against the soft teacher targets with weighted binary cross-entropy:
+\begin{equation}
+\mathcal{L}_{\mathrm{read}} =
+\mathrm{WBCE}\!\left(\hat y_{t,j}, y_{t,j}^{\mathrm{read,soft}}\right).
+\label{eq:lread}
+\end{equation}
+
+\paragraph{Commit learning.}
+For each step $t$, we similarly define a soft stop teacher
+\begin{equation}
+ y_t^{\mathrm{stop,soft}} =
+ \mathrm{avg}\!\left(
+ \mathrm{tail\_progress}_t,
+ \mathrm{stability}_t,
+ (1-\bar e_t),
+ \Ind[t=\text{last step}]
+ \right),
+\label{eq:stoptarget}
+\end{equation}
+and obtain a hard stop label near the trajectory tail, optionally requiring the sampled trajectory to be correct. The commit loss is
+\begin{equation}
+\mathcal{L}_{\mathrm{stop}} =
+\mathrm{WBCE}\!\left(p_t^{\mathrm{stop}}, y_t^{\mathrm{stop,soft}}\right).
+\label{eq:lstop}
+\end{equation}
+
+\paragraph{Overall objective.}
+The total training objective is
+\begin{equation}
+\mathcal{L}=\mathcal{L}_{\mathrm{read}}+\lambda_{\mathrm{stop}}\mathcal{L}_{\mathrm{stop}}.
+\label{eq:lossall}
+\end{equation}
+Training data are drawn from mixed-source reasoning trajectories across multiple datasets and reasoning styles for the same backbone. The implementation partitions data by problem identity into train, validation, and hold-out splits, and reports BCE, ROC-AUC, PR-AUC, ECE, and teacher-student gap in addition to saving the fitted strategy parameters. Since the strategy head observes compact reasoning states and unit descriptors rather than raw benchmark-specific programs, it is encouraged to learn a transferable historical-recall preference rather than a dataset-specific script.
+
+\subsection{Inference Algorithm}
+\label{sec:algo}
+Algorithm~\ref{alg:sot} summarizes the online procedure.
+
+\begin{algorithm}[t]
+\caption{SoT Inference (State-Driven Sparse Historical Activation)}
+\label{alg:sot}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} prompt $x$, frozen LLM, trained strategy head $\theta$
+\STATE Initialize prompt root unit $U_0$ and empty reasoning bank $\mathcal{U}_0$
+\STATE Generate initial reasoning sentence $y_1$ from the prompt; extract $m_1$ and form $U_1$
+\FOR{$t=1,2,\dots,T_{\max}$}
+    \STATE Build recent working trace $\mathcal{W}_t$
+    \STATE Form candidate pool $\mathcal{C}_t$ from older units and optional promoted/summary memories
+    \STATE Run lightweight recall and keep the top-$M$ candidates
+    \FOR{each recalled unit $U_j$}
+        \STATE Compute keep logit $q_{t,j}$ by Eq.~\eqref{eq:qread}
+        \STATE Set binary keep decision $b_{t,j}$ by Eq.~\eqref{eq:binarymask}
+    \ENDFOR
+    \STATE Form sparse historical set $\mathcal{B}_t$ and active context $\mathcal{A}_t$ by Eq.~\eqref{eq:Bt}--\eqref{eq:At}
+    \STATE Compute commit probability $p_t^{\mathrm{stop}}$ by Eq.~\eqref{eq:stopprob}
+    \IF{$p_t^{\mathrm{stop}}>\tau_{\mathrm{stop}}$ for $r_{\mathrm{stop}}$ consecutive steps and $t\ge t_{\min}$}
+        \STATE Enter answer-commit mode and output final answer
+        \STATE \textbf{break}
+    \ENDIF
+    \STATE Generate next sentence $y_{t+1}$ using only the context assembled from $\mathcal{A}_t$
+    \STATE Extract new state $m_{t+1}$ and append unit $U_{t+1}$ to the bank
+\ENDFOR
+\STATE If no stop is triggered by $T_{\max}$, force final answer decoding
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Minimal Implementation Contract}
+\label{sec:contract}
+To ensure one-to-one mapping from method to code, a minimal SoT implementation should expose the following interfaces.
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{State extractor:} given a generated sentence $y_t$, return $(z_t,\delta_t,v_t,c_t,H_t,\bar e_t,m_t)$.
+    \item \textbf{Unit builder:} given $(y_t,z_t,m_t)$, create reasoning unit $U_t=(y_t,z_t,m_t)$ and optionally maintain promoted or summary memories.
+    \item \textbf{Recall scorer:} given $(m_t,U_j)$, return a lightweight recall score for broad candidate pruning.
+    \item \textbf{Historical scorer:} given $(m_t,U_j)$, return the keep logit $q_{t,j}$.
+    \item \textbf{Binary selector:} threshold or top-$K$ the keep logits under a fixed history budget.
+    \item \textbf{Commit scorer:} given $m_t$, return the commit-readiness score.
+    \item \textbf{Context assembler:} combine prompt root, recent working trace, and selected historical units into the next decoding context.
+\end{itemize}
+The reference implementation uses explicit context assembly at sentence boundaries for reproducibility. Sparse KV-level masking is a systems optimization of the same logical mechanism, not a different algorithm.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Evaluation Goals}
+Experiments test four claims:
+\begin{enumerate}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{State-coupled reasoning:} sparse historical activation driven by internal state improves reasoning quality over fixed-script baselines.
+    \item \textbf{Efficiency:} binary historical activation reduces active context size, tokens, and wall-clock latency.
+    \item \textbf{Transferability:} a model-specific strategy head trained on mixed-source trajectories generalizes to unseen datasets and domains on the same backbone.
+    \item \textbf{Robust pacing:} commit readiness reduces overthinking and drift without collapsing performance.
+\end{enumerate}
+
+\subsection{Tasks and Benchmarks}
+We evaluate on benchmark families emphasizing complementary reasoning stressors:
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{Sequential derivation:} long chains with cumulative dependency,
+    \item \textbf{Revision-sensitive reasoning:} tasks in which successful reasoning often requires recalling earlier premises or intermediate conclusions,
+    \item \textbf{Long-horizon reasoning:} tasks prone to context overload and late-stage drift,
+    \item \textbf{Cross-domain transfer:} held-out tasks and domains not used during strategy-head training.
+\end{itemize}
+All methods use the same frozen backbone and aligned prompting protocol unless otherwise specified.
+
+\subsection{Training and Inference Setup}
+The backbone LLM is frozen throughout. For each backbone, we train one lightweight strategy head on mixed-source reasoning trajectories collected from multiple datasets, domains, and prompting styles. The training target is fully self-supervised: read and stop teachers are built from offline future-state proxies, counterfactual summaries, outcome information, and bounded context priors as described in Section~\ref{sec:training}. No human action labels, no benchmark-specific scripts, and no backbone finetuning are used.
+
+At inference time, the strategy head is frozen and transferred directly to unseen datasets on the same backbone. The reference implementation additionally records hold-out fit diagnostics, online trace diagnostics, and retrieval ablations so that transfer quality and control behavior can be evaluated jointly rather than by end-task accuracy alone.
+
+\subsection{Baselines}
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{Vanilla decoding:} direct answer generation.
+    \item \textbf{Standard CoT:} fixed linear reasoning.
+    \item \textbf{Fixed-window history:} always keep only the most recent context window.
+    \item \textbf{Semantic retrieval over history:} retrieve prior sentences by semantic similarity alone, without state-driven control.
+    \item \textbf{SoT w/o debt:} remove the slow variable $\bar e_t$.
+    \item \textbf{SoT w/o commit scorer:} keep sparse historical activation but disable learned stopping.
+    \item \textbf{SoT w/o preference replay:} replace learned historical selection with hand-written similarity-based selection.
+    \item \textbf{SoT full:} state-driven sparse historical activation + learned commit readiness.
+\end{itemize}
+
+\subsection{Metrics}
+We report both quality and control efficiency:
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{Quality:} accuracy / exact match / task success.
+    \item \textbf{Cost:} total generated tokens, active-context tokens per step, and wall-clock latency.
+    \item \textbf{Control statistics:} average number of selected historical units, commit depth, and historical-distance distribution.
+    \item \textbf{Transfer metrics:} source-to-target performance retention and cross-domain generalization gap.
+\end{itemize}
+Matched-budget comparisons are reported whenever different methods use different average context sizes.
+
+\subsection{Ablations}
+Key ablations include:
+\begin{itemize}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{State design:} 4D fast state $[\delta,v,c,H]$ vs. 5D fast-slow state $[\delta,v,c,H,\bar e]$.
+    \item \textbf{Binary vs. soft historical control:} hard sparse activation mask vs. soft weighting over all historical units.
+    \item \textbf{Training signal:} full future-health objective vs. final-outcome-only supervision.
+    \item \textbf{Transfer source diversity:} single-source vs. mixed-source trajectory training.
+    \item \textbf{Commit design:} learned commit scorer vs. fixed threshold on debt alone.
+\end{itemize}
+
+\subsection{Analysis}
+We complement the main results with analyses of:
+\begin{enumerate}[leftmargin=1.3em, itemsep=0.2em]
+    \item \textbf{State trajectories:} visualize $m_t$ across successful and failed reasoning paths.
+    \item \textbf{Historical traces:} inspect which prior units are reactivated at different reasoning phases.
+    \item \textbf{Pacing behavior:} examine how commit readiness evolves over time and where overthinking is avoided.
+    \item \textbf{Transfer behavior:} compare learned historical preferences across seen and unseen domains.
+\end{enumerate}
+
+\section{Discussion and Potential Limitations}
+\label{sec:discussion}
+
+\paragraph{What SoT is and is not.}
+SoT is a state-driven reasoning paradigm in which current latent state controls sparse historical recall and answer commitment. It is not a generic history-pruning heuristic, because historical exposure is conditioned on the current reasoning state rather than on static relevance or compression alone. It is also not a correctness classifier: the state is used to regulate reasoning pace and historical activation, not to certify the final answer.
+
+\paragraph{Why the design is minimal.}
+The method keeps only a compact 5D reasoning state, a sparse binary historical-activation mechanism, and a commit scorer. This removes the need for a large hand-written action vocabulary while preserving the ability to revise, look back, and terminate adaptively.
+
+\paragraph{Limitations.}
+The current version is sentence-level and may miss finer token-level cues. Pairwise replay for unit-utility estimation adds offline training cost, although this cost is isolated to the lightweight strategy head. Binary masking also introduces a harder optimization problem than soft attention, requiring stable sparse-gating training. Finally, while mixed-source training is designed to improve transfer, extremely distant domains may still require broader trajectory coverage.
+
+\section{Future Work}
+\label{sec:future}
+Future work includes: (i) extending historical activation from sentence level to phrase-level reasoning units, (ii) integrating sparse KV-level realization for larger efficiency gains, and (iii) studying whether the learned historical-selection policy can serve as a transferable reasoning prior across different backbone families.
+
+\bibliographystyle{plain}
+\bibliography{reference}
+
+\end{document}

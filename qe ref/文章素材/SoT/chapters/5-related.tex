@@ -1,0 +1,15 @@
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Externally scripted reasoning in LLMs.}
+A major line of recent work improves LLM reasoning through explicit inference-time scaffolding, including step-by-step prompting, branching, self-consistency, reflection, verification, and search. These methods have substantially expanded the empirical frontier of reasoning performance, but they share a common assumption: reasoning is improved by imposing an external program that specifies how the model should think. In this sense, they primarily optimize the \emph{form} of reasoning from outside the model. SoT differs at the problem-definition level. Rather than designing better external thought templates, it asks whether the model's own evolving internal state can directly govern how reasoning proceeds.
+
+\paragraph{Geometry and dynamics of internal representations.}
+Another relevant line of work studies hidden-state geometry, representation dynamics, and manifold structure in neural language models. These works show that internal trajectories often contain interpretable organization and may reflect meaningful stages of processing or reasoning. Such findings motivate the possibility that reasoning-relevant signals exist endogenously within the model. However, most prior work in this direction remains descriptive or diagnostic: it aims to interpret internal behavior, characterize representations, or support tasks such as early stopping and summarization. SoT is different in purpose. It uses a compact state derived from internal dynamics not only for interpretation, but as an online control variable that directly shapes subsequent reasoning.
+
+\paragraph{Memory selection and context sparsification.}
+A third related area focuses on retrieval, memory pruning, context compression, and sparse historical usage for long-context or multi-step inference. These methods are closely related to SoT in execution form, since both seek to avoid carrying forward the entire history. The key difference lies in \emph{what drives selection}. Existing approaches typically rely on semantic similarity, relevance estimation, recency, or generic compression criteria. By contrast, SoT conditions historical activation on the model's current reasoning regime. It therefore treats memory selection not as a standalone context management problem, but as part of reasoning control itself.
+
+Overall, SoT is positioned at the intersection of these three areas, but is not reducible to any one of them. It is not another externally scripted reasoning template, not only a representation analysis framework, and not merely a memory compression method. Its central contribution is to formulate reasoning as a closed-loop process in which endogenous state governs sparse historical activation and subsequent reasoning evolution.
+

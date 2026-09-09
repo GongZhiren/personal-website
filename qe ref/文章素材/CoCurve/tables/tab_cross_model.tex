@@ -1,0 +1,12 @@
+% Float and caption only; numbers are generated into tab_cross.tex.
+\begin{table}[t]
+\centering
+\caption{\textbf{Five models, three shared ratios.} ``Best base.'' is the per-column best of the
+training-free baselines run for that model: each baseline's own group average is taken first, then
+the best baseline for that column. \textbf{Bold} is the better of the two rows, in whichever row it
+falls; the blue band marks our row, and its intensity is the size of our margin where we lead. Groups
+average PIQA/HellaSwag/WinoGrande/CSQA, ARC-e/ARC-c/OBQA, and BoolQ/RACE/RACE-h/QuAIL. Per-method
+numbers: \cref{tab:full-unified}.}
+\label{tab:cross-model}
+{\small\input{tables/tab_cross}}
+\end{table}

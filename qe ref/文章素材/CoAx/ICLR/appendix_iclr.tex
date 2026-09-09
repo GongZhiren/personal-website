@@ -1,0 +1,1940 @@
+% ===================== APPENDIX =====================
+% Parts are top-level \section (auto-lettered A, B, ...); the heavy Parts group their topics into
+% \subsection blocks of \subsubsection units. hyperref is enabled (ICLR), so \ref are clickable.
+
+\section*{Appendix Overview}
+
+The appendix is organized into six parts, following the technical and empirical progression of the paper.
+Parts~A--B specify the method and shared experimental protocol; Parts~C--E provide the detailed evidence behind Sections~\ref{sec:discovery}--\ref{sec:panel}; and Part~F records scope, ethics, and reproducibility information.
+
+\paragraph{Part A: Method Details.}
+Appendix~\ref{app:method} provides the complete technical specification of \coax.
+\vspace{-1mm}
+
+\noindent\textbf{Appendix~\ref{app:geometry}: Notation and output geometry.}
+Formal notation, terminology, Fisher geometry, and the finite-ablation interpretation.\\
+\noindent\textbf{Appendix~\ref{app:proofs}: Proofs.}
+Complete proofs of Propositions~\ref{prop:blind} and~\ref{prop:exact}, together with the signed-growth decomposition.\\
+\noindent\textbf{Appendix~\ref{app:algorithm}: Algorithm, cost, and implementation.}
+The full algorithm, pass complexity, measured efficiency, and implementation details.\\
+\noindent\textbf{Appendix~\ref{app:hyperparams}: Hyperparameters and robustness.}
+Protocol constants, ablation-value robustness, calibration efficiency, output-geometry analysis, and task-alignment diagnostics.
+
+\vspace{1mm}
+\paragraph{Part B: Experimental Setup.}
+Appendix~\ref{app:setup} defines the models, circuit roles and supplied primary sets, evaluation data, metrics, and intact-state, conditional, and structural baselines used throughout the experiments.
+
+\vspace{1mm}
+\paragraph{Part C: Backup Recovery and Mechanistic Validation.}
+Appendix~\ref{app:discovery} expands Section~\ref{sec:discovery}.
+\vspace{-1mm}
+
+\noindent\textbf{Appendix~\ref{app:sig-group}: Backup recovery and statistical validation.}
+Recovery across seeds, significance and imbalance-sensitive metrics, historical-readout and layer-depth controls, and a primary-removal-free reference construction.\\
+\noindent\textbf{Appendix~\ref{app:specificity}: Recovery specific to the removed primary set.}
+Alternative and geometry-matched primary sets, contamination, and LayerNorm-freezing controls.\\
+\noindent\textbf{Appendix~\ref{app:real-group}: Causal validation of the recovered branch.}
+Circuit context, graded recruitment and dose response, selector-specific freezing, structural corroboration, and a concrete backup head.\\
+\noindent\textbf{Appendix~\ref{app:keys-group}: What drives conditional growth.}
+The intact-to-removed contrast, output geometry, controlled dormancy and task-alignment tests, and empirical non-additivity.\\
+\noindent\textbf{Appendix~\ref{app:robust-group}: Robustness.}
+Primary-set size, prompt-template robustness, and an implementation check on other additive units.
+
+\vspace{1mm}
+\paragraph{Part D: Conditional Circuit Completion and Knockout.}
+Appendix~\ref{app:attribution} expands Section~\ref{sec:apps}.
+\vspace{-1mm}
+
+\noindent\textbf{Appendix~\ref{app:completeall}: Circuit-completion controls.}
+Raw headline completion, matched controls, and prompt-level uncertainty.\\
+\noindent\textbf{Appendix~\ref{app:oracleko}: Knockout against the documented backup intervention.}
+Counterfactual matching in IOI margin and output distribution, together with collateral-change and paired-uncertainty controls.
+
+\vspace{1mm}
+\paragraph{Part E: Conditional Repair Beyond Documented Backups.}
+Appendix~\ref{app:panel-full} expands the two generalization tests of Section~\ref{sec:panel}.
+\vspace{-1mm}
+
+\noindent\textbf{Appendix~\ref{app:panel}: Repair prediction across mechanisms.}
+The twelve held-out instances under mechanism-matched causal targets and hierarchical inference.\\
+\noindent\textbf{Appendix~\ref{app:gen-group}: Conditional circuit completion across models.}
+Held-out, equal-budget comparisons underlying Figure~\ref{fig:regime}b.
+
+\vspace{1mm}
+\paragraph{Part F: Limitations, Broader Impact, Ethics, and Reproducibility.}
+Appendix~\ref{app:limitations} records the empirical scope and granularity of the study, broader-impact and ethics considerations, model and data licenses, compute, and reproduction details.
+
+\clearpage
+% ============================================================
+\section{Method Details}\label{app:method}
+
+\subsection{Notation and Output Geometry}
+\label{app:geometry}
+
+\paragraph{Notation and conventions.}
+\label{app:terms}
+Table~\ref{tab:notation} summarizes the symbols for the theoretical development.
+% We distinguish fixed problem objects from generic sets and local subset indices used only in the interaction decomposition.
+
+\begin{table}[ht]\centering\small
+\centering
+\small
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{5pt}
+\caption{Core notation for the conditional-completion analysis.}
+\label{tab:notation}
+\begin{tabular}{@{}p{0.13\linewidth}p{0.70\linewidth}@{}}
+\toprule
+\rowcolor{hdr}
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Problem objects}} \\
+
+$\Sset$ & supplied primary set whose removal defines the conditional intervention \\
+$\Uset$ & candidate units, with $\Uset\cap\Sset=\emptyset$ \\
+$u$ & a candidate unit in $\Uset$ \\
+
+\addlinespace[2pt]
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Sets used in the interaction decomposition}} \\
+
+$M$ & generic ablated set, with logits $z_M$ and joint effect $\dz_M=z_0-z_M$ \\
+$T\subseteq M$ & interaction set contributing to the decomposition of $\dz_M$ \\
+$A\subseteq T$ & dummy subset index in the M\"obius transform defining $I_T$ \\
+$R\subseteq\Sset$ & primary-set subset in Proposition~2, with $T=R\cup\{u\}$ \\
+
+\addlinespace[2pt]
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Effects and scores}} \\
+
+$\dz_u$ & ablation effect of $u$ with $\Sset$ present \\
+$\dz_{u\mid\Sset}$ & ablation effect of $u$ after $\Sset$ is removed \\
+$\Delta_u(\Sset)$ & effect change $\dz_{u\mid\Sset}-\dz_u$ induced by primary-set removal \\
+$I_T$ & M\"obius interaction associated with the unit set $T$ \\
+$\energy(v)$ & magnitude of a logit perturbation in the fixed clean output geometry \\
+$\comp_u(\Sset)$ & \coax conditional-growth score \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Output geometry.}
+We first justify the output measure in Eq.~\ref{eq:energy}.
+Fix an evaluated input--position pair $(x,t)$ and suppress this dependence below;
+recall that $p_0=\mathrm{softmax}(z_0)$ is the clean output distribution.
+For a logit perturbation $v$, the centered term
+$v-\langle p_0,v\rangle\mathbf{1}$, where $\mathbf{1}$ is the all-ones vector,
+removes the shared-logit-shift direction to which softmax is invariant, while the
+subsequent $\sqrt{p_0}$ weighting yields the transformed perturbation $\widetilde v$.
+As shown below, Euclidean inner products between such transformed perturbations
+coincide exactly with Fisher inner products at the clean output distribution $p_0$.
+
+For vocabulary-logit perturbations $v$ and $w$, let
+$\bar v=\langle p_0,v\rangle$ and $\bar w=\langle p_0,w\rangle$
+denote their $p_0$-weighted means.
+Using the transformation in Eq.~\ref{eq:energy},
+\begin{equation}
+\begin{aligned}
+\langle\widetilde v,\widetilde w\rangle
+&=
+\sum_i (p_0)_i(v_i-\bar v)(w_i-\bar w) \\
+&=
+\sum_i (p_0)_i v_iw_i-\bar v\,\bar w \\
+&=
+v^\top
+\left(\mathrm{diag}(p_0)-p_0p_0^\top\right)w
+=
+v^\top Fw .
+\end{aligned}
+\label{eq:app_fisher_identity}
+\end{equation}
+Thus Eq.~\ref{eq:energy} is exactly the squared Fisher-metric magnitude of the
+perturbation, averaged over the evaluated input--position pairs:
+\begin{equation}
+\energy(v)
+=
+\mathbb{E}_{x,t}\!\left[v^\top Fv\right].
+\label{eq:app_energy_fisher}
+\end{equation}
+Because $F$ is positive semidefinite, $\energy(v)\geq 0$.
+Moreover, adding the same constant to every logit leaves both the softmax
+distribution and $\energy(v)$ unchanged, so the measure discards the shared-shift
+direction that is invisible to softmax.
+
+This Fisher metric also has a direct distributional interpretation.
+For a scalar path parameter $\alpha$, define the straight-line logit path
+$z_\alpha=z_0-\alpha v$ and the corresponding scalar function
+\begin{equation}
+\phi(\alpha)
+:=
+\mathrm{KL}\!\left(
+p_0\,\middle\|\,\mathrm{softmax}(z_0-\alpha v)
+\right).
+\label{eq:app_phi}
+\end{equation}
+Since
+$\nabla_z\mathrm{KL}(p_0\,\|\,\mathrm{softmax}(z))
+=\mathrm{softmax}(z)-p_0$,
+the clean point satisfies $\phi(0)=0$ and $\phi'(0)=0$.
+Moreover, the Hessian at $z_0$ is the categorical Fisher matrix
+$F=\mathrm{diag}(p_0)-p_0p_0^\top$, so
+\begin{equation}
+\phi''(0)
+=
+v^\top Fv .
+\label{eq:app_phi_second}
+\end{equation}
+A Taylor expansion around $\alpha=0$ therefore gives
+\begin{equation}
+\mathrm{KL}\!\left(
+p_0\,\middle\|\,\mathrm{softmax}(z_0-\alpha v)
+\right)
+=
+\frac{\alpha^2}{2}\,v^\top Fv
++
+O(\alpha^3\|v\|_2^3),
+\qquad \alpha\to0 .
+\label{eq:app_fisher_kl}
+\end{equation}
+% 数学上一般在O()里面只有\alpha，而且对于普通的收敛要写对于固定的v，像下面这样写，不然会混淆是收敛还是一致收敛
+% A Taylor expansion around $\alpha=0$ for fixed $v$ therefore gives
+% \begin{equation}
+% \mathrm{KL}\!\left(
+% p_0\,\middle\|\,\mathrm{softmax}(z_0-\alpha v)
+% \right)
+% =
+% \frac{\alpha^2}{2}\,v^\top Fv
+% +
+% O(\alpha^3),
+% \qquad \alpha\to0 .
+% \label{eq:app_fisher_kl}
+% \end{equation}
+Hence $v^\top Fv$ characterizes the local quadratic sensitivity of the output
+distribution along the logit direction $v$.
+This gives the interpretation used throughout the paper: $\energy(v)$ measures
+the magnitude of an observed logit displacement in the fixed clean output geometry.
+
+\paragraph{Interpretation for finite ablations.}
+\label{app:softmask}
+The local KL expansion above motivates the geometry of the output measure, while
+\coax itself is applied to finite ablations.
+For each intervention, we directly observe the resulting logit displacement and
+measure its magnitude using the Fisher matrix $F$ at the clean output distribution
+as a fixed reference geometry.
+
+Eq.~\ref{eq:app_fisher_kl} therefore describes only the local behavior of the
+straight-line path $z_\alpha=z_0-\alpha v$ in logit space.
+A full internal ablation need not follow this path: for example, if $h_u$ denotes
+the residual-stream contribution of component $u$, gradually scaling it as
+$h_u\leftarrow(1-\alpha)h_u$ is followed by nonlinear transformer computation,
+so the resulting logits need not equal $z_0-\alpha\dz_u$.
+Accordingly, the method does not require the full-ablation KL to equal its
+quadratic approximation, nor does it assume a linear internal ablation trajectory.
+The Fisher expansion provides a local geometric interpretation of the metric used
+to compare the finite displacements actually produced by intervention.
+
+\subsection{Proofs}\label{app:proofs}
+We prove Proposition~\ref{prop:blind} by an explicit non-identifiability
+construction and Proposition~\ref{prop:exact} by M\"obius inversion, and then
+derive the score decomposition in Eq.~\ref{eq:score_shift}.
+Except where $\energy$ is applied, the identities below hold
+pointwise for each evaluated input--position pair $(x,t)$.
+
+\subsubsection{Proof of Proposition~\ref{prop:blind}}
+
+\begin{proof}
+Recall that $\mathcal{I}_u$ denotes the per-unit information recorded for
+candidate $u$ on the original model: its forward activations, output derivatives,
+and single-ablation effect $\dz_u$.
+We construct two candidates with identical such records but different causal
+roles after the primary set is removed.
+
+It suffices to consider an input distribution supported on one evaluated
+input--position pair.
+Choose a nonconstant logit direction $w$.
+Since the clean softmax distribution $p_0$ has strictly positive entries,
+Eq.~\ref{eq:app_energy_fisher} gives
+\begin{equation}
+\energy(w)=w^\top Fw>0 .
+\label{eq:app_blind_positive}
+\end{equation}
+
+Let $q$ denote a scalar state supplied by the primary path: $q=1$ when
+$\Sset$ is present and $q=0$ when it is removed.
+Let $a_b$ and $a_n$ denote the activations of a prospective backup $b$ and an
+irrelevant candidate $n$, respectively.
+Take $a_b=a_n=1$ on the original model, with ablation setting the corresponding
+activation to zero.
+Consider the downstream logit readout
+\begin{equation}
+z(q,a_b,a_n)
+=
+z_{\mathrm{base}}
++
+\bigl[q+(1-q)a_b\bigr]\,w ,
+\label{eq:app_blind_readout}
+\end{equation}
+where $z_{\mathrm{base}}$ collects all remaining logit contributions.
+The candidate $n$ does not enter this readout.
+
+When $\Sset$ is present, $q=1$, so the coefficient of $w$ is one regardless
+of $a_b$.
+Consequently, ablating either candidate leaves the clean logits unchanged:
+\begin{equation}
+z_{\{b\}}=z_{\{n\}}=z_0=z_{\mathrm{base}}+w,
+\qquad
+\dz_b=\dz_n=0 .
+\label{eq:app_blind_intact}
+\end{equation}
+Moreover, at the intact state,
+\begin{equation}
+\frac{\partial z}{\partial a_b}
+=
+(1-q)w
+=
+0,
+\qquad
+\frac{\partial z}{\partial a_n}
+=
+0 .
+\label{eq:app_blind_derivatives}
+\end{equation}
+Thus $b$ and $n$ have the same forward activation, the same output derivative,
+and the same single-ablation effect on the original model.
+By Definition~\ref{def:intactscore},
+\begin{equation}
+\mathcal{I}_b=\mathcal{I}_n,
+\qquad
+\energy(\dz_b)=\energy(\dz_n)=0 .
+\label{eq:app_blind_same_record}
+\end{equation}
+Hence every intact-state score assigns the two candidates the same value.
+
+Now remove the primary set, so $q=0$.
+With $b$ present, its activation supplies exactly the missing logit direction
+$w$:
+\begin{equation}
+z_\Sset=z_{\mathrm{base}}+w=z_0 .
+\label{eq:app_blind_repair}
+\end{equation}
+Thus $b$ perfectly repairs the primary-path contribution at the output.
+If $b$ is also ablated, that contribution disappears, whereas ablating $n$
+still changes nothing:
+\begin{equation}
+z_{\Sset\cup\{b\}}=z_{\mathrm{base}},
+\qquad
+z_{\Sset\cup\{n\}}=z_\Sset .
+\label{eq:app_blind_counterfactuals}
+\end{equation}
+Therefore the conditional ablation effects are
+\begin{equation}
+\dz_{b\mid\Sset}
+=
+z_\Sset-z_{\Sset\cup\{b\}}
+=
+w,
+\qquad
+\dz_{n\mid\Sset}
+=
+z_\Sset-z_{\Sset\cup\{n\}}
+=
+0 .
+\label{eq:app_blind_conditional}
+\end{equation}
+Using Eq.~\ref{eq:app_blind_positive},
+\begin{equation}
+\energy(\dz_{b\mid\Sset})>0,
+\qquad
+\energy(\dz_{n\mid\Sset})=0 .
+\label{eq:app_blind_conditional_energy}
+\end{equation}
+Finally, because both intact effects vanish, Eq.~\ref{eq:comp} gives
+\begin{equation}
+\comp_b(\Sset)
+=
+\energy(w)
+>0,
+\qquad
+\comp_n(\Sset)
+=
+0 .
+\label{eq:app_blind_coax}
+\end{equation}
+Thus the two candidates are indistinguishable from their intact-state records,
+while conditional co-ablation separates the dormant backup $b$ from the
+irrelevant candidate $n$.
+\end{proof}
+
+\paragraph{Interpretation.}
+Proposition~\ref{prop:blind} establishes a non-identifiability result for the
+intact-state information class in Definition~\ref{def:intactscore}.
+The same per-unit evidence on the original model can correspond to different
+causal roles after the primary set is removed: in the construction above, $b$
+exactly replaces the lost primary contribution $w$, while $n$ remains irrelevant.
+The missing distinction is therefore genuinely conditional on primary-set removal.
+Perfect dormancy gives the sharpest case; the experiments examine whether this
+distinction remains recoverable when real backups retain some intact-state signal.
+
+\subsubsection{Proof of Proposition~\ref{prop:exact}}
+
+\begin{proof}
+Fix a candidate $u\in\Uset$, so $u\notin\Sset$.
+Recall that for any ablated set $M$,
+$\dz_M=z_0-z_M$, with $\dz_\emptyset=0$.
+For the vector-valued set function $M\mapsto\dz_M$, the M\"obius interaction
+associated with each nonempty set $T$ is
+\begin{equation}
+I_T
+=
+\sum_{A\subseteq T}
+(-1)^{|T|-|A|}\dz_A ,
+\label{eq:app_mobius_transform}
+\end{equation}
+where $A$ is a dummy subset of $T$.
+M\"obius inversion on the subset lattice~\citep{rota1964foundations} applies
+coordinatewise to the logit vector and gives, for every ablated set $M$,
+\begin{equation}
+\dz_M
+=
+\sum_{\emptyset\neq T\subseteq M} I_T .
+\label{eq:app_mobius_inversion}
+\end{equation}
+
+The conditional ablation effect can be written as the difference between two
+joint ablation effects:
+\begin{equation}
+\dz_{u\mid\Sset}
+=
+z_\Sset-z_{\Sset\cup\{u\}}
+=
+\dz_{\Sset\cup\{u\}}-\dz_\Sset .
+\label{eq:app_conditional_difference}
+\end{equation}
+Applying Eq.~\ref{eq:app_mobius_inversion} to the two terms yields
+\begin{equation}
+\begin{aligned}
+\dz_{u\mid\Sset}
+&=
+\sum_{\emptyset\neq T\subseteq\Sset\cup\{u\}} I_T
+-
+\sum_{\emptyset\neq T\subseteq\Sset} I_T \\
+&=
+\sum_{\substack{T\subseteq\Sset\cup\{u\}\\u\in T}} I_T .
+\end{aligned}
+\label{eq:app_exact_cancel}
+\end{equation}
+Indeed, every interaction whose set $T$ does not contain $u$ is a subset of
+$\Sset$ and therefore appears in both sums, so these terms cancel exactly.
+
+Because $u\notin\Sset$, every surviving set containing $u$ can be written
+uniquely as
+$T=R\cup\{u\}$ for a subset $R\subseteq\Sset$.
+Re-indexing the remaining terms therefore gives
+\begin{equation}
+\dz_{u\mid\Sset}
+=
+\sum_{R\subseteq\Sset} I_{R\cup\{u\}} .
+\label{eq:app_exact_reindex}
+\end{equation}
+The term $R=\emptyset$ is
+$I_{\{u\}}=\dz_u$.
+More generally, an index set $R$ of size $|R|$ contributes an interaction of
+order $|R|+1$: $|R|=1$ gives the pairwise candidate--primary interactions,
+while $|R|\geq2$ gives all higher orders.
+
+Subtracting the first-order term gives the effect change induced by
+primary-set removal:
+\begin{equation}
+\Delta_u(\Sset)
+:=
+\dz_{u\mid\Sset}-\dz_u
+=
+\sum_{\emptyset\neq R\subseteq\Sset}
+I_{R\cup\{u\}} .
+\label{eq:app_delta_exact}
+\end{equation}
+Thus $\Delta_u(\Sset)$ is exactly the aggregate of every interaction order
+that contains the candidate $u$ and at least one unit from the removed primary
+set.
+No approximation, pairwise truncation, or assumption of linear model
+responses is involved; higher-order nonlinear joint effects are represented
+by the corresponding $I_T$ terms.
+\end{proof}
+
+\subsubsection{Score decomposition}
+
+We now connect the all-order effect change in Proposition~\ref{prop:exact} to the scalar \coax score. By definition,
+\begin{equation}
+\dz_{u\mid\Sset}=\dz_u+\Delta_u(\Sset),
+\label{eq:app_effect_change_identity}
+\end{equation}
+where Eq.~\ref{eq:app_delta_exact} shows that $\Delta_u(\Sset)$ is exactly the aggregate of all interaction orders linking $u$ to the removed primary set.
+
+For each evaluated input--position pair $(x,t)$, the clean distribution $p_0$ is fixed, so the transformation $v\mapsto\widetilde v$ in Eq.~\ref{eq:energy} is linear. Hence
+\begin{equation}
+\widetilde{\dz}_{u\mid\Sset}=\widetilde{\dz}_u+\widetilde{\Delta}_u(\Sset),
+\label{eq:app_tilde_delta}
+\end{equation}
+where $\widetilde{\Delta}_u(\Sset)$ is the same centered, Fisher-weighted transformation applied to the effect change.
+Substituting into $\comp_u(\Sset)=\energy(\dz_{u\mid\Sset})-\energy(\dz_u)$ gives
+\begin{equation}
+\begin{aligned}
+\comp_u(\Sset)
+&=\mathbb{E}_{x,t}\left[\left\|\widetilde{\dz}_u+\widetilde{\Delta}_u(\Sset)\right\|_2^2-\left\|\widetilde{\dz}_u\right\|_2^2\right]\\
+&=\mathbb{E}_{x,t}\left[2\left\langle\widetilde{\dz}_u,\widetilde{\Delta}_u(\Sset)\right\rangle+\left\|\widetilde{\Delta}_u(\Sset)\right\|_2^2\right].
+\end{aligned}
+\label{eq:app_score_decomposition}
+\end{equation}
+This is Eq.~\ref{eq:score_shift}. The squared-change term measures the magnitude of the \emph{aggregate} interaction-induced effect change; because $\Delta_u(\Sset)$ is a vector sum, different interaction orders may reinforce or cancel before this norm is taken. For a perfectly dormant unit, $\energy(\dz_u)=0$, so the intact-state cross term vanishes and
+\begin{equation}
+\comp_u(\Sset)=\energy\!\left(\Delta_u(\Sset)\right).
+\label{eq:app_dormant_growth}
+\end{equation}
+Thus the score directly measures the newly exposed conditional effect in the sharp dormant case, while retaining the signed change in ablation-effect magnitude away from that limit.
+
+\subsection{Algorithm, Cost, and Implementation}
+\label{app:algorithm}
+
+\subsubsection{Algorithm and pass complexity}
+
+Algorithm~\ref{alg:cond} gives the direct finite-ablation implementation of the \coax score in Eq.~\ref{eq:comp}.
+Let $\mathcal{X}$ denote the calibration set of evaluated input--position pairs
+$(x,t)$; all expectations below are empirical averages over $\mathcal{X}$.
+The clean output distribution $p_0(x,t)$ is computed once and then held fixed
+across all interventions.
+
+\begin{algorithm}[ht]
+\caption{\coax conditional co-ablation}
+\label{alg:cond}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} frozen model; calibration set $\mathcal{X}$ of input--position pairs $(x,t)$; primary set $\Sset$; candidate set $\Uset$ with $\Uset\cap\Sset=\emptyset$
+\STATE \textbf{Output:} conditional-growth scores $\comp_u(\Sset)$ for all $u\in\Uset$
+\STATE compute clean logits $z_0(x,t)$ and
+$p_0(x,t)\leftarrow\mathrm{softmax}(z_0(x,t))$
+for all $(x,t)\in\mathcal{X}$
+\FOR{$u\in\Uset$}
+  \STATE ablate $u$ and compute
+  $\dz_u\leftarrow z_0-z_{\{u\}}$
+  \STATE compute
+  $\widetilde{\dz}_u
+  \leftarrow
+  \sqrt{p_0}\odot
+  \bigl(\dz_u-\langle p_0,\dz_u\rangle\mathbf 1\bigr)$
+  \STATE compute and store
+  $\energy(\dz_u)
+  \leftarrow
+  \mathbb{E}_{(x,t)\in\mathcal{X}}
+  \|\widetilde{\dz}_u\|_2^2$
+\ENDFOR
+\STATE ablate $\Sset$ jointly and compute $z_\Sset$
+\COMMENT{shared conditional reference}
+\FOR{$u\in\Uset$}
+  \STATE ablate $\Sset\cup\{u\}$ and compute
+  $\dz_{u\mid\Sset}
+  \leftarrow
+  z_\Sset-z_{\Sset\cup\{u\}}$
+  \STATE compute
+  $\widetilde{\dz}_{u\mid\Sset}
+  \leftarrow
+  \sqrt{p_0}\odot
+  \bigl(
+  \dz_{u\mid\Sset}
+  -
+  \langle p_0,\dz_{u\mid\Sset}\rangle\mathbf 1
+  \bigr)$
+  \STATE
+  $\comp_u(\Sset)
+  \leftarrow
+  \mathbb{E}_{(x,t)\in\mathcal{X}}
+  \|\widetilde{\dz}_{u\mid\Sset}\|_2^2
+  -
+  \energy(\dz_u)$
+  \COMMENT{conditional growth}
+\ENDFOR
+\STATE \textbf{return} $\comp_u(\Sset)$ for ranking
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Pass complexity.}
+The computation mirrors the two states compared by \coax.
+The clean logits $z_0$ and the primary-ablated logits $z_\Sset$ are shared
+across all candidates, while each $u\in\Uset$ requires two candidate-specific
+evaluations: $z_{\{u\}}$ for its intact ablation effect and
+$z_{\Sset\cup\{u\}}$ for its conditional ablation effect.
+Thus scoring $|\Uset|$ candidates requires $2|\Uset|+2$ forward evaluations
+over the calibration set when both shared references are counted, or
+$2|\Uset|+1$ additional evaluations when the clean reference is already
+available.
+In either convention, the pass complexity is $O(|\Uset|)$, with no backward
+pass or task gradient.
+
+\paragraph{Fixed output geometry.}
+The same clean distribution $p_0$ is used for both the intact and conditional effects, so their magnitudes are compared in a common output geometry.
+
+\paragraph{Direct access to the interaction aggregate.}
+Proposition~\ref{prop:exact} identifies the effect change
+$\Delta_u(\Sset)$ as the exact aggregate of all interaction orders linking
+candidate $u$ to the removed primary set.
+\coax does not recover those constituent terms individually: doing so would, in general, require subset evaluations, with even a pairwise truncation costing $O(|\Uset||\Sset|)$ and omitting higher orders.
+Instead, the two-state scan measures the complete vector aggregate $\Delta_u(\Sset)$ directly in $O(|\Uset|)$ evaluations.
+
+\paragraph{Approximation and reuse.}
+For the optional top-$r$ large-vocabulary approximation, the top-$r$
+vocabulary support is selected once from the clean distribution for each
+evaluated input--position pair and then held fixed across all interventions.
+The clean probabilities are renormalized on that support before applying
+Eq.~\ref{eq:energy}; its effect on backup recovery is reported in
+Appendix~\ref{app:components}.
+If circuit completion is repeated after enlarging $\Sset$, the intact effects
+$\dz_u$, their transformed representations, and $\energy(\dz_u)$ can be reused
+for candidates that remain outside the primary set.
+Only the new shared conditional reference $z_\Sset$ and the corresponding
+conditional candidate evaluations $z_{\Sset\cup\{u\}}$ need to be recomputed.
+
+\subsubsection{Cost}
+
+The $O(|\Uset|)$ pass complexity translates to modest wall-clock overhead in
+practice.
+Table~\ref{tab:scal} reports measured runtime and peak GPU memory for one
+intact single-unit scan and for the complete two-state \coax scoring pass, each using $48$ calibration prompts.
+Across architectures from GPT-2-small to Llama-3.1-8B, scoring takes seconds to
+minutes on a single GPU and requires no backward pass.
+Runtime reflects both the cost of a model forward pass and the number of scored
+units, while peak memory is dominated by the frozen model.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\caption{Measured cost of \coax on a single GPU with $48$ calibration prompts.
+\emph{Single} denotes one intact candidate scan; \emph{\coax total} denotes the full two-state computation, including the intact and primary-conditional candidate scans.
+Both are linear in the number of scored units.
+\emph{Units} counts the scored structured units, one per attention head
+($\text{layers}\times\text{query heads}$; on grouped-query models the query heads, not the
+key--value groups).
+Peak memory includes the frozen model.}
+\label{tab:scal}
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{hdr}
+model & params & units & single (s) & \coax total (s) & peak GB \\
+\midrule
+GPT-2-small   & 124M & 144 & 2.9 & 5.7 & 0.8 \\
+GPT-2-medium  & 355M & 384 & 19  & 39  & 1.7 \\
+Pythia-410m   & 410M & 384 & 18  & 37  & 1.9 \\
+GPT-Neo-1.3b  & 1.3B & 384 & 64  & 128 & 5.6 \\
+Gemma-2-2b    & 2B   & 208 & 18  & 35  & 6.0 \\
+\addlinespace[2pt]
+OLMo-2-7B     & 7B   & 1024 & 182 & 368 & 14.9 \\
+Llama-3.1-8B  & 8B   & 1024 & 180 & 360 & 16.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Efficiency}\label{app:efficiency}
+
+\coax uses two forward-only candidate scans, and each scan has a distinct role:
+the conditional scan measures candidate effects after the primary set is removed,
+while the intact scan removes pre-existing importance to isolate the growth caused
+by that intervention.
+This two-state design provides three complementary efficiency advantages.
+
+\paragraph{One additional scan buys the conditional contrast.}
+The closest matched control is conditional energy alone:
+it uses the same supplied primary set, prompts, finite-ablation machinery, and
+Fisher geometry as \coax, but ranks candidates only by
+$\energy(\dz_{u\mid\Sset})$.
+It requires a single conditional candidate scan and reaches
+$0.758\pm0.004$ backup AUC.
+Adding the intact scan enables the subtraction in Eq.~\ref{eq:comp}, raising
+recovery to $0.941\pm0.004$.
+Thus the additional $O(|\Uset|)$ scan is spent specifically on separating
+intervention-induced growth from importance that was already present before
+the intervention.
+
+\paragraph{All-order information without interaction enumeration.}
+By Proposition~\ref{prop:exact}, the effect change
+$\Delta_u(\Sset)$ obtained from these two states is exactly the aggregate of
+all interaction orders linking candidate $u$ to the removed primary set.
+Recovering those orders individually is exponential in $|\Sset|$.
+Even the natural pairwise truncation requires
+$O(|\Uset||\Sset|)$ candidate--primary joint evaluations and omits every
+order above two, whereas \coax obtains the complete aggregate in
+$O(|\Uset|)$ forward evaluations.
+Conditioning therefore obtains the complete effect-change aggregate directly,
+without decomposing it into constituent interaction orders.
+
+\paragraph{Forward-only and data-efficient.}
+Unlike the gradient baselines, \coax requires neither a backward pass nor a
+task gradient; all candidate interventions are independent and can be batched
+or parallelized.
+On GPT-2-small, the strongest intact-state gradient baseline reaches
+$0.815\pm0.031$ backup AUC, compared with $0.941\pm0.004$ for \coax.
+The calibration requirement is also small: $16$ unlabeled prompts already
+reach $0.931$ AUC, $32$ reach $0.937$, and the $96$-prompt main setting reaches
+$0.941$ (Figure~\ref{fig:method_analysis}a).
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\caption{
+Compute--recovery trade-off on GPT-2-small IOI.
+The three supplied primary heads are excluded from the backup ranking, leaving
+$|\Uset|=141$ candidates.
+Forward/backward counts omit the shared clean reference.
+$\dagger$ denotes methods given the same supplied primary set as \coax.
+}
+\label{tab:efficiency}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{hdr}
+method & forwards & backwards & task grad. & backup AUC \\
+\midrule
+
+\rowcolor{hdr!55}
+\multicolumn{5}{c}{\textbf{Intact-state scores}} \\
+
+single ablation
+& $|\Uset|$ & $0$ & --- & $0.603\pm.007$ \\
+
+AtP
+& $1$ & $1$ & \checkmark & $0.600\pm.032$ \\
+
+EAP-IG
+& $5$ & $5$ & \checkmark & $0.700\pm.020$ \\
+
+AtP$^\star$ GradDrop
+& $1$ & $L$ & \checkmark & $0.815\pm.031$ \\
+
+\addlinespace[2pt]
+\rowcolor{hdr!55}
+\multicolumn{5}{c}{\textbf{Given the same primary set}} \\
+
+conditional energy only$^\dagger$
+& $|\Uset|+1$ & $0$ & --- & $0.758\pm.004$ \\
+
+pairwise-truncated growth$^\dagger$
+& $|\Uset|+|\Sset|+|\Uset||\Sset|$
+& $0$ & --- & $0.927\pm.001$ \\
+
+\rowcolor{ourrow}
+\coax$^\dagger$
+& $2|\Uset|+1$ & $0$ & --- & \bestauc{0.941}{.004} \\
+
+\bottomrule
+\end{tabular}
+
+\begin{flushleft}
+\scriptsize
+\textbf{Notes:}
+For IOI, $|\Uset|=141$ and $|\Sset|=3$, giving $283$ forward evaluations
+for \coax versus $567$ for the pairwise-truncated construction.
+The latter retains only
+$\Delta_u^{(2)}(\Sset)=\sum_{s\in\Sset}I_{\{u,s\}}$,
+whereas Proposition~\ref{prop:exact} shows that \coax obtains the complete
+all-order aggregate $\Delta_u(\Sset)$.
+\end{flushleft}
+
+
+\end{table}
+
+Table~\ref{tab:efficiency} summarizes the resulting compute--recovery trade-off.
+For the IOI backup task, $|\Uset|=141$ candidates remain after excluding the
+three supplied primary heads.
+The clean reference, shared by all methods that require it, is omitted from
+the pass counts.
+
+\subsubsection{Implementation details}
+
+The following conventions remove implementation ambiguities to make the score precise and support reproduction.
+
+\begin{itemize}
+
+\item \textbf{Aggregation.}
+For each prompt, $\energy(\cdot)$ is first averaged over its evaluated token positions and then averaged across prompts, giving every prompt equal weight.
+In the main IOI discovery setting there is a single evaluated position---the answer position---as specified in Table~\ref{tab:hparams}.
+
+\item \textbf{Top-$r$ vocabulary support.}
+When the optional top-$r$ approximation is used, a support is selected once from the clean distribution $p_0$ for each evaluated input--position pair and
+is held fixed for all corresponding ablated passes.
+The clean probabilities are renormalized on this support before applying Eq.~\ref{eq:energy}, so the intact and conditional effects are measured in the
+same coordinates and clean-reference geometry.
+
+\item \textbf{Conditional intervention.}
+All units in the supplied primary set $\Sset$ are ablated jointly, rather than one at a time.
+The resulting logits $z_\Sset$ form a single conditional reference shared by all candidates, so every $\dz_{u\mid\Sset}$ is measured relative to the same primary-ablated state.
+
+\item \textbf{Ranking.}
+Candidates are ranked directly by the signed growth score $\comp_u(\Sset)$, with no ReLU or post-hoc threshold.
+Positive values indicate amplification after primary-set removal, whereas negative values indicate attenuation and therefore naturally fall lower in a
+backup ranking.
+
+\item \textbf{Grouped-query attention.}
+A unit is one query head, and the intervention overwrites that head's slice of the input to the attention output projection.
+Grouped-query attention (GQA) shares keys and values across the query heads of a group, but each query head still writes through its own slice of that projection, so a single query head remains a well-defined component to remove and no query heads are merged into one unit.
+The unit counts in Table~\ref{tab:scal} are therefore $\text{layers}\times\text{query heads}$ on every model, including the GQA ones.
+
+\end{itemize}
+
+\subsection{Hyperparameters and Robustness}
+\label{app:hyperparams}
+
+\subsubsection{Hyperparameters}
+
+\coax has few tunable quantities; most settings specify the intervention and evaluation protocol rather than learned or task-optimized hyperparameters.
+The main IOI discovery setting uses $96$ calibration prompts, reads logits at the \emph{answer position}, and evaluates the \emph{full vocabulary}.
+Zero ablation is the default intervention.
+
+The supplied primary set follows the documented circuit definition: three name-mover heads for IOI and four induction heads for the induction experiments.
+Robustness to smaller supplied primary sets is reported in Appendix~\ref{app:seedrobust}.
+For large-vocabulary models, we optionally use the fixed-support top-$r$ approximation described above; its robustness relative to full-vocabulary scoring is evaluated in Appendix~\ref{app:components}.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{Main protocol and auxiliary experimental settings.
+Task- or model-specific deviations are stated in the corresponding sections.}
+\label{tab:hparams}
+\begin{tabular}{ll}
+\toprule
+\rowcolor{hdr}
+setting & value \\
+\midrule
+
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Main discovery protocol}} \\
+output position
+& answer position (last prompt position) \\
+vocabulary
+& full ($50{,}257$ for GPT-2-small); optional top-$r$ approximation \\
+output geometry
+& centered Fisher with fixed clean $p_0$ (Eq.~\ref{eq:energy}) \\
+discovery prompts
+& $96$ IOI calibration prompts \\
+ablation value
+& zero; alternatives in Table~\ref{tab:ablrobust} \\
+primary set $|\Sset|$
+& documented circuit definition ($3$ name-movers; $4$ induction heads) \\
+prompt seeds
+& $\{1,15,22,8\}$ \\
+
+\addlinespace[2pt]
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Baseline and unit-granularity settings}} \\
+EAP-IG integration steps
+& $5$ \\
+FFN grouping
+& $96$ groups for GPT-2-small FFN analysis \\
+
+\addlinespace[2pt]
+\rowcolor{hdr!55}
+\multicolumn{2}{c}{\textbf{Auxiliary analyses}} \\
+random-control draws
+& $20$ (attribution / knockout) \\
+permutation shuffles
+& $10{,}000$ \\
+synthetic trials
+& $40$ \\
+
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:hparams} consolidates the main protocol together with the baseline and auxiliary-analysis settings used throughout the experiments.
+
+
+\subsubsection{Robustness to the ablation value}
+\label{app:ablrobust}
+
+Faithfulness estimates can depend on the choice of ablation operator
+\citep{miller2024faithfulness}.
+We therefore recompute the same \coax ranking under four qualitatively
+different replacement rules: zero ablation, mean replacement, empirical
+resampling, and moment-matched Gaussian replacement.
+
+For mean replacement, the per-dimension activation mean is estimated from the
+head's pre-projection activations on the same $96$ IOI calibration prompts,
+pooled over all token positions.
+For resample replacement, each candidate is replaced by a single activation
+slice drawn uniformly from those same (prompt, position) pairs.
+Gaussian replacement uses the corresponding empirical per-dimension mean and
+standard deviation estimated from the same pooled activations.
+For stochastic replacements, the draw is made once per head before scoring and held fixed across the intact and conditional evaluations, so the two states are compared under the same replacement vector and the contrast is not confounded
+by resampling noise.
+
+
+% Across the four prompt seeds, \coax remains consistently strong under every
+% replacement rule, with mean backup AUC ranging from
+% \textit{[MIN MEAN]} to \textit{[MAX MEAN]}.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\caption{
+Robustness to the ablation operator on GPT-2-small IOI.
+Values are backup-discovery AUC averaged over the four prompt seeds
+$\{1,15,22,8\}$.
+}
+\label{tab:ablrobust}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{hdr}
+method & zero & mean & resample & Gaussian \\
+\midrule
+single ablation
+& $0.603\pm.007$
+& $0.620\pm.009$
+& $0.705\pm.012$
+& $0.623\pm.016$ \\
+\rowcolor{ourrow}
+\coax \scriptsize{(ours)}
+& \bestauc{0.941}{.004}
+& \bestauc{0.943}{.003}
+& \bestauc{0.930}{.052}
+& \bestauc{0.941}{.007} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% \begin{table}[ht]\centering\small
+% \setlength{\tabcolsep}{8pt}
+% \caption{Backup-discovery AUC under four ablation values (GPT-2-small, single run at the default prompt seed, so the zero-ablation row is this study's own reference rather than the four-seed mean of Table~\ref{tab:backup}).
+% \coax is stable across all four; single-ablation saliency stays well below it throughout.}
+% \label{tab:ablrobust}
+% \begin{tabular}{lcccc}
+% \toprule
+% \rowcolor{hdr}
+%  & zero & mean & resample & Gaussian \\
+% \midrule
+% single ablation   & 0.60 & 0.61 & 0.69 & 0.61 \\
+% \rowcolor{ourrow}
+% \coax \scriptsize{(ours)}            & \best{0.945} & \best{0.945} & \best{0.968} & \best{0.936} \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+As shown in Table~\ref{tab:ablrobust}, \coax achieves $0.930$--$0.943$ across the four operators, while single-ablation ranking remains at
+$0.603$--$0.705$.
+The conditional ranking therefore remains stable across deterministic,
+empirical, and stochastic replacement rules rather than depending on a particular ablation value.
+
+\subsubsection{Method analysis: data efficiency, output geometry, and task alignment}
+\label{app:caleff}
+
+Figure~\ref{fig:method_analysis} isolates three design properties of \coax:
+its calibration requirement, the contribution of the output geometry, and
+its dependence on alignment with the task direction.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figs/fig_method_analysis.pdf}
+\caption{\textbf{Diagnostics of the \coax score.}
+\textbf{(a)} Backup AUC versus unlabeled calibration-set size
+(GPT-2-small IOI, four prompt seeds); recovery is already near the
+$96$-prompt result with $16$--$32$ prompts.
+\textbf{(b)} Output-geometry ablation under the same conditional contrast:
+the full centered Fisher geometry outperforms plain $\ell_2$, centering alone,
+and probability weighting alone.
+\textbf{(c)} Synthetic backup AUC as answer alignment $\beta$ varies.
+Full-distribution \coax remains stable as backups move off the task direction,
+whereas the conditional gradient deteriorates; AtP$^\star$ remains near
+chance.
+The measured IOI setting lies in the low-answer-alignment regime of the sweep.}
+\label{fig:method_analysis}
+\end{figure}
+
+\paragraph{Data efficiency.}
+\coax requires only unlabeled calibration prompts.
+On GPT-2-small IOI, $16$ prompts already reach $0.931$ backup AUC,
+$32$ reach $0.937$, and the $96$-prompt main setting reaches $0.941$
+(Figure~\ref{fig:method_analysis}a).
+Thus most of the final recovery is already obtained from a small calibration set.
+
+\paragraph{Output geometry.}
+Conditioning provides the main recovery signal (Table~\ref{tab:design});
+Figure~\ref{fig:method_analysis}b isolates the additional contribution of the
+output geometry.
+Using the same conditional contrast, a plain $\ell_2$ magnitude reaches
+$0.905$, while the full centered Fisher geometry reaches $0.941$.
+Centering alone ($0.903$) and probability weighting alone ($0.909$) do not
+recover this gain.
+This is consistent with Eq.~\ref{eq:app_fisher_identity}: centering and
+$\sqrt{p_0}$ weighting jointly realize the Fisher metric
+$F=\mathrm{diag}(p_0)-p_0p_0^\top$.
+
+\paragraph{Full-distribution scoring.}
+\coax measures the complete output displacement rather than projecting it
+onto the answer direction.
+In the synthetic sweep of Figure~\ref{fig:method_analysis}c, $\beta$ controls
+how strongly the planted backup effect aligns with that task direction.
+The \coax AUC remains essentially unchanged as $\beta$ decreases, whereas the
+conditional gradient deteriorates as the backup moves off the answer
+direction; intact-state scores remain near chance.
+The documented IOI setting also lies in the low-answer-alignment region of this controlled sweep ($\beta\approx0$; Appendix~\ref{app:synth}).
+Thus the controlled experiment shows that full-distribution scoring remains stable as a planted conditional effect rotates away from the task direction.
+
+
+\clearpage
+% ============================================================
+\section{Experimental Setup}
+\label{app:setup}
+
+\subsection{Models}
+\label{app:models}
+
+We evaluate GPT-2~\citep{radford2019gpt2} (small 124M, medium 355M, large 774M), Pythia~\citep{biderman2023pythia} (160M, 410M, 1.4B), GPT-Neo-1.3B~\citep{black2021gptneo}, Gemma-2~\citep{gemma2024} (2B, 9B), OLMo-2-7B~\citep{olmo2024}, Meta-Llama-3.1-8B-Instruct~\citep{llama3}, and Qwen2.5-7B-Instruct~\citep{qwen2025}.
+All checkpoints remain frozen and no method updates model weights.
+The cross-model panel uses \texttt{Qwen/Qwen2.5-7B-Instruct} and \texttt{meta-llama/Meta-Llama-3.1-8B-Instruct}; exact checkpoint identifiers and software revisions are provided in the anonymized supplementary archive.
+% Evaluation counts are in Table~\ref{tab:efficiency}, with runtime and memory in Table~\ref{tab:scal}.
+
+\subsection{Circuit roles and primary sets}
+\label{app:circuitroles}
+
+For GPT-2-small IOI, we use the documented head roles of \citet{wang2022ioi}: name-mover, backup name-mover, S-inhibition, induction, duplicate-token, and previous-token heads.
+The main backup experiment takes the three primary name-movers as $\Sset$, the eight documented backups as positives, and all remaining heads as candidates.
+For cross-model induction analyses, induction, duplicate-token, and previous-token roles are detected from attention offsets on repeated-random sequences~\citep{olsson2022induction}: previous-token heads attend to $p{-}1$, duplicate-token heads to $p{-}T$, and induction heads to $p{-}T{+}1$ for repeated-sequence length $T$.
+These detected roles define primary sets when documented cross-model labels are unavailable.
+
+\subsection{Data}
+\label{app:data}
+
+IOI prompts instantiate ``When \{A\} and \{B\} went to the \{place\}, \{B\} gave a \{object\} to'' using the single-token pools of \citet{wang2022ioi}; the indirect object (IO) appears once and the subject (S) twice.
+The main discovery protocol uses $96$ sampled fillings, and the structural attention summary in Figure~\ref{fig:attn} is averaged over the same prompts.
+Two additional surface templates test prompt-form robustness in Appendix~\ref{app:template}.
+Induction experiments use uniformly random token sequences repeated once and score repeated-token log-probability on the second copy.
+WikiText-2 windows~\citep{merity2017wikitext} provide unlabeled calibration data for cross-scale geometry analyses.
+Protocol constants and prompt seeds are in Table~\ref{tab:hparams}.
+
+\subsection{Metrics}
+\label{app:metrics}
+
+For IOI, the behavioral readout is the answer margin $m=z_{\mathrm{IO}}-z_{\mathrm{S}}$.
+Backup recovery uses head-level ROC-AUC over the eight documented backups, excluding the supplied primary heads; average precision and precision at small $k$ provide imbalance-sensitive checks.
+Section~\ref{sec:panel} reports Spearman rank agreement between each score and held-out freezing-based repair.
+Circuit completion uses the incompleteness gap from Section~\ref{sec:apps}; knockout additionally measures IOI-margin distance and answer-position KL to the documented primary-plus-backup intervention, with unrelated-text KL tracking collateral change.
+
+\subsection{Baselines}
+\label{app:baselines}
+
+\paragraph{Intact-state scores.}
+We compare single-ablation saliency, AtP~\citep{syed2023attribution} (gradient times activation), EAP-IG~\citep{hanna2024faith} (five integrated-gradient steps~\citep{sundararajan2017integrated}), and AtP$^\star$ GradDrop~\citep{kramar2024atp}.
+For GradDrop, we use the head-output component: $L$ backward passes, each blocking one layer's indirect gradient path; the QK correction instead targets attention saturation.
+Task-gradient baselines use the IOI margin.
+
+\paragraph{Conditional and structural controls.}
+Conditional energy ranks by $\energy(\dz_{u\mid\Sset})$ using the same primary set, ablation machinery, and Fisher geometry as \coax, but omits the intact effect.
+Conditional gradient recomputes attribution after primary-set ablation, testing whether the intervened state alone exposes backups.
+We also compare co-activation and the weight-space projection kernel~\citep{yamagiwa2026projection}.
+A task-specific historical control ranks heads by the change in direct IO$-$S logit attribution after primary removal; because this mirrors the readout used to characterize the IOI backup branch, we report it separately in Appendix~\ref{app:historical-dla}.
+These controls isolate conditioning, the intact-to-removed contrast, and the scoring representation.
+
+\clearpage
+% ============================================================
+\section{Backup Recovery and Mechanistic Validation}
+\label{app:discovery}
+
+This appendix expands the evidence behind Section~\ref{sec:discovery} in the same order as the main text.
+We first report full backup-recovery results, then test whether recovery is specific to the removed primary set and whether the recovered branch causally carries repair.
+We close with diagnostics of conditional growth and robustness to reasonable protocol variation.
+
+
+% ------------------------------------------------------------
+\subsection{Backup Recovery and Statistical Validation}
+\label{app:sig-group}
+
+Figure~\ref{fig:separation} gives the distributional view of the main recovery result.
+The documented backups lie near the bottom of the intact-state single-ablation ranking but move sharply upward under conditional growth, producing the inversion summarized by Table~\ref{tab:backup}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.86\textwidth]{figs/fig_separation.pdf}
+\caption{\textbf{The same backups under intact-state and conditional scoring.}
+Each point is one of the $144$ GPT-2-small heads; the $141$ non-primary heads are ranked for evaluation and the three primary name-movers are shown only for context.
+The eight documented backups (blue stars) rank near the bottom under intact-state single-ablation saliency (AUC $0.60$) but near the top under \coax conditional growth (AUC $0.94$).
+Primary heads are excluded from the backup ROC-AUC.}
+\label{fig:separation}
+\end{figure}
+
+
+\subsubsection{Recovery across prompt seeds}
+
+The headline result is stable across the four declared prompt seeds rather than being driven by one prompt sample.
+\coax leads every baseline on all four seeds and reaches $0.941{\pm}0.004$ backup ROC-AUC (Table~\ref{tab:backup-seeds}).
+AtP$^\star$ GradDrop remains the strongest intact-state attribution baseline and conditional energy the strongest removed-only control on every seed.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\textbf{Backup ROC-AUC across prompt seeds} (GPT-2-small IOI; $96$ prompts per seed).
+\coax leads on all four seeds and has the smallest spread.}
+\label{tab:backup-seeds}
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{hdr}
+score & s1 & s15 & s22 & s8 & mean $\pm$ std \\
+\midrule
+single ablation           & 0.599 & 0.614 & 0.604 & 0.597 & $0.603 \pm 0.007$ \\
+AtP                       & 0.640 & 0.600 & 0.611 & 0.551 & $0.600 \pm 0.032$ \\
+conditional gradient      & 0.699 & 0.597 & 0.627 & 0.582 & $0.626 \pm 0.045$ \\
+EAP-IG                    & 0.675 & 0.729 & 0.703 & 0.695 & $0.700 \pm 0.020$ \\
+AtP$^\star$ GradDrop      & 0.845 & 0.813 & 0.836 & 0.765 & \secnd{$0.815 \pm 0.031$} \\
+conditional energy        & 0.757 & 0.764 & 0.758 & 0.755 & $0.758 \pm 0.004$ \\
+\rowcolor{ourrow}
+\coax (ours)              & 0.945 & 0.944 & 0.934 & 0.943 & \bestauc{0.941}{0.004} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ROC-AUC measures the full ranking; top-$k$ recovery gives the corresponding small-set view.
+The \coax ranking contains $4/8$ documented backups in its top $8$, $4/8$ in the top $10$, $5/8$ in the top $15$, and $6/8$ in the top $20$.
+Because only $8/141$ candidates are positive, average precision gives a stricter top-of-ranking check: \coax reaches $0.557{\pm}0.011$ versus $0.174{\pm}0.015$ for AtP$^\star$ GradDrop, with precision@$8$ of $0.50$ versus $0.125$.
+Across prompt seeds, the full \coax rankings have pairwise Spearman correlation $0.913{\pm}0.032$, with Jaccard overlap $0.852{\pm}0.105$ at top-$8$ and $0.806{\pm}0.056$ at top-$20$.
+The corresponding hypergeometric probabilities under random ranking are $2.8{\times}10^{-4}$, $8.1{\times}10^{-4}$, $3.2{\times}10^{-4}$, and $9.2{\times}10^{-5}$.
+
+
+\subsubsection{Matched controls and statistical tests}
+\label{app:sig}
+
+Against the strongest intact-state attribution baseline, AtP$^\star$ GradDrop, \coax improves backup AUC from $0.815$ to $0.941$.
+A DeLong test on seed-averaged head scores gives $p=1.6{\times}10^{-3}$; bootstrap $95\%$ CIs are $[0.885,0.986]$ for \coax and $[0.725,0.920]$ for AtP$^\star$.
+Treating each prompt seed as one paired observation gives a mean AUC gap of $+0.126{\pm}0.037$, $t_3=6.77$, $p=0.007$.
+These tests quantify variation over prompts within this fixed model and benchmark rather than variation over models or circuits.
+
+The more diagnostic comparisons hold the supplied primary set fixed.
+Conditional energy uses the same prompts, primary set, finite ablations, and Fisher geometry as \coax but omits the intact-state term; it reaches $0.758{\pm}0.004$, with DeLong $p=3.8{\times}10^{-4}$ against \coax.
+Conditional gradient also scores the primary-ablated model but replaces the finite full-distribution effect with task-gradient attribution; it reaches $0.626{\pm}0.045$, with DeLong $p=3.4{\times}10^{-5}$.
+Thus reading the intervened state helps, but the intact-to-removed contrast supplies the larger gain.
+
+Two exact non-parametric checks lead to the same conclusion.
+A $10{,}000$-shuffle label-permutation test places the observed AUC entirely outside the null distribution (null mean $0.50$, $95$th percentile $0.67$, $p<10^{-4}$), and the top-$k$ hypergeometric tests above reject chance at every reported cutoff.
+
+
+\subsubsection{Conditioning an existing attribution score is not sufficient}
+\label{app:condatp}
+
+A natural alternative is to re-run an existing attribution method after removing the supplied primary set, or to take the same intact-to-removed difference of that attribution score.
+Table~\ref{tab:condatp} tests both possibilities on the same $96$ IOI prompts, four prompt seeds, primary set, and candidate pool used for backup recovery.
+Moving AtP$^\star$ GradDrop to the primary-ablated model leaves its AUC essentially unchanged ($0.815\rightarrow0.814$), while subtracting its intact-state score reduces recovery to $0.737$.
+By contrast, finite ablation displacement improves from $0.603$ in the intact state to $0.758$ after primary removal and to $0.941$ under the two-state contrast.
+Thus the gain is not obtained by applying an arbitrary attribution estimator in a different state: it depends on re-intervening on each candidate and comparing the resulting finite causal displacement across states.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{\textbf{Conditioning existing attribution methods does not reproduce conditional co-ablation.}
+Documented-backup ROC-AUC on GPT-2-small IOI (mean$\pm$std over four prompt seeds).
+``Conditional'' scores the primary-ablated model; ``two-state'' subtracts the corresponding intact-state score.}
+\label{tab:condatp}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{hdr}
+score & intact & conditional & two-state \\
+\midrule
+AtP (grad$\times$act) & $0.600{\pm}0.032$ & $0.626{\pm}0.045$ & $0.666{\pm}0.044$ \\
+AtP$^\star$ GradDrop & $0.815{\pm}0.031$ & $0.814{\pm}0.045$ & $0.737{\pm}0.045$ \\
+\rowcolor{ourrow}
+finite ablation displacement & $0.603{\pm}0.007$ & $0.758{\pm}0.004$ & \bestauc{0.941}{0.004} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Co-activation as an input-side control}
+\label{app:coact}
+
+Co-activation gives a complementary intact-state view.
+Ranking heads by the mean absolute correlation between their attention-output norms and those of the primary name-movers reaches $0.93$ backup AUC, close to \coax's $0.941$.
+This shows that the documented backups belong to a coherent co-firing neighborhood even before intervention.
+
+The two scores nevertheless identify different properties.
+Co-activation records intact-state co-firing, whereas \coax asks whether a candidate's causal effect grows specifically after the supplied primary set is removed.
+Freezing co-activation's selected set causes a larger raw IOI-margin loss than freezing the \coax set ($1.97{\pm}0.06$ versus $0.90{\pm}0.07$; Appendix~\ref{app:freezesel}), but it gives substantially worse backup-role knockout matching (Appendix~\ref{app:oracleko}).
+High label overlap or large raw freezing impact therefore does not by itself establish that a selector has isolated the missing causal role.
+
+
+\subsubsection{Historical direct-logit readout}
+\label{app:historical-dla}
+
+The documented IOI backup branch was originally characterized using direct effects after name-mover knockout~\citep{wang2022ioi}, so we separately test the corresponding task-specific ranking: the change in direct attribution to the IO$-$S logit direction after removing the primary set.
+As expected for a readout closely aligned with how the reference labels were characterized, it recovers those labels slightly better than \coax ($0.971{\pm}0.003$ versus $0.941{\pm}0.004$ ROC-AUC; average precision $0.620{\pm}0.023$ versus $0.557{\pm}0.011$). Its selected set does not reproduce the same causal role: the top-8 overshoots the freezing readout ($1.62$ versus $0.90$ for \coax), is farther from the documented knockout in IOI-margin distance ($1.33$ versus $0.99$; paired difference $+0.344$, $95\%$ CI $[+0.235,+0.450]$), and repeatedly includes the documented negative name-mover $[10,7]$. Thus reproducing the historical label readout is not identical to recovering the missing branch's causal role.
+
+\subsubsection{Candidate-depth control}
+\label{app:layer-control}
+
+All eight documented backups lie in layers $9$--$11$, making depth a strong structural prior.
+We therefore repeat the comparison under the \emph{headline} last-position/full-vocabulary protocol while restricting the candidate pool to that late-layer band.
+\coax remains at $0.909{\pm}0.002$ AUC within layers $9$--$11$, compared with $0.691{\pm}0.011$ for intact single-ablation saliency; its score--layer correlation is also only $+0.114{\pm}0.011$, smaller than for the other high-scoring structural and attribution selectors (Table~\ref{tab:layer-control}).
+Thus the recovery is not explained by a preference for late-layer heads.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{7pt}
+\caption{\textbf{Candidate-depth control under the headline protocol.}
+The first column restricts candidates to layers $9$--$11$; the second reports Spearman correlation between score and layer over the full candidate pool.}
+\label{tab:layer-control}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+selector & L9--L11 AUC $\uparrow$ & $\rho$(score, layer) \\
+\midrule
+\rowcolor{ourrow}
+\coax & $0.909{\pm}0.002$ & $+0.114{\pm}0.011$ \\
+conditional direct-logit change & $0.887{\pm}0.016$ & $+0.175{\pm}0.017$ \\
+co-activation & $0.776{\pm}0.010$ & $+0.436{\pm}0.003$ \\
+IO-attention structural read & $0.788{\pm}0.004$ & $+0.483{\pm}0.002$ \\
+AtP$^\star$ GradDrop & $0.762{\pm}0.038$ & $+0.409{\pm}0.008$ \\
+single ablation & $0.691{\pm}0.011$ & $-0.328{\pm}0.008$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{A primary-removal-free reference construction}
+\label{app:noncirc}
+
+The eight documented backups are a useful external reference, but their original characterization involved name-mover knockout~\citep{wang2022ioi}.
+To verify that the intact-state blind spot is not an artifact of that labeling route, we construct a second GPT-2-small reference set without observing any primary-removal response.
+We first identify a name-mover family using two intact structural criteria: final-position attention to the IO name and an OV copy score that tests whether the head writes a name representation back toward the same token.
+Within this family, the three largest intact direct-logit contributors define the primaries; candidates within a $0.75$ guard band of the weakest primary are excluded, and the remaining five weak contributors form the dormant reference set.
+This construction recovers exactly the three documented primary name-movers; three of its five dormant members are documented backups, while the remaining two are $[11,1]$ and $[11,6]$.
+Varying the family size from $12$ to $28$ and the guard band from $0.70$ to $0.90$ yields $20$ constructions that all pass the independent causal check; across them, \coax remains at $0.970$--$0.992$ ROC-AUC while intact single ablation remains at $0.394$--$0.483$.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{\textbf{Recovery of a primary-removal-free dormant reference set} (GPT-2-small; five positives, four prompt seeds).
+The reference labels use only intact structural reads and intact direct contribution; no quantity measured after primary removal enters their construction.}
+\label{tab:noncirc}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+score & ROC-AUC $\uparrow$ & average precision $\uparrow$ \\
+\midrule
+single ablation & $0.444{\pm}0.004$ & $0.036{\pm}0.000$ \\
+AtP$^\star$ GradDrop & $0.815{\pm}0.064$ & $0.135{\pm}0.021$ \\
+co-activation & $0.955{\pm}0.001$ & $0.312{\pm}0.004$ \\
+conditional direct-logit change & $0.985{\pm}0.003$ & $0.599{\pm}0.050$ \\
+\rowcolor{ourrow}
+\coax & $0.983{\pm}0.001$ & $0.586{\pm}0.006$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The resulting labels also pass an intervention-based check that is not used in their construction.
+Against controls matched exactly in layer and closely in intact ablation energy, the dormant set has larger output-norm wake-up ($1.159$ versus $1.091$), direct-logit hand-off ($+0.187$ versus $+0.047$), conditional causal drop ($+0.197$ versus $-0.062$), and freeze-carried repair ($+0.514$ versus $+0.134$).
+Thus the conditional recovery signal persists when the positive set is defined independently of primary removal, while the two independently surfaced non-reference heads $[11,1]$ and $[11,6]$ receive convergent structural and intervention evidence.
+
+
+% ------------------------------------------------------------
+\subsection{Recovery Is Specific to the Removed Primary Set}
+\label{app:specificity}
+\label{app:fishermatch}
+
+Section~\ref{sec:specificity} asks whether the recovered ranking follows the identity of the removed circuit rather than generic intervention severity.
+We test this with alternative documented and matched primary sets, then remove LayerNorm rescaling as a potential source of background growth.
+
+
+\subsubsection{Alternative and geometry-matched primary sets}
+
+Table~\ref{tab:specificity} varies the supplied primary set while keeping the backup labels and evaluation protocol fixed.
+Matching behavioral damage, depth, or task relevance does not reproduce the ranking induced by the documented name-movers.
+The correct set gives $0.941{\pm}0.004$ backup AUC, whereas a damage-matched random set gives $0.426{\pm}0.129$, a same-layer control $0.536{\pm}0.196$, and documented S-inhibition and induction sets $0.688{\pm}0.010$ and $0.359{\pm}0.017$.
+Adding off-circuit heads to the correct set degrades recovery gradually from $0.92$ with one contaminating head to $0.74$ with four.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Backup recovery follows primary-set identity.}
+GPT-2-small IOI backup AUC under alternative supplied primary sets (mean$\pm$std over four prompt seeds; contamination entries are means).
+Matching behavioral damage or depth does not reproduce the documented backup ranking, while contamination of the correct set degrades recovery gradually.}
+\label{tab:specificity}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+primary set $\Sset$ & joint damage & backup AUC \\
+\midrule
+\rowcolor{ourrow}
+documented name-movers & $+0.284$ & \bestauc{0.941}{0.004} \\
+\midrule
+damage-matched random & $+0.295$ & $0.426{\pm}0.129$ \\
+random & $-0.152$ & $0.492{\pm}0.113$ \\
+same-layer, different heads & $+0.085$ & $0.536{\pm}0.196$ \\
+documented S-inhibition set & $+1.309$ & $0.688{\pm}0.010$ \\
+documented induction set & $+1.336$ & $0.359{\pm}0.017$ \\
+\midrule
+true set $+1/+2/+3/+4$ off-circuit heads
+& --- & $0.92/0.84/0.81/0.74$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We make the negative control harder by matching wrong three-head sets in the score's own output geometry.
+From $5{,}000$ random triples scored on calibration prompts, we retain the $16$ closest to the documented primary set in behavioral damage, answer-position Fisher displacement $\energy(\dz_\Sset)$, and mean layer index, then evaluate them on held-out prompts.
+The matched wrong sets remain below chance on average: $0.397{\pm}0.133$ and $0.405{\pm}0.129$ AUC on two held-out prompt sets, versus $0.944$ and $0.934$ for the documented primaries.
+Even the closest behavioral-damage matches score only $0.319$ and $0.413$ on the two evaluations. Matching both behavioral damage and the output displacement used by the score therefore does not reproduce the backup ranking.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\caption{\textbf{Geometry-matched primary-set control.}
+Backup AUC on two held-out prompt sets after selecting $16$ wrong triples from a $5{,}000$-set search, matched to the documented primary set in behavioral damage, Fisher displacement, and depth.
+For the matched controls, mean$\pm$std is across the selected triples.}
+\label{tab:fishermatch}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+primary set & held-out A & held-out B \\
+\midrule
+\rowcolor{ourrow}
+documented name-movers & $0.944$ & $0.934$ \\
+geometry-matched wrong sets
+& $0.397{\pm}0.133$ & $0.405{\pm}0.129$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{LayerNorm freezing}
+\label{app:lnfreeze}
+
+Primary-set ablation also changes downstream normalization statistics and can rescale the remaining computation.
+We isolate this channel by recording the intact-state centering mean and normalization denominator for every GPT-2-small LayerNorm and replaying ablated forwards with these statistics partially or fully fixed.
+A \emph{scale freeze} fixes the denominator, while a \emph{full freeze} also fixes the centering mean.
+Replaying the recorded statistics on an otherwise intact forward reproduces the original logits to within $10^{-3}$ before either control is used.
+
+Backup AUC rises from $0.941{\pm}0.004$ in the unmodified model to $0.983{\pm}0.002$ under scale freeze and $0.978{\pm}0.002$ under full freeze.
+Under scale freeze, the documented backups retain $0.81{\pm}0.01$ of their conditional growth ($0.076{\pm}0.003\to0.062{\pm}0.003$), while mean non-backup growth shifts from approximately zero to negative ($-0.001{\pm}0.001\to-0.030{\pm}0.002$).
+Normalization rescaling therefore does not create the recovered backup signal; removing it suppresses background growth and sharpens the separation.
+
+
+% ------------------------------------------------------------
+\subsection{Causal Validation of the Recovered Branch}
+\label{app:real-group}
+
+Backup-label recovery establishes ranking agreement, but the mechanistic claim requires the recovered branch to respond to primary-set failure and causally carry the resulting repair.
+We first situate that branch in the documented IOI circuit, then give the full measurements behind Figure~\ref{fig:mechanism} and an independent structural check.
+
+
+\subsubsection{Circuit context: the documented fallback branch}
+\label{app:circuitviz}
+
+Figure~\ref{fig:routes} places the primary and backup name-movers inside the documented IOI information flow.
+The earlier duplicate-token, induction, and S-inhibition heads route the relevant name information toward the final position, after which \primary{primary} and \backup{backup} name-movers form parallel late write paths to the answer.
+The diagram provides circuit context; the intervention measurements below establish when the backup branch becomes causally active.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figs/fig_routes.pdf}
+\caption{\textbf{The documented IOI fallback branch in token$\times$layer context.}
+Each column is a prompt token and each row a layer; gray nodes denote the residual stream.
+Duplicate-token, induction, and S-inhibition heads carry the earlier subject-related signal (olive), while the primary name-movers (orange) and documented backup name-movers (blue, dashed) form parallel late write paths from the IO name to the answer position.
+The routes follow the documented IOI circuit~\citep{wang2022ioi}; they are circuit structure rather than per-edge \coax attributions.
+Figure~\ref{fig:mechanism} establishes that the backup branch is recruited after primary-set removal.}
+\label{fig:routes}
+\end{figure}
+
+
+\subsubsection{Hand-off and graded wake-up}
+\label{app:mechanism}
+
+\paragraph{Direct-logit hand-off.}
+For Figure~\ref{fig:mechanism}a, direct-logit attribution projects each head's residual-stream write onto $W_U[\mathrm{IO}]-W_U[\mathrm{S}]$ at the answer position using the final-LayerNorm statistics from that forward.
+We report branch totals because the figure's edge width represents the contribution of the whole branch.
+In the intact model, the three \primary{primary} name-movers contribute $+2.519{\pm}0.169$, the eight documented \backup{backups} $+0.567{\pm}0.048$, and the remaining $133$ heads $-0.773{\pm}0.151$ to the IO$-$S logit.
+After \primary{primary}-set removal, the \primary{primary} contribution is zero by construction, the documented \backup{backup} branch rises to $+1.680{\pm}0.149$, and the remaining heads shift to $+0.392{\pm}0.141$.
+The IOI margin nevertheless changes only from $2.574{\pm}0.083$ to $2.290{\pm}0.110$.
+The redistribution inside the circuit is therefore much larger than the behavioral loss.
+
+\paragraph{Graded wake-up.}
+Figure~\ref{fig:mechanism}b removes the three primary name-movers progressively in descending order of their single-head IOI effect.
+For each $k\in\{0,1,2,3\}$, we measure the output-norm ratio and the additional IOI-margin drop caused by ablating a candidate after the first $k$ primaries have already been removed.
+The documented backups grow monotonically on both readouts, whereas matched random heads remain approximately flat.
+
+For the \coax curve, each prompt seed selects its top-$8$ once using the full three-head primary set and holds that set fixed while $k$ varies.
+The response therefore cannot be explained by reselecting heads at each intervention level.
+The recovered set follows the same monotone direction as the documented branch.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\caption{\textbf{Graded wake-up behind Figure~\ref{fig:mechanism}b.}
+Mean$\pm$std over four prompt seeds.
+The \coax top-$8$ is selected once with the full primary set removed and held fixed across $k$; one matched-random set per prompt seed is likewise held fixed across the sweep.}
+\label{tab:mechanism}
+\begin{tabular}{c|ccc|ccc}
+\toprule
+\rowcolor{hdr}
+& \multicolumn{3}{c|}{output-norm ratio}
+& \multicolumn{3}{c}{conditional causal effect} \\
+\rowcolor{hdr}
+$k$
+& documented & \coax & random
+& documented & \coax & random \\
+\midrule
+0
+& $1.000{\pm}.000$
+& $1.000{\pm}.000$
+& $1.000{\pm}.000$
+& $0.046{\pm}.001$
+& $0.112{\pm}.020$
+& $0.017{\pm}.022$ \\
+1
+& $1.031{\pm}.015$
+& $1.024{\pm}.012$
+& $1.001{\pm}.002$
+& $0.059{\pm}.013$
+& $0.114{\pm}.029$
+& $0.010{\pm}.020$ \\
+2
+& $1.082{\pm}.001$
+& $1.062{\pm}.005$
+& $1.004{\pm}.002$
+& $0.083{\pm}.003$
+& $0.118{\pm}.021$
+& $0.010{\pm}.026$ \\
+3
+& $1.150{\pm}.002$
+& $1.118{\pm}.008$
+& $1.006{\pm}.004$
+& $0.102{\pm}.006$
+& $0.136{\pm}.020$
+& $0.009{\pm}.036$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Dose response to partial primary removal}
+\label{app:dose}
+
+The main experiment uses complete zero ablation of the primary set.
+As a continuous-strength check, we scale every primary head output by $1-\alpha$ for $\alpha\in\{0,0.25,0.5,0.75,1\}$.
+The documented backups increase monotonically on both wake-up readouts as the intervention strengthens, while matched random heads remain essentially flat or move in the opposite direction (Table~\ref{tab:dose}).
+This shows that recruitment is graded in intervention strength rather than appearing only at the endpoint ablation.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\textbf{Dose response to partial primary removal} (GPT-2-small IOI; four prompt seeds).
+Wake-up is the output-norm ratio relative to the intact state; conditional drop is the additional IOI-margin loss from ablating a candidate after the partial primary intervention.}
+\label{tab:dose}
+\begin{tabular}{cccccc}
+\toprule
+\rowcolor{hdr}
+$\alpha$ & IOI margin & backup wake & random wake & backup cond. drop & random cond. drop \\
+\midrule
+$0.00$ & $2.583$ & $1.000$ & $1.000$ & $+0.047$ & $-0.004$ \\
+$0.25$ & $2.502$ & $1.038$ & $1.002$ & $+0.062$ & $-0.009$ \\
+$0.50$ & $2.441$ & $1.077$ & $1.003$ & $+0.076$ & $-0.014$ \\
+$0.75$ & $2.398$ & $1.114$ & $1.005$ & $+0.090$ & $-0.019$ \\
+$1.00$ & $2.357$ & $1.150$ & $1.006$ & $+0.104$ & $-0.023$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Selector-specific causal freezing}
+\label{app:freezesel}
+
+The graded curves establish intervention responsiveness; freezing tests whether that response is causally load-bearing.
+With the primary set already ablated, we freeze each selector's top-$8$ heads at their intact-state final-position outputs so that those heads cannot respond to the intervention.
+For IOI margin $m$, we report the freeze-induced loss
+\begin{equation}
+L_{\mathrm{freeze}}(X)
+=
+m(\text{ablate }\Sset)
+-
+m(\text{ablate }\Sset,\text{ freeze }X).
+\label{eq:freezeloss}
+\end{equation}
+We report this absolute quantity so every selector is compared under the same freezing intervention; it tests whether a selected set is load-bearing, not whether a larger value is a better circuit match.
+
+Freezing the \coax-selected set causes a $0.90{\pm}0.07$ IOI-margin loss, compared with $0.03{\pm}0.08$ for conditional energy and $0.27{\pm}0.37$ for a size-matched random set.
+The documented backups themselves give $0.57{\pm}0.09$ under the same freezing intervention.
+Co-activation and AtP$^\star$ produce larger raw losses, $1.97{\pm}0.06$ and $1.50{\pm}0.03$, respectively; this shows why freezing magnitude is a causal load-bearing diagnostic rather than a partition of total repair or a standalone circuit-matching criterion.
+Circuit completion and knockout in Appendix~\ref{app:attribution} provide the complementary specificity test.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{\textbf{Freeze-induced IOI-margin loss for each selector's top-$8$} (GPT-2-small; mean$\pm$std over four prompt seeds).
+All rows use the same intervention: the selected heads are fixed at their intact-state outputs after the primary set has been ablated.
+``Overlap'' is the mean number of documented backups in each selected set.}
+\label{tab:freezesel}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+frozen set & IOI-margin loss & overlap \\
+\midrule
+documented backups \emph{(oracle reference)} & $0.57{\pm}0.09$ & $8.0/8$ \\
+\rowcolor{ourrow}
+\coax growth & $0.90{\pm}0.07$ & $4.0/8$ \\
+conditional energy & $0.03{\pm}0.08$ & $1.0/8$ \\
+co-activation & $1.97{\pm}0.06$ & $3.0/8$ \\
+AtP$^\star$ GradDrop & $1.50{\pm}0.03$ & $1.0/8$ \\
+random & $0.27{\pm}0.37$ & $0.25/8$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The overlap column is descriptive rather than an exhaustive precision measure: the documented eight define the known backup branch but do not imply that no other heads participate in compensation.
+The freezing readout therefore asks whether a selected set is causally load-bearing under primary failure; the completion and knockout tests ask the stricter question of whether it matches the missing branch's causal role.
+
+
+\subsubsection{Independent structural corroboration}
+\label{app:sigfilter}
+
+The causal readouts above are intervention-based, so we additionally use a structural signal that \coax never observes.
+A name-mover's defining attention pattern is to attend from the answer position back to the indirect-object name~\citep{wang2022ioi}.
+Reading this final-position QK attention without ablation, the documented backups attend to the IO token $5.8\times$ more strongly than other heads on average ($0.19$ versus $0.03$).
+This structural score alone gives $0.96$ backup ROC-AUC while correlating only weakly with \coax ($\rho=0.09$ Spearman).
+
+Figure~\ref{fig:attn} makes the structural check explicit.
+The primary and backup name-movers preferentially read the IO name rather than the repeated subject or filler tokens, while unrelated controls do not show the same pattern.
+Because this read uses the known name-mover token relation, we use it as independent post-hoc corroboration rather than as a general discovery score.
+Agreement between this ablation-free structural signature and the intervention-based evidence strengthens the mechanistic identification of the recovered branch.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.72\textwidth]{figs/fig_attn.pdf}
+\caption{\textbf{Independent structural read of the name-mover branch.}
+Final-position attention to token roles, averaged over $96$ IOI prompts.
+Documented primary and backup name-movers attend preferentially to the IO name, while control heads do not show the same pattern.
+This ablation-free structural read gives $0.96$ backup ROC-AUC and correlates only weakly with the \coax score ($\rho=0.09$), providing complementary evidence for the recovered role.}
+\label{fig:attn}
+\end{figure}
+
+
+\subsubsection{A concrete dormant backup}
+\label{app:casestudy}
+
+The aggregate pattern above can be seen directly in the documented backup name-mover $[10,6]$.
+In the intact model, its direct IO$-$S contribution is small ($+0.07$), yet from the answer position it attends strongly to the IO name ($0.29$), matching the structural role of a name-mover.
+After the primary name-movers are removed, its direct IO$-$S contribution rises to $+0.21$, while a random comparison head remains near zero ($+0.01$).
+This head-level view connects the structural role to intervention-induced recruitment; the set-level freezing experiment in Appendix~\ref{app:freezesel} provides the corresponding causal validation of repair.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.96\textwidth]{figs/fig_casestudy.pdf}
+\caption{\textbf{A concrete dormant backup in GPT-2-small IOI.}
+\textbf{(a) Backup reads the IO name.} The documented backup $[10,6]$ attends strongly to the IO name from the answer position, matching the structural signature of a name-mover.
+\textbf{(b) Its contribution grows after primary-set failure.} The backup's direct IO$-$S contribution increases from $+0.07$ in the intact state to $+0.21$ after the primary name-movers are removed, while a random comparison head remains near zero.}
+\label{fig:casestudy}
+\end{figure}
+
+
+% ------------------------------------------------------------
+\subsection{What Drives Conditional Growth}
+\label{app:keys-group}
+
+
+\subsubsection{The intact-to-removed contrast and output geometry}
+\label{app:components}
+
+Table~\ref{tab:design} separates two design choices: which states are compared and how output displacement is measured.
+The dominant gain comes from the state comparison.
+Intact-state single-ablation energy reaches $0.603$ backup AUC; conditional energy in the primary-ablated model raises this to $0.758$; contrasting the two states reaches $0.941$.
+Conditional energy alone retains components that are large in either state, whereas subtraction removes this pre-existing importance and isolates intervention-induced growth.
+
+
+Holding the two-state comparison fixed, plain $\ell_2$ displacement already reaches $0.905$ AUC.
+Centering alone gives $0.903$, probability weighting alone $0.909$, and the full centered Fisher geometry $0.941$.
+The remaining gain therefore belongs to the combined output geometry rather than either operation in isolation.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{\textbf{Component analysis of \coax} (GPT-2-small; means over four prompt seeds).
+The top block varies the state comparison; the bottom block varies the output geometry while retaining signed growth.}
+\label{tab:design}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{hdr}
+score & backup AUC & recall@$8$ & recall@$20$ \\
+\midrule
+\rowcolor{hdr}
+\multicolumn{4}{l}{\emph{state comparison}} \\
+intact-state energy, $\energy(\dz_u)$ & $0.603$ & $0/8$ & $0/8$ \\
+conditional energy, $\energy(\dz_{u\mid\Sset})$ & $0.758$ & $1/8$ & $3.0/8$ \\
+\rowcolor{ourrow}
+signed growth, $\energy(\dz_{u\mid\Sset})-\energy(\dz_u)$ & \best{$0.941$} & $4.0/8$ & $6.2/8$ \\
+\midrule
+\rowcolor{hdr}
+\multicolumn{4}{l}{\emph{output geometry} (signed growth throughout)} \\
+plain $\ell_2$ & $0.905$ & & \\
+centering only & $0.903$ & & \\
+probability weighting only & $0.909$ & & \\
+\rowcolor{ourrow}
+centered Fisher (full) & \best{$0.941$} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Controlled test of dormancy and task alignment}
+\label{app:synth}
+
+The IOI benchmark provides documented mechanistic labels but only eight backup heads.
+We therefore use a controlled construction for two narrower questions: whether an intact-state score can identify a near-dormant backup, and whether a task-direction gradient remains informative when repair is not aligned with that direction.
+This experiment isolates score behavior rather than serving as an additional realism benchmark.
+
+\paragraph{Construction.}
+We work in an $r=192$ output space with unit answer direction $e$ and Gaussian observation noise $\sigma=0.05$.
+Four \primary{primaries} have large intact-state effects and directions partially aligned with $e$.
+Each of $100$ \backup{backups} shadows a \primary{primary} direction but is near dormant in the intact state ($a_b^{\mathrm{intact}}\approx0.04$) and becomes active after primary removal ($a_b^{\mathrm{cond}}\approx0.42$).
+A further $100$ \irrelevant{inert units} have random directions, small intact-state effects, and no conditional change.
+Primaries are excluded from the classification task.
+
+We compare intact-state energy, an intact-state answer-gradient proxy, the corresponding conditional gradient, and \coax signed growth.
+The two intact-state scores sit at or below chance, whereas conditioning makes the planted backups identifiable (Table~\ref{tab:synth}).
+\coax reaches $0.90{\pm}0.02$ AUC and the conditional gradient $0.85{\pm}0.04$ in the default answer-aligned construction.
+Sweeping observation noise from $\sigma=0.03$ to $0.16$ reduces \coax from $0.95$ to $0.63$, while the intact-state scores remain near chance.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{7pt}
+\caption{\textbf{Dormancy isolates the value of conditioning.}
+Controlled benchmark with $100$ conditionally active backups and $100$ inert units over $40$ independent trials.
+Intact-state scores remain at or below chance, while both conditional scores recover the planted backups.}
+\label{tab:synth}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{hdr}
+score & ROC-AUC\,$\uparrow$ & DeLong vs.\ \coax \\
+\midrule
+\rowcolor{ourrow}
+\coax growth & \bestauc{0.90}{.02} & --- \\
+intact-state energy & $0.42{\pm}.05$ & $p<10^{-15}$ \\
+intact-state gradient proxy & $0.51{\pm}.04$ & $p<10^{-15}$ \\
+conditional gradient & $0.85{\pm}.04$ & n.s.\ (default alignment) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Task alignment.}
+Let $\beta$ denote the fraction of a backup's effect energy aligned with the answer direction.
+Holding the total conditional effect fixed while varying $\beta$ leaves \coax at approximately $0.90$ AUC, whereas the answer-direction conditional gradient falls from $0.95$ at $\beta=0.9$ to $0.59$ at $\beta=0.1$ (Table~\ref{tab:synth-sweep}).
+The two conditional scores therefore answer different questions: conditional growth reads the full output displacement, while the gradient reads its task-aligned projection.
+
+The documented IOI backups also lie in this low-alignment regime.
+Across the eight heads, the measured IO$-$S energy fraction is below $0.01$ for every backup, with mean $0.002$ and across-head standard deviation $0.003$.
+We use this measurement only to place the empirical IOI setting on the synthetic sweep, not as a discriminator of backup identity; it is consistent with the empirical gap between conditional gradient and full-distribution conditional growth on IOI.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Full-distribution growth is insensitive to answer alignment.}
+Synthetic sweep over backup answer-alignment $\beta$ ($100$ backups, $40$ independent trials).
+At fixed effect norm, \coax remains stable while the answer-direction conditional gradient degrades as repair moves away from the task direction.}
+\label{tab:synth-sweep}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{hdr}
+backup alignment $\beta$ & \coax AUC & cond.\ grad.\ AUC & intact grad.\ AUC & DeLong $p$ \\
+\midrule
+$0.9$ & $0.90$ & $0.95$ & $0.58$ & cond.\ grad.\ higher ($0.03$) \\
+$0.5$ & $0.90$ & $0.87$ & $0.52$ & n.s.\ ($0.21$) \\
+$0.3$ & $0.90$ & $0.75$ & $0.49$ & $\mathbf{<10^{-3}}$ \\
+\rowcolor{ourrow}
+$0.1$ & \best{$0.90$} & $0.59$ & $0.48$ & $\mathbf{<10^{-3}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Interaction structure and empirical non-additivity}
+\label{app:superadd}
+
+The conditional effect change has an exact all-order interaction interpretation, but \coax does not enumerate those terms.
+As a diagnostic, Figure~\ref{fig:interp} visualizes only the pairwise slice of the IOI circuit.
+The primary and backup name-movers form a strong interaction block, consistent with each candidate's effect depending on whether the primary branch remains available.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.78\textwidth]{figs/fig_synergy_matrix.pdf}
+\caption{\textbf{Pairwise slice of the IOI interaction structure.}
+The magnitude of the pairwise co-ablation residual is shown for documented IOI circuit heads grouped by role.
+Primary and backup name-movers form a strong block (blue outline).
+This is only the order-two slice of the all-order aggregate in Proposition~\ref{prop:exact}; \coax does not compute this matrix.}
+\label{fig:interp}
+\end{figure}
+
+The same dependence appears at the module level.
+Jointly ablating the three primaries changes the IOI margin by only $0.28$ because the backup branch remains available.
+Ablating the full primary-plus-backup module changes it by $1.30$, almost twice the $0.67$ predicted by summing the eleven single-head effects and $4.6\times$ the primary-only effect.
+A size-matched random set is approximately additive.
+The redundant module therefore cannot be reconstructed from isolated intact-state effects, matching the conditional dependence characterized by Proposition~\ref{prop:exact}.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\caption{\textbf{Joint versus summed ablation} on GPT-2-small IOI (IOI-margin drop; intact margin $2.57$; means over four prompt seeds).
+The primary-plus-backup module is strongly non-additive, whereas a size-matched random set is approximately additive.}
+\label{tab:superadd}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{hdr}
+ablated set & $\sum$ single & joint & ratio \\
+\midrule
+$3$ primary name-movers & 0.30 & 0.28 & $0.9\times$ \\
+$8$ documented backups & 0.37 & 0.30 & $0.8\times$ \\
+\rowcolor{ourrow}
+primaries $+$ backups & 0.67 & \best{1.30} & $\mathbf{1.9\times}$ \\
+random, size-matched & \multicolumn{2}{c}{approximately additive} & $\approx1\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ------------------------------------------------------------
+\subsection{Robustness}
+\label{app:robust-group}
+
+
+\subsubsection{Primary-set size}
+\label{app:seedrobust}
+
+\coax is conditioned on a supplied primary set, so we test whether strong recovery requires all three documented name-movers.
+We order the primary heads by their own ablation energy and evaluate the first one, two, or all three.
+Backup AUC is already $0.94$ with one primary, rises to $0.97$ with two, and is $0.94$ with the full set.
+Together with the contamination experiment in Appendix~\ref{app:specificity}, this shows that recovery tolerates partial specification while remaining sensitive to off-circuit contamination.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Backup AUC versus supplied primary-set size} (mean over four prompt seeds).
+A partial documented primary set already supports strong recovery.}
+\label{tab:seedrobust}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{hdr}
+primary set & $|\Sset|{=}1$ & $|\Sset|{=}2$ & $|\Sset|{=}3$ \\
+\midrule
+\rowcolor{ourrow}
+documented primaries & 0.94 & \best{0.97} & 0.94 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Prompt-template robustness}
+\label{app:template}
+
+The main IOI experiment uses one surface template.
+Recomputing backup recovery on two alternative forms that exercise the same indirect-object name-moving behavior (``After \dots\ arrived at the \dots, \dots handed a \dots\ to'' and ``While \dots\ were at the \dots, \dots passed a \dots\ to'') gives AUC $0.93$ and $0.92$, versus $0.94$ for the standard template.
+The recovery therefore persists across prompt forms rather than depending on one surface realization.
+
+
+\subsubsection{Other additive units}
+\label{app:ffn}
+
+The formulation applies to any unit whose intervention induces a well-defined additive residual contribution.
+As an implementation check, we instantiate \coax on contiguous slices of GPT-2-small MLP intermediate neurons ($96$ groups), zeroing each slice at the down-projection input and applying the same conditional score without modification.
+The main causal benchmark remains head-level because the documented backup roles are defined at that granularity.
+
+
+\clearpage
+% ============================================================
+\section{Conditional Circuit Completion and Knockout}
+\label{app:attribution}
+
+This appendix expands Section~\ref{sec:apps} at the circuit level.
+We first report the raw-headline \coax completion and matched controls, then give the full knockout comparison against the documented backup intervention.
+Recovery, freezing, completion, and knockout all use the raw headline \coax ranking; no backup labels, task gradients, or task-direction filters enter the \coax selection.
+
+
+% ------------------------------------------------------------
+\subsection{Circuit-Completion Controls}
+\label{app:completeall}
+
+The controlled primary circuit has incompleteness $0.755{\pm}0.074$, while the documented circuit reaches $0.276{\pm}0.027$.
+Using the same raw headline ranking as discovery, the \coax top-$8$ reduces incompleteness to $0.205{\pm}0.030$; a size-matched random top-up gives $0.808{\pm}0.206$ (Table~\ref{tab:completeall}).
+The raw ranking therefore provides a direct completion result without introducing any task-direction selection step.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\caption{\textbf{Circuit completion with the raw headline ranking} (GPT-2-small; mean$\pm$std over four prompt seeds; lower is better).
+The \coax row uses the same last-position/full-vocabulary raw ranking as backup discovery, with no task-direction filter.}
+\label{tab:completeall}
+\begin{tabular}{lc}
+\toprule
+\rowcolor{hdr}
+circuit & incompleteness $\downarrow$ \\
+\midrule
+primary circuit \emph{(no completion)} & $0.755{\pm}0.074$ \\
+$+$random & $0.808{\pm}0.206$ \\
+\rowcolor{ourrow}
+$+$\coax & \best{$0.205{\pm}0.030$} \\
+documented circuit \emph{(reference)} & $0.276{\pm}0.027$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A prompt-level paired bootstrap confirms that the gain is stable: relative to the primary-only circuit and a size-matched random completion, raw \coax lowers incompleteness with $95\%$ CIs $[-0.610,-0.490]$ and $[-0.669,-0.540]$, respectively.
+The result uses exactly the same raw candidate ranking as discovery, so the circuit-level completion does not require task-direction information beyond the supplied primary set.
+
+
+% ------------------------------------------------------------
+\subsection{Knockout Against the Documented Backup Intervention}
+\label{app:oracleko}
+
+We next reverse the completion test.
+Each selector contributes eight heads, which are removed together with the primary name-movers and compared with removal of the documented primaries plus documented backups.
+We measure the mean absolute difference in IOI margin, KL divergence from the documented knockout at the answer position, and KL from the intact model on unrelated text.
+Task accuracy alone would give the wrong ordering: the documented knockout has IOI accuracy $0.714$ and \coax $0.779$, whereas the \coax next-$8$ and AtP$^\star$ selections drive accuracy much lower, to $0.190$ and $0.156$, despite lying farthest from the documented intervention.
+This inversion is why we judge knockout by reproducing the documented causal intervention rather than by maximizing task damage.
+
+\coax is closest in IOI-margin distance among the general selectors in Table~\ref{tab:oracleko}, with margin distance $0.99$, output KL $0.17$, and unrelated-text KL $0.14$.
+A continuation of the \coax ranking, AtP$^\star$, co-activation, and random removal are all farther from the documented intervention in margin distance.
+Thus the completion and knockout tests agree that the recovered set reproduces the missing causal response substantially better than damage-maximizing alternatives.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{7pt}
+\caption{\textbf{Knockout relative to the documented backup intervention} (mean over four prompt seeds).
+Each row removes the primary set plus eight selected heads.
+Lower values indicate closer reproduction of the documented knockout; unrelated-text KL measures collateral change.}
+\label{tab:oracleko}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{hdr}
+top-up & margin distance $\downarrow$ & output KL $\downarrow$ & unrelated KL $\downarrow$ \\
+\midrule
+documented backups \emph{(oracle)} & $0.00$ & $0.00$ & $0.09$ \\
+\rowcolor{ourrow}
+\coax & \best{$0.99$} & $0.17$ & $0.14$ \\
+co-activation & $1.79$ & $0.47$ & $0.15$ \\
+\coax next-$8$ & $2.24$ & $0.64$ & $0.54$ \\
+AtP$^\star$ GradDrop & $2.62$ & $0.82$ & $0.31$ \\
+random & $1.27$ & $0.43$ & $0.15$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Paired bootstrap intervals over the $384$ prompt-level observations support the margin-distance ordering: relative to \coax, co-activation is $+0.799$ farther from the documented knockout ($95\%$ CI $[+0.657,+0.938]$), AtP$^\star$ is $+1.631$ farther ($[+1.443,+1.818]$), and random is $+0.280$ farther ($[+0.160,+0.395]$).
+
+
+\clearpage
+% ============================================================
+\section{Conditional Repair Beyond Documented Backups}
+\label{app:panel-full}
+
+This appendix expands the two generalization tests in Section~\ref{sec:panel}: repair alignment across mechanism clusters and held-out circuit completion across model families.
+
+% ------------------------------------------------------------
+\subsection{Repair Prediction Across Mechanisms}
+\label{app:panel}
+
+The intervention panel contains twelve instances formed by three surface templates crossed with four primary sets: name-mover, S-inhibition, induction, and duplicate-token. For each instance, \coax is scored on $96$ prompts, while the freezing-based causal repair target is measured on a disjoint set of $96$ prompts. Name-mover and S-inhibition instances use the IOI margin; induction and duplicate-token instances use repeated-token induction behavior, so each causal target matches the behavior disrupted by its primary set.
+
+The causal target is the continuous quantity used in Section~\ref{sec:panel}, $\mathrm{repair}(u\mid\Sset)=m(\text{ablate }\Sset)-m(\text{ablate }\Sset,\text{ freeze }u)$. Agreement is measured by Spearman correlation across candidate heads. Signed conditional growth is positive in $11/12$ held-out instances and all four mechanism clusters.
+
+\subsubsection{Hierarchical inference}
+\label{app:hier}
+
+The three templates within each primary set share the same model, head inventory, and mechanism, so we resample primary sets first and templates within them. The mechanism means are $+0.030$ for duplicate-token, $+0.193$ for induction, $+0.204$ for name-mover, and $+0.066$ for S-inhibition. Their equally weighted macro mean is $+0.123$, with nested $95\%$ CI $[+0.047,+0.201]$. Dropping any one mechanism leaves the macro estimate between $+0.096$ and $+0.154$, so the positive agreement is not carried by a single cluster.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Agreement of \coax with mechanism-matched causal repair} (Spearman $\rho$). Each mechanism value averages its three templates; the macro column weights the four mechanisms equally, and the interval resamples mechanisms first and templates within them.}
+\label{tab:hier}
+\begin{tabular}{lcccccc}
+\toprule
+\rowcolor{hdr}
+score & dup.-token & induction & name-mover & S-inhib. & macro & nested $95\%$ CI \\
+\midrule
+\rowcolor{ourrow}
+\coax & $+0.030$ & $+0.193$ & $+0.204$ & $+0.066$ & \best{$+0.123$} & $[+0.047,+0.201]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ------------------------------------------------------------
+\subsection{Conditional Circuit Completion Across Models}
+\label{app:gen-group}
+
+We test the set-level claim behind Figure~\ref{fig:regime}b under a held-out, equal-budget protocol. For each non-GPT-2 model, detection, selector calibration, and completion evaluation use disjoint repeated-token sequence sets: $32$ sequences identify the induction primary set, every selector receives the same $16$ calibration sequences, and completion is measured on $64$ held-out sequences. No backup labels are used. Each selector contributes its top $10$ remaining heads, and all values below are completion gains %这里需要加上具体的数学公式吗，怎么计算completion gain
+relative to a size-matched random completion evaluated on the same held-out sequences.
+
+Table~\ref{tab:indcross} compares \coax with intact-state single ablation, co-activation, AtP, AtP$^\star$ GradDrop, and the role-matched next induction heads (``own''). \coax exceeds matched random on all eight models and has a family-macro gain of $6.78$; it also gives the larger completion than the role-matched own-head control on six of eight models. The $8/8$ above-random pattern is unchanged on an absolute rather than normalized scale: the smallest absolute gain is $+1.51$ log-probability, $17.7\times$ the random control's own draw-to-draw standard deviation. Excluding the largest-gain model still leaves a $3.32\times$ family-macro gain over matched random, so the transfer result is not carried by that model alone.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.0pt}
+\caption{\textbf{Held-out, equal-budget cross-model conditional circuit completion} ($k=10$). Entries are completion gain over a size-matched random completion; $1$ therefore corresponds to the random reference. Detection, calibration, and evaluation use disjoint sequence sets, and every selector receives the same $16$ calibration sequences.}
+\label{tab:indcross}
+\begin{tabular}{lcccccc}
+\toprule
+\rowcolor{hdr}
+model & \coax & single & co-act & AtP & AtP$^\star$ & own \\
+\midrule
+Pythia-160M               & 4.53 & 4.32 & 4.12 & 3.50 & 3.51 & 4.05 \\
+Pythia-410M               & 12.09 & 12.08 & 8.41 & 9.23 & 3.24 & 8.96 \\
+Pythia-1.4B               & 4.94 & 3.90 & 3.46 & 3.07 & 1.70 & 3.71 \\
+GPT-Neo-1.3B              & 1.44 & 2.74 & 1.25 & 1.94 & 0.95 & 2.17 \\
+Gemma-2-2B                & 2.50 & 2.10 & 0.73 & 1.49 & 1.52 & 1.72 \\
+Qwen2.5-7B-Instruct       & 24.07 & 8.87 & 1.51 & 22.57 & 2.37 & 3.82 \\
+OLMo-2-7B                 & 2.66 & 3.39 & 3.12 & 4.66 & 1.74 & 5.38 \\
+Llama-3.1-8B-Instruct     & 2.79 & 3.70 & 3.70 & 2.61 & 1.73 & 1.78 \\
+\midrule
+\rowcolor{ourrow}
+family macro              & 6.78 & 4.59 & 2.61 & 6.42 & 1.86 & 3.41 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\section{Limitations, Broader Impact, Ethics, and Reproducibility}
+\label{app:limitations}
+
+\subsection{Limitations}
+
+Documented backup labels are available only for GPT-2-small IOI~\citep{wang2022ioi}, so ground-truth backup recovery is evaluated in that setting; generalization beyond it is assessed through label-free causal targets across mechanisms and architectures.
+\coax conditions on a supplied primary set; automatically identifying that set is a separate problem, so the present work evaluates conditional circuit completion rather than joint primary-and-backup discovery.
+Our main experiments use attention heads, matching the granularity of the documented backup circuit, although the formulation extends to other additive residual units and Appendix~\ref{app:ffn} provides an FFN-group implementation check.
+
+\subsection{Broader impact}
+
+\coax is an analysis method for frozen models and does not train or modify model weights.
+Its intended benefit is more faithful mechanistic auditing: an intact-state analysis can appear to localize or remove a behavior while self-repair reroutes computation around the intervention.
+Exposing such conditional routes can reduce false claims of circuit localization or removal.
+The method does not itself add model capabilities, although, as with mechanistic interpretability generally, improved circuit knowledge may also inform downstream model analysis or editing.
+
+\subsection{Assets, licenses, and ethics}
+
+All experiments use publicly released pretrained checkpoints under their respective licenses: GPT-2 and GPT-Neo (MIT), Pythia, OLMo-2, and Qwen2.5-7B-Instruct (Apache-2.0), Gemma-2 (Gemma Terms of Use), and Meta-Llama-3.1-8B-Instruct (Llama 3.1 Community License).
+All checkpoints are used unmodified for inference-only analysis.
+Evaluation inputs comprise templated IOI prompts from \citet{wang2022ioi}, procedurally generated repeated-token sequences for induction, and WikiText-2 windows~\citep{merity2017wikitext} for unlabeled calibration.
+No human subjects, private data, or personally identifying information are involved; the IOI templates contain only common given names.
+
+\subsection{Reproducibility}
+\label{app:repro}
+
+All model weights remain frozen and no training is performed at any stage.
+Appendix~\ref{app:method} specifies the complete \coax computation and implementation, Table~\ref{tab:hparams} records the fixed protocol constants and random seeds, and Appendix~\ref{app:setup} defines the checkpoints, data, metrics, and baseline implementations.
+Measured wall-clock time and peak memory are reported in Table~\ref{tab:scal}; the main experiments require only a single GPU and run from seconds to minutes per scan.
+The core GPT-2-small IOI discovery pipeline and its baselines also run on CPU in minutes, allowing the headline recovery result to be reproduced without GPU hardware.
+The anonymized supplementary archive contains the implementation, environment specification, and a README mapping the main tables and figures to their reproduction scripts.
+% DON'T FORGET TO UPLOAD!

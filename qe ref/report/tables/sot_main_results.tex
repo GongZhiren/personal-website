@@ -1,0 +1,83 @@
+\begin{table}[tbp]
+    \centering
+    \caption{Main results of \SoT{} on Llama-3.1-8B (accuracy, \%). The table spans quantitative, symbolic/code, general-understanding, and long-context reasoning and compares external reasoning, memory-oriented, latent, and RL-based alternatives under one evaluation harness.}
+    \vspace{-2mm}
+    \label{tab:sot-main-full}
+    \footnotesize
+    {\setlength{\tabcolsep}{1.85pt}%
+     \setlength{\aboverulesep}{0pt}%
+     \setlength{\belowrulesep}{0pt}%
+     \setlength{\extrarowheight}{0pt}%
+     \renewcommand{\arraystretch}{1.06}%
+     \renewcommand{\tabularxcolumn}[1]{m{#1}}%
+    \begin{tabularx}{\linewidth}{@{} >{\centering\arraybackslash}p{1.65cm} >{\centering\arraybackslash}m{1.38cm} !{\vrule width 0.4pt} >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}m{3.1em} >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\columncolor[HTML]{EAECEF}\centering\arraybackslash}m{3.1em} @{}}
+    \toprule
+    \multirow{2}{=}{\centering\textbf{Category}} & \multirow{2}{=}{\centering\textbf{Method}}
+    & \multicolumn{4}{>{\cellcolor[HTML]{E3F2FD}}c!{\vrule width 1pt}}{\textbf{Quantitative Reasoning}}
+    & \multicolumn{6}{>{\cellcolor[HTML]{E3F2FD}}c}{\textbf{Symbolic and Code}} \\
+    &
+    & {\scriptsize\textbf{GSM}} & {\scriptsize\textbf{MATH}} & {\scriptsize\textbf{DROP}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\scriptsize\textbf{avg.}}
+    & {\scriptsize\textbf{FOL}} & {\scriptsize\textbf{PW}} & {\scriptsize\textbf{BBH}} & {\scriptsize\textbf{HE}} & {\scriptsize\textbf{MBPP}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}}{\scriptsize\textbf{avg.}} \\
+    \midrule
+    Greedy & Vanilla & 79.0 & 58.2 & 6.2 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{53.9}} & 29.6 & 26.0 & 26.0 & 25.0 & \cellcolor[HTML]{FFD4D3}{55.2} & 33.0 \\
+    \midrule
+    \multirow{7}{=}{\centering Reasoning Paradigm}
+    & CoT   & \cellcolor[HTML]{FFFCE0}{80.8} & \cellcolor[HTML]{FFD4D3}{64.2} & 1.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{55.5}} & 4.9 & 24.5 & \cellcolor[HTML]{FCE4D5}{70.0} & 25.0 & \cellcolor[HTML]{FCE4D5}{51.6} & 31.2 \\
+    & PS    & 71.2 & 40.0 & 1.4 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{43.4}} & 4.9 & 15.2 & \cellcolor[HTML]{FFFCE0}{55.0} & 10.0 & 22.0 & 17.6 \\
+    & SR    & 75.8 & 44.8 & \cellcolor[HTML]{FFFCE0}{15.6} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{50.4}} & 32.5 & 31.0 & 46.0 & 25.0 & 36.4 & 32.9 \\
+    & SC    & \cellcolor[HTML]{FFD4D3}{83.6} & 54.0 & 1.6 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{53.2}} & 16.8 & 28.5 & 52.0 & 10.0 & 35.2 & 27.3 \\
+    & BoN   & \cellcolor[HTML]{FFD4D3}{83.6} & 54.0 & 1.6 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{53.2}} & 16.8 & 28.5 & 52.0 & 10.0 & 35.2 & 27.3 \\
+    & CB    & 48.0 & 36.5 & \cellcolor[HTML]{FCE4D5}{19.8} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{37.1}} & \cellcolor[HTML]{FFFCE0}{40.4} & \cellcolor[HTML]{FFFCE0}{35.8} & 34.0 & \cellcolor[HTML]{FFFCE0}{30.0} & \cellcolor[HTML]{FFFCE0}{49.2} & 38.6 \\
+    & MCTS  & 55.2 & 33.5 & 13.2 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{37.5}} & 36.0 & 31.5 & 30.0 & \cellcolor[HTML]{FCE4D5}{35.0} & \cellcolor[HTML]{FFFCE0}{49.2} & 36.7 \\
+    \midrule
+    \multirow{3}{=}{\centering Memory-Oriented}
+    & H2O    & 79.8 & 59.2 & 2.4 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{53.6}} & 6.4 & 27.8 & 48.0 & 10.0 & 42.0 & 26.3 \\
+    & SNAP   & 80.4 & \cellcolor[HTML]{FCE4D5}{60.2} & 2.3 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{54.1}} & 8.4 & 26.2 & \cellcolor[HTML]{FFFCE0}{55.0} & 15.0 & 41.2 & 27.3 \\
+    & STREAM & 70.4 & 44.2 & 1.3 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{44.4}} & 1.5 & 31.8 & 1.0 & 0.0 & 5.6 & 13.0 \\
+    \midrule
+    Latent & COCO & \cellcolor[HTML]{FCE4D5}{81.4} & \cellcolor[HTML]{FFFCE0}{60.0} & 3.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{54.8}} & \cellcolor[HTML]{FFD4D3}{45.3} & \cellcolor[HTML]{FCE4D5}{45.2} & 51.0 & 20.0 & 47.2 & 42.5 \\
+    \midrule
+    RL-Based & GRPO & 0.0 & 0.5 & 0.3 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{0.2}} & 2.0 & 2.2 & 7.0 & 0.0 & 0.0 & 1.8 \\
+    \midrule
+    Ours & \textbf{\SoT{}} & \cellcolor[HTML]{FFD4D3}{\textbf{83.6}} & \textbf{54.8} & \cellcolor[HTML]{FFD4D3}{\textbf{38.9}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{\underline{\textbf{62.8}}}} & \cellcolor[HTML]{FCE4D5}{\textbf{43.4}} & \cellcolor[HTML]{FFD4D3}{\textbf{60.2}} & \cellcolor[HTML]{FFD4D3}{\textbf{77.0}} & \cellcolor[HTML]{FFD4D3}{\textbf{48.8}} & \cellcolor[HTML]{FFFCE0}{\textbf{49.2}} & \underline{\textbf{54.5}} \\
+    \midrule
+    \end{tabularx}\par\addvspace{0.35ex}
+    \begin{tabularx}{\linewidth}{@{} >{\centering\arraybackslash}p{1.65cm} >{\centering\arraybackslash}m{1.38cm} !{\vrule width 0.4pt} >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}m{3.1em} >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\columncolor[HTML]{EAECEF}\centering\arraybackslash}m{3.1em} @{}}
+    \multirow{2}{=}{\centering\textbf{Category}} & \multirow{2}{=}{\centering\textbf{Method}}
+    & \multicolumn{6}{>{\cellcolor[HTML]{E3F2FD}}c!{\vrule width 1pt}}{\textbf{General Understanding}}
+    & \multicolumn{4}{>{\cellcolor[HTML]{E3F2FD}}c}{\textbf{Long-Context Reasoning}} \\
+    &
+    & {\scriptsize\textbf{CSQA}} & {\scriptsize\textbf{StrQA}} & {\scriptsize\textbf{BoolQ}} & {\scriptsize\textbf{MMLU}} & {\scriptsize\textbf{RACE}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\scriptsize\textbf{avg.}}
+    & {\scriptsize\textbf{HQA}} & {\scriptsize\textbf{NarQA}} & {\scriptsize\textbf{LB}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}}{\scriptsize\textbf{avg.}} \\
+    \midrule
+    Greedy & Vanilla & \cellcolor[HTML]{FFFCE0}{48.0} & \cellcolor[HTML]{FCE4D5}{68.8} & 59.2 & 45.6 & 50.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{54.2}} & 7.0 & 20.1 & \cellcolor[HTML]{FFFCE0}{32.7} & 16.2 \\
+    \midrule
+    \multirow{7}{=}{\centering Reasoning Paradigm}
+    & CoT   & 32.8 & 31.5 & 37.2 & 34.0 & 50.3 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{36.3}} & 2.0 & 4.5 & 26.9 & 7.1 \\
+    & PS    & 30.5 & 18.2 & 21.5 & 31.2 & 42.0 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{28.1}} & 1.7 & 3.0 & 20.4 & 5.3 \\
+    & SR    & \cellcolor[HTML]{FCE4D5}{57.0} & 64.0 & \cellcolor[HTML]{FFFCE0}{72.2} & \cellcolor[HTML]{FCE4D5}{62.4} & \cellcolor[HTML]{FCE4D5}{62.7} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{63.6}} & \cellcolor[HTML]{FCE4D5}{17.9} & 21.7 & 25.5 & 20.6 \\
+    & SC    & 28.5 & 34.5 & 43.2 & 31.0 & 45.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{35.8}} & 1.9 & 4.3 & 25.8 & 6.8 \\
+    & BoN   & 28.5 & 34.5 & 43.2 & 31.0 & 45.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{35.8}} & 1.9 & 4.3 & 25.8 & 6.8 \\
+    & CB    & 46.0 & \cellcolor[HTML]{FFD4D3}{71.5} & \cellcolor[HTML]{FFD4D3}{82.2} & \cellcolor[HTML]{FFFCE0}{51.2} & \cellcolor[HTML]{FFFCE0}{56.0} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{61.1}} & \cellcolor[HTML]{FFFCE0}{15.5} & \cellcolor[HTML]{FCE4D5}{27.5} & 26.2 & 21.8 \\
+    & MCTS  & 42.0 & 65.5 & \cellcolor[HTML]{FFD4D3}{82.2} & 46.4 & 49.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{57.0}} & 13.5 & \cellcolor[HTML]{FFFCE0}{27.1} & 27.8 & 21.0 \\
+    \midrule
+    \multirow{3}{=}{\centering Memory-Oriented}
+    & H2O    & 33.5 & 30.8 & 39.2 & 35.0 & 19.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{32.4}} & 2.0 & 2.0 & 0.0 & 1.7 \\
+    & SNAP   & 33.5 & 31.0 & 38.5 & 34.6 & 16.7 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{31.8}} & 2.0 & 2.0 & 0.0 & 1.7 \\
+    & STREAM & 34.8 & 26.2 & 38.8 & 22.4 & 0.0 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{25.6}} & 2.5 & 0.0 & 0.0 & 1.1 \\
+    \midrule
+    Latent & COCO & 40.5 & 63.5 & 70.0 & 42.8 & 43.3 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{52.0}} & 4.4 & 10.8 & \cellcolor[HTML]{FCE4D5}{34.6} & 11.9 \\
+    \midrule
+    RL-Based & GRPO & 10.5 & 3.8 & 9.8 & 8.2 & 12.0 & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{8.7}} & 0.6 & 1.1 & 5.3 & 1.6 \\
+    \midrule
+    Ours & \textbf{\SoT{}} & \cellcolor[HTML]{FFD4D3}{\textbf{71.0}} & \cellcolor[HTML]{FFFCE0}{\textbf{67.2}} & \cellcolor[HTML]{FCE4D5}{\textbf{80.0}} & \cellcolor[HTML]{FFD4D3}{\textbf{64.6}} & \cellcolor[HTML]{FFD4D3}{\textbf{75.7}} & \multicolumn{1}{>{\centering\arraybackslash}m{3.1em}!{\vrule width 1pt}}{\cellcolor[HTML]{EAECEF}{\underline{\textbf{71.1}}}} & \cellcolor[HTML]{FFD4D3}{\textbf{25.7}} & \cellcolor[HTML]{FFD4D3}{\textbf{39.4}} & \cellcolor[HTML]{FFD4D3}{\textbf{38.3}} & \underline{\textbf{33.0}} \\
+    \bottomrule
+    \end{tabularx}%
+    }
+    \vspace{0.35ex}
+    \noindent\begin{minipage}{\linewidth}
+        \footnotesize
+        \textbf{Note.} Cells are ranked within each benchmark family; the purpose here is to show the breadth of the paired comparison rather than a single headline number.
+    \end{minipage}
+    \vspace{-2mm}
+    \end{table}
