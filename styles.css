@@ -424,7 +424,8 @@ h1 {
 .pub-card img.anchorpath-main,
 .pub-card img.cocurve-main,
 .pub-card img.e2e-main,
-.pub-card img.maribench-main {
+.pub-card img.maribench-main,
+.pub-card img.pub-contain {
   object-fit: contain;
   object-position: center center;
   background: #fff;
