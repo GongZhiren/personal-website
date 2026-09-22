@@ -271,6 +271,39 @@ h1 {
 .news-personal {
   border-left: 1px solid #e2e9fb;
   padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.coffee-chat {
+  margin-top: auto;
+  position: relative;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid #cddcff;
+  background: linear-gradient(135deg, rgba(85,131,220,0.10), rgba(139,110,240,0.08));
+  box-shadow: 0 6px 20px rgba(55,90,173,0.10);
+}
+
+.coffee-chat-head {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #2d3d66;
+  margin-bottom: 6px;
+}
+
+.coffee-chat p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.coffee-chat b { color: #3757a3; }
+
+@media (max-width: 720px) {
+  .coffee-chat { margin-top: 16px; }
 }
 
 .news-subhead {
