@@ -433,7 +433,7 @@
                 </div>
               </div>
               <div id="abs-lotr" class="tldr-panel">
-                <strong>LoTR (Logic-of-Thought Routing)</strong> is a plug-and-play layer for LLM reasoning: instead of following a fixed prompt script, it <strong>routes internal computation pathways</strong> according to the evolving logic state at each step. This lets existing reasoning paradigms adapt on the fly, <strong>improving reasoning quality without extra training</strong>.
+                External reasoning paradigms (CoT, Plan-and-Solve, Self-Refine, sampling, search) prescribe <em>how</em> to reason, but leave the model's <strong>internal computation pathway fixed</strong>. <strong>LoTR (Logic-of-Thought Routing)</strong> is a plug-and-play, inference-time module that, with <strong>frozen weights</strong>, reads a small basis of recurring <strong>logic states</strong> with a lightweight probe and mixes cached per-state <strong>attention-head templates</strong> to route each step through the pathway its logic needs. On <strong>Llama-3.1-8B (8 benchmarks × 8 paradigms)</strong> it lifts the macro by <strong>+2.66 pts (+5.37% relative) at only +0.15% tokens</strong>, with positive transfer to Qwen2.5-14B and Mixtral-8×7B.
               </div>
               <div class="pub-tags">
                 <span># Plug-and-Play</span>
