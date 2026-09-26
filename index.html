@@ -283,6 +283,31 @@
             </div>
           </article>
 
+          <article class="pub-card">
+            <img class="pub-contain" src="./assets/specroute_main.png" alt="SpecRoute overview: closed-loop multi-step speculation, prefix verification with KV reuse, and shared-GPU scheduling" loading="lazy">
+            <div class="pub-main">
+              <h3>SpecRoute: Multi-Step Speculation for Efficient LLM Agent Serving</h3>
+              <p class="authors">Zeng Zihao, Siyi Li, <span class="me">Zhiren Gong</span>, Lei Xiao, Wei Yang Bryan Lim</p>
+              <div class="pub-meta">
+                <span class="venue-badge">Coming soon</span>
+                <div class="pub-links">
+                  <button class="pub-link tldr-toggle" type="button" data-target="abs-specroute">TL;DR</button>
+                  <span class="pub-link disabled">Paper</span>
+                  <span class="pub-link disabled">Project Page</span>
+                  <span class="pub-link disabled">Code</span>
+                </div>
+              </div>
+              <div id="abs-specroute" class="tldr-panel">
+                LLM agents interleave model reasoning with tool execution, leaving the multi-turn chain on the critical path. <strong>SpecRoute</strong> is a serving runtime that accelerates agents through <strong>multi-step speculative execution</strong>: a lightweight draft agent speculates on future tool actions and runs them off-GPU while the target processes its context, then verifies observations at tool-call boundaries with <strong>KV reuse</strong>, under a slack-aware scheduler that shares one GPU. It reaches <strong>1.28–1.56× single-request speedups over vLLM</strong> with comparable task quality, and cuts mean completion time by <strong>28–36% at low load</strong> under online serving.
+              </div>
+              <div class="pub-tags">
+                <span># LLM Agent Serving</span>
+                <span># Speculative Execution</span>
+                <span># Inference Efficiency</span>
+              </div>
+            </div>
+          </article>
+
           <!-- AnchorPath 暂不展示（保留以便后续恢复）
           <article class="pub-card">
             <img class="anchorpath-main" src="./assets/anchorpath_main.png" alt="Overview of AnchorPath: cache once, trace the anchored removal-cost path, refresh the stalest units each step" loading="lazy">
