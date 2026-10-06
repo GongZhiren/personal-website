@@ -9,13 +9,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20261006a">
+  <link rel="stylesheet" href="./styles.css?v=20261006b">
   <style>
   .fp-wrap{width:min(1100px,94vw);margin:0 auto;padding:26px 0 60px}
   .fp-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 18px}
   .fp-title{font-family:'Playfair Display',Georgia,serif;font-size:2rem;color:var(--text);margin:0;display:flex;align-items:baseline;gap:12px}
   .fp-title .sub{font-family:Inter,sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
-  .fp-home{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-2));font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;box-shadow:0 6px 16px rgba(42,91,255,.28);white-space:nowrap}
+  .fp-home{display:inline-flex;align-items:center;gap:9px;color:#5a2d0c;background:linear-gradient(135deg,#f7b25a,#ef8a3c);
+    font-weight:800;font-size:14px;padding:7px 16px 7px 8px;border-radius:12px;border:1px solid rgba(214,120,40,.45);
+    box-shadow:0 6px 16px rgba(226,116,47,.26);white-space:nowrap;transition:transform .2s,box-shadow .2s}
+  .fp-home:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(226,116,47,.34)}
+  .fp-home img{width:30px;height:30px;object-fit:contain;flex:none;filter:drop-shadow(0 1px 2px rgba(120,60,10,.22))}
   .fp-lead{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 18px}
   .fp-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;position:sticky;top:0;z-index:5;padding:12px 0;background:linear-gradient(180deg,var(--bg) 72%,rgba(244,247,255,0))}
   .fp-chip{border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.2s}
@@ -38,7 +42,7 @@
   <div class="fp-wrap">
     <div class="fp-head">
       <h1 class="fp-title">Publications <span class="sub">Zhiren Gong</span></h1>
-      <a class="fp-home" href="./index.html">&larr; Home</a>
+      <a class="fp-home" href="./index.html"><img src="./assets/home_icon.png" alt="">Home</a>
     </div>
     <p class="fp-lead">A complete list of my publications and preprints, grouped into four themes. Use the filters to focus on one area; <span class="me">Zhiren Gong</span> is bolded and <span class="code-glyph">&lt;/&gt;</span> marks code releases.</p>
     <div class="fp-filters">

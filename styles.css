@@ -280,9 +280,13 @@ h1 {
   position: relative;
   padding: 16px 18px;
   border-radius: 14px;
-  border: 1px solid #cddcff;
-  background: linear-gradient(135deg, rgba(85,131,220,0.10), rgba(139,110,240,0.08));
-  box-shadow: 0 6px 20px rgba(55,90,173,0.10);
+  border: 1px solid #e6c9a6;
+  background:
+    linear-gradient(rgba(255,255,255,0.86), rgba(255,255,255,0.88)),
+    url("./assets/coffee_chat_bg.jpg");
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 6px 20px rgba(173,120,55,0.12);
 }
 
 .coffee-chat-head {
