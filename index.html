@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20261006b">
+  <link rel="stylesheet" href="./styles.css?v=20261006c">
 </head>
 <body>
   <div class="page-bg"></div>
@@ -20,7 +20,7 @@
       <a href="#achievement">Achievement</a>
       <a href="#service">Service</a>
       <a href="#contact">Contact</a>
-      <a class="nav-cta" href="./publications.html">Full Publications <span aria-hidden="true">→</span></a>
+      <a class="nav-cta" href="./publications.html"><img src="./assets/fullpub_icon.png" alt="">Full Publications <span aria-hidden="true">→</span></a>
     </nav>
   </header>
   <div class="layout">
@@ -217,66 +217,17 @@
         </div>
       </section>
 
-      <section id="research-map" class="section card rmap">
-        <div class="rmap-head">
-          <h2>Research Map <span>· one loop</span></h2>
-          <p class="rmap-thesis">Toward <b>efficient, reliable foundation-model deployment</b>, studied as one loop: <b>understand</b> how models compute &amp; reason, <b>compress</b> the model, make the <b>reasoning</b> itself cheap and adaptive, then <b>deploy &amp; stress-test</b> in the real world — where failures feed the next round of theory. Click any work to expand.</p>
+      <section id="research-map" class="section card">
+        <div class="section-head">
+          <h2 class="title-with-icon"><img src="./icon/研究.png" alt="Research map icon">Research Map</h2>
         </div>
-
-        <div class="rmap-flow">
-          <svg class="rmap-arc" viewBox="0 0 1000 46" preserveAspectRatio="none" aria-hidden="true">
-            <defs><linearGradient id="rmapgrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stop-color="#7c5cff"/><stop offset="0.4" stop-color="#2a5bff"/>
-              <stop offset="0.7" stop-color="#0bb4d4"/><stop offset="1" stop-color="#e8913a"/></linearGradient></defs>
-            <path d="M960 42 C 960 4, 40 4, 40 42"/>
-            <path d="M40 42 l -5 -8 M40 42 l 7 -6" stroke="#7c5cff" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <text x="500" y="12" text-anchor="middle">insights feed back</text>
-          </svg>
-          <div class="rmap-stage" data-k="theory"><b>①</b>Understand</div>
-          <span class="rmap-arrow">→</span>
-          <div class="rmap-stage" data-k="efficiency"><b>②</b>Compress the model</div>
-          <span class="rmap-arrow">→</span>
-          <div class="rmap-stage" data-k="reasoning"><b>③</b>Reason efficiently</div>
-          <span class="rmap-arrow">→</span>
-          <div class="rmap-stage" data-k="application"><b>④</b>Deploy &amp; stress-test</div>
-        </div>
-
-        <div class="rmap-grid">
-          <div class="rmap-pillar rp-theory">
-            <div class="rmap-pillar-head"><span class="rmap-dot"></span>Theory &amp; Interpretability</div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">Conditional Co-Ablation (CoAx)</span><span class="rmap-vbadge pre">Preprint</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Self-repair makes the very ablation used to test a circuit shift which components carry it. CoAx ranks components by how much their effect <b>grows once a primary set is removed</b> — recovering the backups a circuit hides. <a href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">Why MoE Needs Fewer Samples</span><span class="rmap-vbadge pre">Preprint</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">A theory of MoE sample efficiency: geometry-aware routing crosses learning barriers with far fewer samples than dense nets, via an <b>information-exponent collapse</b>.</div></div></div>
-          </div>
-
-          <div class="rmap-pillar rp-efficiency">
-            <div class="rmap-pillar-head"><span class="rmap-dot"></span>Model Efficiency</div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">SubspacePath Pruner</span><span class="rmap-vbadge">ICML 2026</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Inference-time, training-data-free pruning: a probe maps a scenario's <b>domain subspace</b> to a sparse head pathway, keeping only the heads a domain needs. <a href="https://gongzhiren.github.io/SubspacePathPruner-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">CoCurve</span><span class="rmap-vbadge pre">Preprint</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Prune attention &amp; FFN <b>jointly</b> via cross-module co-pruning curvature edges, recovered from just M single-unit probes. <a href="https://gongzhiren.github.io/CoCurve-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">Model Consolidation under Budget</span><span class="rmap-vbadge pre">Preprint</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Maps <b>when</b> cheap closed-form merging beats compute-heavy end-to-end distillation — a practical accuracy–efficiency frontier. <a href="https://gongzhiren.github.io/E2E-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-          </div>
-
-          <div class="rmap-pillar rp-reasoning">
-            <div class="rmap-pillar-head"><span class="rmap-dot"></span>Reasoning Efficiency</div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">State of Thought (SoT)</span><span class="rmap-vbadge">NeurIPS 2026</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">A <b>582-parameter</b> controller reads the model's endogenous state to select evidence and decide when to stop — higher accuracy with far fewer tokens. <a href="https://gongzhiren.github.io/SoT-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">LoTR</span><span class="rmap-vbadge pre">Preprint</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Plug-and-play logic-conditioned routing: read the logic state, blend cached <b>head templates</b> to route each step — frozen weights, near-zero token cost. <a href="https://gongzhiren.github.io/LoTR-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">Rule-Guided Active Inference</span><span class="rmap-vbadge">ICLR 2026</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Wake–sleep active inference with symbolic <b>habit rules</b>: familiar contexts fire a rule and act instantly, novel ones fall back on full planning. <a href="https://gongzhiren.github.io/ActiveInference-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-          </div>
-
-          <div class="rmap-pillar rp-application">
-            <div class="rmap-pillar-head"><span class="rmap-dot"></span>Applications</div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">XDomainBench</span><span class="rmap-vbadge">ICML 2026</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Stress-tests <b>cross-domain scientific knowledge composition</b>, revealing where and why reasoning collapses as compositional complexity grows. <a href="https://gongzhiren.github.io/XDomainBench-website/" target="_blank" rel="noreferrer">Project →</a></div></div></div>
-            <div class="rmap-paper"><div class="rmap-paptop"><span class="nm">Channel Gains to Captions</span><span class="rmap-vbadge">IEEE WCL</span><span class="rmap-caret">▶</span></div>
-              <div class="rmap-detail"><div class="rmap-detail-in">Task-unified multi-level <b>RF sensing</b> with vision-language models — one model reads wireless signals and describes what they mean. <a href="https://arxiv.org/pdf/2608.30836" target="_blank" rel="noreferrer">Paper →</a></div></div></div>
-          </div>
+        <p class="rmap-sub">From the model&rsquo;s <b>internal structure</b>, my work runs in two parallel tracks &mdash; <b>before deployment</b> (making the model/agent efficient) and <b>at reasoning time</b> (making the reasoning efficient) &mdash; both feeding real-world <b>deployment</b>. Click a stage to see its papers.</p>
+        <div class="rm2">
+          <div class="rm2-side"><div class="rm2-node" data-n="foundation"><button class="rm2-head" type="button" aria-expanded="false"><span class="rm2-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 6V3M15 6V3M9 21v-3M15 21v-3M6 9H3M6 15H3M21 9h-3M21 15h-3"/></svg></span><span class="rm2-t">Foundation Model Internal Structure</span><span class="rm2-ct">4</span><span class="rm2-car">▸</span></button><div class="rm2-papers"><div class="rm2-plist"><div class="rm2-paper"><span class="pn">CoAx</span><span class="pv">Preprint</span><a href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">MoE Sample Efficiency</span><span class="pv">Preprint</span></div><div class="rm2-paper"><span class="pn">Expert Sharing</span><span class="pv">Preprint</span></div><div class="rm2-paper"><span class="pn">SubspacePath</span><span class="pv">ICML’26</span><a href="https://gongzhiren.github.io/SubspacePathPruner-website/" target="_blank" rel="noreferrer">↗</a></div></div></div></div></div>
+          <div class="rm2-conn"><svg viewBox="0 0 52 160" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rmwire" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#2a5bff"/></linearGradient></defs><path d="M0 80 C 30 80 24 40 52 40"/><path d="M0 80 C 30 80 24 120 52 120"/></svg></div>
+          <div class="rm2-mid"><div class="rm2-node" data-n="model"><button class="rm2-head" type="button" aria-expanded="false"><span class="rm2-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 0 1 16 0"/><path d="M12 15l4.5-3.2"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span><span class="rm2-t">Model / Agent Efficiency</span><span class="rm2-ct">6</span><span class="rm2-car">▸</span></button><div class="rm2-papers"><div class="rm2-plist"><div class="rm2-paper"><span class="pn">SubspacePath</span><span class="pv">ICML’26</span><a href="https://gongzhiren.github.io/SubspacePathPruner-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">CoCurve</span><span class="pv">Preprint</span><a href="https://gongzhiren.github.io/CoCurve-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">Model Consolidation</span><span class="pv">Preprint</span><a href="https://gongzhiren.github.io/E2E-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">SpecRoute</span><span class="pv">Soon</span></div><div class="rm2-paper"><span class="pn">SkillFocus</span><span class="pv">Preprint</span></div><div class="rm2-paper"><span class="pn">CrossAgentMem</span><span class="pv">Soon</span></div></div></div></div><div class="rm2-node" data-n="reason"><button class="rm2-head" type="button" aria-expanded="false"><span class="rm2-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 5.5a5 5 0 0 1 8.8 2.2 3.8 3.8 0 0 1-1 7.3H8.3a3.8 3.8 0 0 1-.8-9.5z"/><circle cx="6" cy="18.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="21" r="0.9" fill="currentColor" stroke="none"/></svg></span><span class="rm2-t">Reasoning Efficiency</span><span class="rm2-ct">3</span><span class="rm2-car">▸</span></button><div class="rm2-papers"><div class="rm2-plist"><div class="rm2-paper"><span class="pn">State of Thought</span><span class="pv">NeurIPS’26</span><a href="https://gongzhiren.github.io/SoT-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">LoTR</span><span class="pv">Soon</span><a href="https://gongzhiren.github.io/LoTR-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">Active Inference</span><span class="pv">ICLR’26</span><a href="https://gongzhiren.github.io/ActiveInference-website/" target="_blank" rel="noreferrer">↗</a></div></div></div></div></div>
+          <div class="rm2-conn"><svg viewBox="0 0 52 160" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 28 40 24 80 52 80" stroke="#2a5bff"/><path d="M0 120 C 28 120 24 80 52 80" stroke="#e8913a"/></svg></div>
+          <div class="rm2-side"><div class="rm2-node" data-n="deploy"><button class="rm2-head" type="button" aria-expanded="false"><span class="rm2-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5c3 0 5 2 5 5 0 3.5-3 6.5-7 8l-3-3c1.5-4 4.5-7 8-7 .3 0 .7 0 1 .1"/><circle cx="14.5" cy="9.5" r="1.6"/><path d="M6.5 14.5c-1.5 1-2 4-2 4s3-.5 4-2"/></svg></span><span class="rm2-t">Deployment</span><span class="rm2-ct">4</span><span class="rm2-car">▸</span></button><div class="rm2-papers"><div class="rm2-plist"><div class="rm2-paper"><span class="pn">XDomainBench</span><span class="pv">ICML’26</span><a href="https://gongzhiren.github.io/XDomainBench-website/" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">MariBench</span><span class="pv">Soon</span></div><div class="rm2-paper"><span class="pn">Channel Gains</span><span class="pv">IEEE WCL</span><a href="https://arxiv.org/pdf/2608.30836" target="_blank" rel="noreferrer">↗</a></div><div class="rm2-paper"><span class="pn">LLM × Physical World</span><span class="pv">Soon</span></div></div></div></div></div>
         </div>
       </section>
 
@@ -542,6 +493,7 @@
                 <div class="pub-links">
                   <button class="pub-link tldr-toggle" type="button" data-target="abs-skillfocus">TL;DR</button>
                   <a class="pub-link paper-link" href="https://arxiv.org/abs/2609.34397" target="_blank" rel="noreferrer">Paper</a>
+                  <span class="pub-link disabled"><span class="code-glyph">&lt;/&gt;</span>Code</span>
                 </div>
               </div>
               <div id="abs-skillfocus" class="tldr-panel">
@@ -920,11 +872,25 @@
   </div>
 
   <script>
-  /* Research Map: expandable paper chips */
+  /* Research Map: expandable stage nodes */
   (function(){
-    document.querySelectorAll('.rmap-paptop').forEach(function(t){
-      t.addEventListener('click',function(){ t.closest('.rmap-paper').classList.toggle('open'); });
+    document.querySelectorAll('.rm2-head').forEach(function(h){
+      h.addEventListener('click',function(){
+        var n=h.closest('.rm2-node'); var open=n.classList.toggle('open');
+        h.setAttribute('aria-expanded', open?'true':'false');
+      });
     });
+  })();
+  /* Top-nav scroll-spy: highlight the section currently in view as you scroll */
+  (function(){
+    var links=[].slice.call(document.querySelectorAll('.top-nav a[href^="#"]'));
+    var secs=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+    function spy(){
+      var pos=(document.documentElement.scrollTop||document.body.scrollTop||0)+140, cur=-1;
+      secs.forEach(function(s,i){ if(s && s.offsetTop<=pos) cur=i; });
+      links.forEach(function(a,i){ a.classList.toggle('active', i===cur); });
+    }
+    if(links.length){ document.addEventListener('scroll',spy,{passive:true}); window.addEventListener('resize',spy,{passive:true}); spy(); }
   })();
   </script>
   <script src="./script.js?v=20260308"></script>
