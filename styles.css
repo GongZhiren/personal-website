@@ -910,3 +910,21 @@ button.pub-link {
 .rm2-paper .pv.acc{background:rgba(26,158,107,.15);color:#12805a}
 .rm2-paper .pv.pre{background:rgba(42,91,255,.12);color:#2a5bff}
 .rm2-paper .pv.soon{background:rgba(232,145,58,.16);color:#b9701f}
+
+/* ---- Research Map v4: four corner descriptions + header button ---- */
+#research-map .section-head.rm-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rmmap{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"tl tr" "flow flow" "bl br";gap:0 24px;align-items:start}
+.rmmap .rm2{grid-area:flow;margin:6px 0}
+.rmcorner{display:none;padding:12px 14px;border-radius:12px}
+.rmmap.show .rmcorner{display:block}
+.rmcorner.tl{grid-area:tl;--nc:#7c5cff;margin-bottom:12px}
+.rmcorner.tr{grid-area:tr;--nc:#2a5bff;margin-bottom:12px}
+.rmcorner.bl{grid-area:bl;--nc:#0bb4d4;margin-top:12px}
+.rmcorner.br{grid-area:br;--nc:#e8913a;margin-top:12px}
+.rmcorner{background:color-mix(in srgb,var(--nc) 7%,#fff);border:1px solid color-mix(in srgb,var(--nc) 24%,var(--line))}
+.rmcorner h4{margin:0 0 5px;font-size:12.5px;display:flex;align-items:center;gap:7px;color:var(--text)}
+.rmcorner h4::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--nc);flex:none}
+.rmcorner p{margin:0;font-size:11.8px;line-height:1.55;color:var(--muted)}
+.rmmap.show .rm2-papers{max-height:470px}
+.rmmap.show .rm2-car{transform:rotate(90deg)}
+@media(max-width:860px){.rmmap{grid-template-columns:1fr;grid-template-areas:"flow" "tl" "tr" "bl" "br"}}
