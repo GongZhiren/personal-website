@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="./assets/cat-icon.png?v=1">
+  <title>Publications | Zhiren Gong</title>
+  <meta name="description" content="Full list of publications by Zhiren Gong.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=20261006a">
+  <style>
+  .fp-wrap{width:min(1100px,94vw);margin:0 auto;padding:26px 0 60px}
+  .fp-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 18px}
+  .fp-title{font-family:'Playfair Display',Georgia,serif;font-size:2rem;color:var(--text);margin:0;display:flex;align-items:baseline;gap:12px}
+  .fp-title .sub{font-family:Inter,sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
+  .fp-home{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-2));font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;box-shadow:0 6px 16px rgba(42,91,255,.28);white-space:nowrap}
+  .fp-lead{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 18px}
+  .fp-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;position:sticky;top:0;z-index:5;padding:12px 0;background:linear-gradient(180deg,var(--bg) 72%,rgba(244,247,255,0))}
+  .fp-chip{border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.2s}
+  .fp-chip:hover{border-color:var(--brand);color:var(--brand)}
+  .fp-chip.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:transparent;box-shadow:0 6px 16px rgba(42,91,255,.25)}
+  .fp-cat{font-family:Inter,sans-serif;font-size:1.05rem;color:var(--text);margin:24px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:10px}
+  .fp-count{font-size:.72rem;font-weight:800;color:var(--muted);background:rgba(42,91,255,.08);padding:2px 9px;border-radius:999px}
+  .fp-row{display:grid;grid-template-columns:155px 1fr;gap:16px;align-items:start;padding:14px 16px;margin-bottom:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .25s,box-shadow .25s,border-color .25s}
+  .fp-row:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:rgba(42,91,255,.35)}
+  @media(max-width:620px){.fp-row{grid-template-columns:1fr}}
+  .fp-badge{font-size:11px;font-weight:800;text-align:center;padding:7px 8px;border-radius:9px;line-height:1.25;background:rgba(42,91,255,.1);color:var(--brand);align-self:start}
+  .fp-badge.pre{background:rgba(81,98,137,.12);color:var(--muted)}
+  .fp-badge.soon{background:rgba(232,145,58,.14);color:#b9701f}
+  .fp-body h3{margin:0 0 5px;font-size:15px;line-height:1.4;color:var(--text)}
+  .fp-body .authors{margin:0 0 9px;font-size:13px;color:var(--muted);line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="page-bg"></div>
+  <div class="fp-wrap">
+    <div class="fp-head">
+      <h1 class="fp-title">Publications <span class="sub">Zhiren Gong</span></h1>
+      <a class="fp-home" href="./index.html">&larr; Home</a>
+    </div>
+    <p class="fp-lead">A complete list of my publications and preprints, grouped into four themes. Use the filters to focus on one area; <span class="me">Zhiren Gong</span> is bolded and <span class="code-glyph">&lt;/&gt;</span> marks code releases.</p>
+    <div class="fp-filters">
+      <button class="fp-chip active" data-f="all" type="button">All <span class="fp-count">20</span></button>
+      <button class="fp-chip" data-f="reasoning" type="button">Reasoning Efficiency</button>
+      <button class="fp-chip" data-f="efficiency" type="button">Model Efficiency</button>
+      <button class="fp-chip" data-f="theory" type="button">Theory &amp; Interpretability</button>
+      <button class="fp-chip" data-f="application" type="button">Applications</button>
+    </div>
+    <div class="fp-list">
+<h2 class="fp-cat" data-cat="reasoning">Reasoning Efficiency <span class="fp-count">5</span></h2>
+<article class="fp-row" data-cat="reasoning"><div class="fp-badge acc">NeurIPS 2026</div><div class="fp-body"><h3>State of Thought Enables Endogenous Reasoning</h3><p class="authors"><span class="me">Zhiren Gong</span>, Yikun Hou, Zeng Zihao, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://arxiv.org/abs/2609.16055" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/SoT-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/SoT-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a><a class="pub-link" href="https://github.com/GongZhiren/State-of-Thought" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="reasoning"><div class="fp-badge acc">ICLR 2026</div><div class="fp-body"><h3>Learning Human Habits with Rule-Guided Active Inference</h3><p class="authors"><span class="me">Zhiren Gong</span>, Chao Yang, Wendi Ren, Shuang Li</p><div class="pub-links"><a class="pub-link" href="https://openreview.net/forum?id=FZXwkBH6s7" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/ActiveInference-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://github.com/GongZhiren/human-action-active-inference" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="reasoning"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>LoTR: Logic-of-Thought Routing for Plug-and-Play Reasoning of LLMs</h3><p class="authors"><span class="me">Zhiren Gong</span>, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/LoTR-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a></div></div></article>
+<article class="fp-row" data-cat="reasoning"><div class="fp-badge pre">Preprint</div><div class="fp-body"><h3>SkillFocus: Evolving Agent Skills via Capability Decomposition</h3><p class="authors">Ning Wang, <span class="me">Zhiren Gong</span>, Bingdong Li, Peng Yang, Aimin Zhou</p><div class="pub-links"><a class="pub-link" href="https://arxiv.org/abs/2609.34397" target="_blank" rel="noreferrer">Paper</a></div></div></article>
+<article class="fp-row" data-cat="reasoning"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>Concept-Profile Guided Cross-Agent Memory Sharing for Multi-Turn Conversation</h3><p class="authors">Zijie Wang, <span class="me">Zhiren Gong</span>, Zeng Zihao, Tiantong Wu, Lei Xiao, Wei Yang Bryan Lim</p></div></article>
+<h2 class="fp-cat" data-cat="efficiency">Model Efficiency <span class="fp-count">4</span></h2>
+<article class="fp-row" data-cat="efficiency"><div class="fp-badge acc">ICML 2026</div><div class="fp-body"><h3>SubspacePath Pruner: Inference-time Pruning via Probe-based Representation-Parameter Coupling</h3><p class="authors"><span class="me">Zhiren Gong</span>, Yikun Hou, Fan Wu, Che Wang, Fuyao Zhang, Tiantong Wu, Yurong Hao, Jiaming Zhang, Yiyang Duan, Tiantong Wang, Fei Huang, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://openreview.net/forum?id=fvkCjFvWKf" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/SubspacePathPruner-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/SubspacePathPruner-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a><a class="pub-link" href="https://github.com/GongZhiren/SubspacePathPruner" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="efficiency"><div class="fp-badge pre">Preprint</div><div class="fp-body"><h3>CoCurve: Cross-Module Co-Pruning Curvature for Training-Free Structured LLM Pruning</h3><p class="authors"><span class="me">Zhiren Gong</span>, Zeng Zihao, Tiantong Wang, Yixin Wang, Honoka Anada, Zijie Wang, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://arxiv.org/abs/2607.17568" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/CoCurve-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/CoCurve-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a><a class="pub-link" href="https://github.com/GongZhiren/CoCurve" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="efficiency"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>SpecRoute: Multi-Step Speculation for Efficient LLM Agent Serving</h3><p class="authors">Zeng Zihao, Siyi Li, <span class="me">Zhiren Gong</span>, Lei Xiao, Wei Yang Bryan Lim</p></div></article>
+<article class="fp-row" data-cat="efficiency"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>Model Consolidation under Budget: From Closed-Form Merging to End-to-End Distillation</h3><p class="authors"><span class="me">Zhiren Gong</span>, Tiantong Wang, Zeng Zihao, Yiyang Duan, Ming Xiao, Chau Yuen</p><div class="pub-links"><a class="pub-link" href="https://gongzhiren.github.io/E2E-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/E2E-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a></div></div></article>
+<h2 class="fp-cat" data-cat="theory">Theory &amp; Interpretability <span class="fp-count">4</span></h2>
+<article class="fp-row" data-cat="theory"><div class="fp-badge pre">Preprint</div><div class="fp-body"><h3>Conditional Co-Ablation: Recovering Self-Repair Backups in Transformer Circuits</h3><p class="authors"><span class="me">Zhiren Gong</span>, He Lu, Tiantong Wang, Yichi Zhang, Yixin Wang, Zeng Zihao, Ming Xiao, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://arxiv.org/abs/2607.01940" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/Conditional-Co-Ablation-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a><a class="pub-link" href="https://github.com/GongZhiren/Conditional-Co-Ablation" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="theory"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>Reinforcement Learning toward Target Behavior</h3><p class="authors">Yichi Zhang, <span class="me">Zhiren Gong</span>, Yucheng Chen, Jun Liu, Si Yong Yeo</p></div></article>
+<article class="fp-row" data-cat="theory"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>From Local Prediction Error to Final Outputs: A Theory of Expert Sharing in Multi-Step Reasoning</h3><p class="authors">Tiantong Wang, <span class="me">Zhiren Gong</span>, Yixin Wang, Tiantong Wu, Wei Yang Bryan Lim</p></div></article>
+<article class="fp-row" data-cat="theory"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>Why Mixture of Experts Needs Fewer Samples Than Dense Networks: The Information Exponent Collapse Theorem</h3><p class="authors">Tiantong Wang, <span class="me">Zhiren Gong</span>, Yikun Hou, Tiantong Wu, Wei Yang Bryan Lim</p></div></article>
+<h2 class="fp-cat" data-cat="application">Applications <span class="fp-count">7</span></h2>
+<article class="fp-row" data-cat="application"><div class="fp-badge acc">ICML 2026</div><div class="fp-body"><h3>XDomainBench: Diagnosing Reasoning Collapse in High-Dimensional Scientific Knowledge Composition</h3><p class="authors"><span class="me">Zhiren Gong</span>, Tiantong Wu, Jiaming Zhang, Fuyao Zhang, Che Wang, Yurong Hao, Yikun Hou, Foo Ping, Yilei Zhao, Fei Huang, Chau Yuen, Wei Yang Bryan Lim</p><div class="pub-links"><a class="pub-link" href="https://openreview.net/forum?id=U8x5SYtT5b" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="https://gongzhiren.github.io/XDomainBench-website/" target="_blank" rel="noreferrer">Project Page</a><a class="pub-link" href="https://gongzhiren.github.io/XDomainBench-website/tutorial.html" target="_blank" rel="noreferrer">Tutorial</a><a class="pub-link" href="https://github.com/GongZhiren/XDomainBench" target="_blank" rel="noreferrer"><span class="code-glyph">&lt;/&gt;</span>Code</a></div></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>MariBench: Benchmarking LLM Agents for Maritime Operational Judgment over Raw AIS Data</h3><p class="authors">He Lu, <span class="me">Zhiren Gong</span>, Fuyao Zhang, Tianbing Xia, Yufan Huang, Wei Yang Bryan Lim, Ran Yan</p></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge acc">IEEE Wireless Communications Letters</div><div class="fp-body"><h3>Channel Gains to Captions: Task-Unified Multi-Level RF Sensing with Vision-Language Models</h3><p class="authors">Tianyu Hu, <span class="me">Zhiren Gong</span>, Haowei Cui, Shuai Wang, Samson Lasaulce, Lingxiang Li, Wassim Hamidouche, Zhi Chen, Merouane Debbah</p><div class="pub-links"><a class="pub-link" href="https://arxiv.org/pdf/2608.30836" target="_blank" rel="noreferrer">Paper</a></div></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge acc">IEEE TVT 2023</div><div class="fp-body"><h3>3D Radio Map Reconstruction based on Generative Adversarial Networks under Constrained Aircraft Trajectories</h3><p class="authors">Tianyu Hu, Yang Huang, Junting Chen, Qihui Wu, <span class="me">Zhiren Gong</span></p><div class="pub-links"><a class="pub-link" href="https://doi.org/10.1109/TVT.2023.3239556" target="_blank" rel="noreferrer">Paper</a><a class="pub-link" href="./paper2/Journal_3DDCRGAN.pdf" target="_blank" rel="noreferrer">PDF</a></div></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>ParetoEvo: Pareto-Guided Evolutionary Tree Search for Automatic Heuristic Design with LLM Agents</h3><p class="authors">Haoyun Li, Ming Xiao, Yong Liang Guan, <span class="me">Zhiren Gong</span></p></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>C2U in RAG: Compositional Concept Unlearning in Retrieval-Augmented Generation</h3><p class="authors">Yiyang Duan, Fan Wu, Tiantong Wu, Che Wang, <span class="me">Zhiren Gong</span>, Wei Guo, Yang Cao, Wei Yang Bryan Lim</p></div></article>
+<article class="fp-row" data-cat="application"><div class="fp-badge soon">Coming soon</div><div class="fp-body"><h3>When Large Language Models Meet the Physical World: Beyond Task-Level, Toward Situation-Level</h3><p class="authors">Yang Liu, <span class="me">Zhiren Gong</span>, Xiaoping Wang, Jianbo Zheng, Guanghui Ye, Jinhong Hu, Kai Lu, Wei Yang Bryan Lim</p></div></article>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var chips=document.querySelectorAll('.fp-chip');
+    chips.forEach(function(c){c.addEventListener('click',function(){
+      chips.forEach(function(x){x.classList.remove('active')});c.classList.add('active');
+      var f=c.getAttribute('data-f');
+      document.querySelectorAll('.fp-row,.fp-cat').forEach(function(el){
+        el.style.display=(f==='all'||el.getAttribute('data-cat')===f)?'':'none';
+      });
+    });});
+  })();
+  </script>
+</body>
+</html>
