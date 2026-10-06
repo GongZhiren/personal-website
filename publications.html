@@ -39,9 +39,9 @@
     border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .25s,box-shadow .25s,border-color .25s}
   .fp-card2:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--cc) 40%,var(--line))}
   @media(max-width:640px){.fp-card2{grid-template-columns:1fr}}
-  .fp-card2 .thumb{width:252px;height:158px;border-radius:10px;overflow:hidden;background:#f7f9fc;display:grid;place-items:center;border:1px solid var(--line);padding:8px}
-  @media(max-width:640px){.fp-card2 .thumb{width:100%;height:180px}}
-  .fp-card2 .thumb img{width:100%;height:100%;object-fit:contain;display:block}
+  .fp-card2 .thumb{position:relative;width:252px;height:168px;border-radius:10px;overflow:hidden;background:#f7f9fc;border:1px solid var(--line);box-sizing:border-box}
+  @media(max-width:640px){.fp-card2 .thumb{width:100%;height:190px}}
+  .fp-card2 .thumb img{position:absolute;top:9px;left:9px;width:calc(100% - 18px);height:calc(100% - 18px);object-fit:contain;display:block}
   .fp-b h3{margin:0 0 5px;font-size:15px;line-height:1.38;color:var(--text)}
   .fp-b .authors{margin:0 0 7px;font-size:12.5px;color:var(--muted);line-height:1.5}
   .fp-vbadge{display:inline-block;font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px}
