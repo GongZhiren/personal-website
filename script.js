@@ -61,7 +61,10 @@ function initAchievementTabs() {
 function initScrollNav() {
   const links = [...document.querySelectorAll(".top-nav a")];
   const sections = links
-    .map((link) => document.querySelector(link.getAttribute("href")))
+    .map((link) => {
+      const href = link.getAttribute("href");
+      return href && href.startsWith("#") ? document.querySelector(href) : null;
+    })
     .filter(Boolean);
 
   if (!sections.length) return;

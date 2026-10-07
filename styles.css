@@ -385,9 +385,14 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 12px 16px;
   flex-wrap: wrap;
 }
+/* keep the heading and the tab row centered on one baseline, and give the
+   head real breathing room before the panels below it */
+.section-head > h2 { margin: 0; }
+#publications .section-head,
+#achievement .section-head { margin-bottom: 18px; }
 
 .tab-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 
