@@ -875,13 +875,13 @@ button.pub-link {
 .rm2-node[data-n="model"]{--nc:#2a5bff}
 .rm2-node[data-n="reason"]{--nc:#0bb4d4}
 .rm2-node[data-n="deploy"]{--nc:#e8913a}
-.rm2-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer;background:none;
+.rm2-head{width:100%;display:flex;align-items:center;gap:6px;padding:11px 11px;cursor:pointer;background:none;
   border:0;border-left:4px solid var(--nc);text-align:left;font:inherit}
-.rm2-ico{flex:none;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--nc);
+.rm2-ico{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:var(--nc);
   background:color-mix(in srgb,var(--nc) 13%,#fff)}
-.rm2-ico svg{width:19px;height:19px}
-.rm2-t{flex:1;font-weight:800;font-size:12.8px;line-height:1.2;color:var(--text)}
-.rm2-ct{font:800 10px/1 Inter;color:var(--nc);background:color-mix(in srgb,var(--nc) 13%,#fff);border-radius:999px;padding:3px 8px}
+.rm2-ico svg{width:16px;height:16px}
+.rm2-t{flex:1;min-width:0;font-weight:800;font-size:12px;line-height:1.22;color:var(--text)}
+.rm2-ct{flex:none;font:800 9.5px/1 Inter;color:var(--nc);background:color-mix(in srgb,var(--nc) 13%,#fff);border-radius:999px;padding:3px 6px}
 .rm2-car{flex:none;color:var(--muted);font-size:11px;transition:transform .25s}
 .rm2-node.open .rm2-car{transform:rotate(90deg)}
 .rm2-papers{max-height:0;overflow:hidden;transition:max-height .32s ease}
@@ -947,9 +947,9 @@ button.pub-link {
 .rmmap.show .rm2-side{justify-content:space-between}
 .rm2-head{cursor:pointer}
 .rm2-head:focus-visible{outline:2px solid var(--nc);outline-offset:2px;border-radius:6px}
-.rm2-target{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:6px;color:var(--nc);
-  cursor:pointer;flex:none;margin-right:2px;transition:transform .25s,background .2s,box-shadow .2s}
-.rm2-target svg{width:14px;height:14px}
+.rm2-target{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;color:var(--nc);
+  cursor:pointer;flex:none;margin-right:1px;transition:transform .25s,background .2s,box-shadow .2s}
+.rm2-target svg{width:12px;height:12px}
 .rm2-target:hover{transform:scale(1.18) rotate(90deg);background:color-mix(in srgb,var(--nc) 15%,#fff)}
 .rm2-target.on{background:var(--nc);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--nc) 20%,transparent)}
 .rm2-expand{background:linear-gradient(135deg,#ffffff,#f2f6ff)}
@@ -958,18 +958,19 @@ button.pub-link {
 .rm2-expand.on{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:transparent;box-shadow:0 7px 18px rgba(42,91,255,.28)}
 
 /* ---- Research Map RQ labels + subtitle key highlights + publication RQ tags ---- */
-.rm2-rq{font:800 10px/1 Inter,sans-serif;color:#fff;background:var(--nc,#2a5bff);border-radius:5px;
-  padding:3px 5px;margin-right:7px;letter-spacing:.02em;flex:none}
+.rm2-rq{font:800 9px/1 Inter,sans-serif;color:#fff;background:var(--nc,#2a5bff);border-radius:5px;
+  padding:3px 4px;margin-right:4px;letter-spacing:.01em;flex:none}
 .rmcorner h4 .rqc{font:800 9px/1 Inter,sans-serif;color:#fff;background:var(--nc,#2a5bff);border-radius:4px;
   padding:2px 4px;letter-spacing:.02em;flex:none}
 /* subtitle: bold / italic / map-colored key phrases with a soft highlight */
 .rmap-sub strong{font-weight:800;color:var(--text)}
 .rmap-sub em{font-style:italic}
-.rmap-sub .k{font-weight:700;padding:0 .16em;border-radius:5px}
-.rmap-sub .k1{color:#6a49f2;background:rgba(124,92,255,.12)}
-.rmap-sub .k2{color:#2a5bff;background:rgba(42,91,255,.10)}
-.rmap-sub .k3{color:#0a97b0;background:rgba(11,180,212,.14)}
-.rmap-sub .k4{color:#cf781c;background:rgba(232,145,58,.15)}
+.rmap-sub .k{font-weight:700}
+.rmap-sub .k1{color:#6a49f2}
+.rmap-sub .k2{color:#2a5bff}
+.rmap-sub .k3{color:#0a97b0}
+.rmap-sub .k4{color:#cf781c}
+#research-map .rm-head{margin-bottom:16px}
 /* small RQ-theme tags after publication titles (home + full page both load this file) */
 .rq-tag{display:inline-block;font:800 9.5px/1 Inter,sans-serif;letter-spacing:.03em;text-transform:uppercase;
   color:#fff;padding:3px 6px;border-radius:5px;margin-left:6px;vertical-align:middle;transform:translateY(-1px)}
@@ -977,3 +978,9 @@ button.pub-link {
 .rq-tag.q2{background:#2a5bff}
 .rq-tag.q3{background:#0bb4d4}
 .rq-tag.q4{background:#e8913a}
+
+/* Full Publications page: RQ legend */
+.fp-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 20px;font-size:12.5px;color:var(--muted);font-weight:600}
+.fp-legend>span{display:inline-flex;align-items:center;gap:6px}
+.fp-legend .fp-legend-lead{color:var(--text);font-weight:700}
+.fp-legend .rq-tag{margin-left:0}
